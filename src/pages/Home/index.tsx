@@ -3,7 +3,6 @@ import { Col, List, Row } from 'antd';
 import { CalendarOutlined, FireOutlined, FolderOpenOutlined } from '@ant-design/icons';
 import Author from './Author/Author';
 import Advert from './Advert/Advert';
-import Footer from './Footer/Footer';
 
 const Home = () => {
   const [list] = React.useState([{
@@ -36,7 +35,6 @@ const Home = () => {
           <Advert />
         </Col>
       </Row>
-      <Footer />
     </>
   );
 };

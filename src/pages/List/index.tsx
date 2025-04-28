@@ -4,7 +4,6 @@ import { CalendarOutlined, FireOutlined, FolderOpenOutlined } from '@ant-design/
 import { Link, useLocation } from 'react-router-dom';
 import Author from '../Home/Author/Author';
 import Advert from '../Home/Advert/Advert';
-import Footer from '../Home/Footer/Footer';
 
 const Page = () => {
     const location = useLocation();
@@ -57,7 +56,6 @@ const Page = () => {
                     <Advert />
                 </Col>
             </Row>
-            <Footer />
         </>
     );
 };

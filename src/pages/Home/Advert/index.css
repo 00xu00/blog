@@ -8,6 +8,11 @@
     border-bottom: 1px solid;
 }
 
+.ad-div div:last-child {
+    margin-bottom: 0;
+    border-bottom: none;
+}
+
 .ad-div div img {
     width: 10rem;
     height: 4rem;

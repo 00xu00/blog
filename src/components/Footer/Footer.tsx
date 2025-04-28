@@ -1,6 +1,6 @@
 import React from "react";
 import "./index.css"
-import ElementRotation from '../../../components/ElementRotation'
+import ElementRotation from '../ElementRotation'
 
 const Footer = () => {
     return <div className="footer-div">
