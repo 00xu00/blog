@@ -6,6 +6,8 @@ import Detail from '../pages/Detail';
 import List from '../pages/List';
 import Auth from '../pages/Auth';
 import NotFound from '../pages/NotFound';
+import Profile from '../pages/Profile';
+import Chat from '../pages/Chat';
 
 const router = createBrowserRouter([
   {
@@ -23,12 +25,20 @@ const router = createBrowserRouter([
       {
         path: 'list',
         element: <List />
+      },
+      {
+        path: 'profile',
+        element: <Profile />
       }
     ]
   },
   {
     path: '/auth',
     element: <Auth />
+  },
+  {
+    path: '/chat/:userId',
+    element: <Chat />
   },
   {
     path: '*',

@@ -1,5 +1,9 @@
 import React, { useState, useEffect, useRef } from "react"
-import { Row, Col, Menu, Input, Dropdown, Avatar, Badge, Switch, Drawer, Button, MenuProps } from "antd"
+import { useNavigate } from "react-router-dom"
+import { Row, Col, Menu, Input, Dropdown, Avatar, Badge, Switch, Drawer, Button, MenuProps, Space } from "antd"
+import { useDispatch, useSelector } from 'react-redux';
+import { RootState } from '../../store';
+import { markAsRead, Message } from '../../store/messageSlice';
 import {
     HomeOutlined,
     PlayCircleOutlined,
@@ -13,7 +17,8 @@ import {
     SettingOutlined,
     MenuOutlined,
     MoonOutlined,
-    SunOutlined
+    SunOutlined,
+    MailOutlined
 } from "@ant-design/icons";
 import "./header.css"
 
@@ -26,6 +31,8 @@ const Header = () => {
     const [searchValue, setSearchValue] = useState('');
     const [indicatorStyle, setIndicatorStyle] = useState({ width: '0px', left: '0px' });
     const menuRef = useRef<HTMLDivElement>(null);
+    const dispatch = useDispatch();
+    const { messages, unreadCount } = useSelector((state: RootState) => state.message);
 
     const menuItems: MenuProps['items'] = [
         {
@@ -45,7 +52,7 @@ const Header = () => {
         },
         {
             label: "文章",
-            key: "article",
+            key: "write",
             icon: <BookOutlined />
         }
     ];
@@ -77,16 +84,13 @@ const Header = () => {
         localStorage.setItem('darkMode', isDarkMode.toString());
     }, [isDarkMode]);
 
+    const navigate = useNavigate();
     const userMenuItems: MenuProps['items'] = [
         {
             key: 'profile',
             icon: <UserOutlined />,
             label: '个人中心',
-        },
-        {
-            key: 'settings',
-            icon: <SettingOutlined />,
-            label: '设置',
+            onClick: () => navigate('/profile'),
         },
         {
             key: 'theme',
@@ -155,6 +159,39 @@ const Header = () => {
         }, 0);
     };
 
+    const handleMessageClick = (message: Message) => {
+        if (!message.isRead) {
+            dispatch(markAsRead(message.id));
+        }
+        // 跳转到聊天页面
+        navigate(`/chat/${message.sender.id}`);
+    };
+
+    const messageItems = [
+        {
+            key: 'messages',
+            label: '私信',
+            icon: <MailOutlined />,
+            count: unreadCount,
+            children: messages.map(message => ({
+                key: message.id,
+                label: (
+                    <div className="header-notification-item" onClick={() => handleMessageClick(message)}>
+                        <Avatar src={message.sender.avatar} icon={<UserOutlined />} />
+                        <div className="notification-content">
+                            <div className="notification-title">
+                                <span>{message.sender.name}</span>
+                                {!message.isRead && <Badge status="processing" />}
+                            </div>
+                            <div className="notification-desc">{message.content}</div>
+                            <div className="notification-time">{message.createTime}</div>
+                        </div>
+                    </div>
+                )
+            }))
+        }
+    ];
+
     return (
         <>
             <div className={`header ${isDarkMode ? 'dark' : 'light'}`}>
@@ -190,9 +227,18 @@ const Header = () => {
                                 prefix={<SearchOutlined />}
                                 allowClear
                             />
-                            <Badge count={5} className="header-notification">
-                                <BellOutlined />
-                            </Badge>
+                            <Space size="large">
+                                <Dropdown
+                                    menu={{ items: messageItems }}
+                                    placement="bottomRight"
+                                    trigger={['click']}
+                                    overlayClassName="header-notification-dropdown"
+                                >
+                                    <Badge count={unreadCount} className="header-notification">
+                                        <MailOutlined className="header-icon" />
+                                    </Badge>
+                                </Dropdown>
+                            </Space>
                             <Dropdown menu={{ items: userMenuItems }} placement="bottomRight">
                                 <div className="header-user">
                                     <Avatar icon={<UserOutlined />} />

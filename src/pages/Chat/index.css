@@ -1,0 +1,138 @@
+.chat-container {
+  max-width: 800px;
+  margin: 20px auto;
+  height: calc(100vh - 100px);
+  display: flex;
+  flex-direction: column;
+  background-color: #fff;
+  border-radius: 8px;
+  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.1);
+  overflow: hidden;
+}
+
+.chat-header {
+  padding: 16px;
+  border-bottom: 1px solid #f0f0f0;
+  background-color: #fff;
+}
+
+.chat-messages {
+  flex: 1;
+  padding: 16px;
+  overflow-y: auto;
+  background-color: #f5f5f5;
+}
+
+.message-item {
+  display: flex;
+  margin-bottom: 16px;
+  max-width: 70%;
+}
+
+.message-item.self {
+  margin-left: auto;
+  flex-direction: row-reverse;
+}
+
+.message-avatar {
+  margin: 0 8px;
+}
+
+.message-content {
+  display: flex;
+  flex-direction: column;
+}
+
+.message-info {
+  display: flex;
+  justify-content: space-between;
+  margin-bottom: 4px;
+}
+
+.message-name {
+  font-weight: bold;
+  color: #333;
+}
+
+.message-time {
+  font-size: 12px;
+  color: #999;
+  margin-left: 8px;
+}
+
+.message-text {
+  padding: 8px 12px;
+  border-radius: 4px;
+  background-color: #fff;
+  box-shadow: 0 1px 2px rgba(0, 0, 0, 0.1);
+}
+
+.message-item.self .message-text {
+  background-color: #e6f7ff;
+}
+
+.chat-input {
+  padding: 16px;
+  border-top: 1px solid #f0f0f0;
+  background-color: #fff;
+  display: flex;
+  gap: 8px;
+}
+
+.chat-input .ant-input {
+  flex: 1;
+}
+
+.send-button {
+  height: 32px;
+  align-self: flex-end;
+}
+
+/* 暗色模式适配 */
+.dark-mode .chat-container {
+  background-color: #141414;
+}
+
+.dark-mode .chat-header {
+  background-color: #141414;
+  border-bottom-color: #303030;
+}
+
+.dark-mode .chat-messages {
+  background-color: #1f1f1f;
+}
+
+.dark-mode .message-name {
+  color: #e0e0e0;
+}
+
+.dark-mode .message-time {
+  color: #8c8c8c;
+}
+
+.dark-mode .message-text {
+  background-color: #1f1f1f;
+  color: #e0e0e0;
+}
+
+.dark-mode .message-item.self .message-text {
+  background-color: #111b26;
+}
+
+.dark-mode .chat-input {
+  background-color: #141414;
+  border-top-color: #303030;
+}
+
+/* 响应式设计 */
+@media (max-width: 768px) {
+  .chat-container {
+    margin: 0;
+    height: 100vh;
+    border-radius: 0;
+  }
+
+  .message-item {
+    max-width: 85%;
+  }
+}

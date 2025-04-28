@@ -1,4 +1,6 @@
 import React from 'react';
+import { Provider } from 'react-redux';
+import { store } from './store';
 import "./index.css"
 import Header from "./components/Header/Header"
 import Footer from "./components/Footer/Footer"
@@ -9,13 +11,15 @@ function App() {
   const isAuthPage = location.pathname === '/login' || location.pathname === '/register';
 
   return (
-    <div className="App">
-      {!isAuthPage && <Header />}
-      <main style={{ flex: 1 }}>
-        <Outlet />
-      </main>
-      {!isAuthPage && <Footer />}
-    </div>
+    <Provider store={store}>
+      <div className="App">
+        {!isAuthPage && <Header />}
+        <main style={{ flex: 1 }}>
+          <Outlet />
+        </main>
+        {!isAuthPage && <Footer />}
+      </div>
+    </Provider>
   );
 }
 
