@@ -4,6 +4,7 @@ import App from '../App';
 import Home from '../pages/Home';
 import Detail from '../pages/Detail';
 import List from '../pages/List';
+import Auth from '../pages/Auth';
 import NotFound from '../pages/NotFound';
 
 const router = createBrowserRouter([
@@ -22,8 +23,12 @@ const router = createBrowserRouter([
       {
         path: 'list',
         element: <List />
-      },
+      }
     ]
+  },
+  {
+    path: '/auth',
+    element: <Auth />
   },
   {
     path: '*',
