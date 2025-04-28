@@ -1,115 +1,204 @@
-import React, { useState, useEffect } from 'react';
-import { Tabs, Card, List, Avatar, Button, Space, Tag, message, Badge } from 'antd';
+import React, { useEffect, useState } from 'react';
+import { useDispatch, useSelector } from 'react-redux';
+import { Tabs, List, Avatar, Space, Badge, Button, Card, Tag, message } from 'antd';
 import {
+  MailOutlined,
   HistoryOutlined,
   LikeOutlined,
   StarOutlined,
   EditOutlined,
-  UserAddOutlined,
   UserOutlined,
-  BookOutlined,
   HeartOutlined,
   EyeOutlined,
   MessageOutlined,
-  MailOutlined
+  UserAddOutlined,
+  CheckOutlined
 } from '@ant-design/icons';
-import { useDispatch, useSelector } from 'react-redux';
 import { RootState } from '../../store';
-import { markAsRead, Message } from '../../store/messageSlice';
+import {
+  setProfile,
+  setArticles,
+  setFollowing,
+  setFollowers,
+  setActiveTab
+} from '../../store/profile/actions';
+import { setMessages, markAsRead } from '../../store/messageSlice';
+import { ProfileState } from '../../store/profile/types';
 import './index.css';
 import { useNavigate } from 'react-router-dom';
 
 const { TabPane } = Tabs;
 
-interface Article {
-  id: string;
-  title: string;
-  description: string;
-  createTime: string;
-  views: number;
-  likes: number;
-  comments: number;
-}
-
-interface User {
-  id: string;
-  name: string;
-  avatar: string;
-  bio: string;
-  followers: number;
-  following: number;
-  articles: number;
-}
-
 const Profile: React.FC = () => {
-  const [activeTab, setActiveTab] = useState('messages');
-  const [user, setUser] = useState<User>({
-    id: '1',
-    name: '用户名',
-    avatar: '',
-    bio: '这个人很懒，什么都没写',
-    followers: 0,
-    following: 0,
-    articles: 0
-  });
-
-  const [articles, setArticles] = useState<Article[]>([
-    {
-      id: '1',
-      title: '示例文章标题',
-      description: '这是文章的简要描述...',
-      createTime: '2024-01-01',
-      views: 100,
-      likes: 10,
-      comments: 5
-    }
-  ]);
-
-  const { messages, unreadCount } = useSelector((state: RootState) => state.message);
   const dispatch = useDispatch();
   const navigate = useNavigate();
+  const [followingMap, setFollowingMap] = useState<Record<string, boolean>>({});
+  const [followerFollowingMap, setFollowerFollowingMap] = useState<Record<string, boolean>>({});
 
-  const handleFollow = () => {
-    message.success('关注成功');
-  };
+  const {
+    userInfo,
+    articles,
+    following,
+    followers,
+    activeTab
+  } = useSelector((state: RootState) => state.profile);
+  const { messages, unreadCount } = useSelector((state: RootState) => state.message);
 
-  const handleUnfollow = () => {
-    message.success('已取消关注');
-  };
+  useEffect(() => {
+    // 模拟获取数据
+    const fetchData = async () => {
+      // 这里应该是实际的API调用
+      const mockData = {
+        userInfo: {
+          id: '1',
+          name: '用户名',
+          avatar: '',
+          bio: '个人简介',
+          stats: {
+            articles: 10,
+            followers: 100,
+            following: 50
+          }
+        },
+        messages: [
+          {
+            id: '1',
+            sender: {
+              id: '2',
+              name: '用户A',
+              avatar: ''
+            },
+            content: '你好，请问这篇文章的代码可以分享一下吗？',
+            createTime: '2024-01-01 12:00',
+            isRead: false
+          },
+          {
+            id: '2',
+            sender: {
+              id: '3',
+              name: '用户B',
+              avatar: ''
+            },
+            content: '感谢你的分享，对我帮助很大！',
+            createTime: '2024-01-01 10:00',
+            isRead: false
+          }
+        ],
+        articles: [
+          {
+            id: '1',
+            title: '示例文章标题',
+            description: '这是文章的简要描述...',
+            createTime: '2024-01-01',
+            views: 100,
+            likes: 10,
+            comments: 5
+          }
+        ],
+        following: [
+          {
+            id: '1',
+            name: '关注用户1',
+            avatar: '',
+            bio: '个人简介1'
+          }
+        ],
+        followers: [
+          {
+            id: '1',
+            name: '粉丝1',
+            avatar: '',
+            bio: '个人简介1'
+          }
+        ]
+      };
 
-  const handleMessageClick = (message: Message) => {
-    if (!message.isRead) {
-      dispatch(markAsRead(message.id));
+      dispatch(setProfile(mockData.userInfo));
+      dispatch(setMessages(mockData.messages));
+      dispatch(setArticles(mockData.articles));
+      dispatch(setFollowing(mockData.following));
+      dispatch(setFollowers(mockData.followers));
+    };
+
+    fetchData();
+  }, [dispatch]);
+
+  useEffect(() => {
+    // 初始化关注状态
+    const initialFollowingMap = following.reduce((acc, user) => {
+      acc[user.id] = true;
+      return acc;
+    }, {} as Record<string, boolean>);
+    setFollowingMap(initialFollowingMap);
+
+    // 初始化粉丝关注状态
+    const initialFollowerFollowingMap = followers.reduce((acc, user) => {
+      // 这里应该从后端获取实际的关注状态
+      acc[user.id] = false; // 默认未关注
+      return acc;
+    }, {} as Record<string, boolean>);
+    setFollowerFollowingMap(initialFollowerFollowingMap);
+  }, [following, followers]);
+
+  const handleMessage = (userId: string) => {
+    if (userId === userInfo.id) {
+      message.warning('不能给自己发送私信');
+      return;
     }
-    // 跳转到聊天页面
-    navigate(`/chat/${message.sender.id}`);
+    navigate(`/chat/${userId}`);
+  };
+
+  const handleFollow = (userId: string) => (e: React.MouseEvent) => {
+    e.preventDefault();
+    if (userId === userInfo.id) {
+      message.warning('不能关注自己');
+      return;
+    }
+    setFollowingMap(prev => ({
+      ...prev,
+      [userId]: !prev[userId]
+    }));
+    message.success(followingMap[userId] ? '已取消关注' : '关注成功');
+  };
+
+  const handleFollowerFollow = (userId: string) => (e: React.MouseEvent) => {
+    e.preventDefault();
+    if (userId === userInfo.id) {
+      message.warning('不能关注自己');
+      return;
+    }
+    setFollowerFollowingMap(prev => ({
+      ...prev,
+      [userId]: !prev[userId]
+    }));
+    message.success(followerFollowingMap[userId] ? '已取消关注' : '关注成功');
   };
 
   const renderUserInfo = () => (
     <div className="profile-header">
       <div className="profile-avatar">
-        <Avatar size={100} icon={<UserOutlined />} />
+        <Avatar size={100} src={userInfo.avatar} icon={<UserOutlined />} />
       </div>
       <div className="profile-info">
-        <h2>{user.name}</h2>
-        <p>{user.bio}</p>
+        <h2>{userInfo.name}</h2>
+        <p>{userInfo.bio}</p>
         <Space>
-          <Button type="primary" onClick={handleFollow}>
+          <Button type="primary" onClick={handleFollow(userInfo.id)}>
             <UserAddOutlined /> 关注
           </Button>
-          <Button>私信</Button>
+          <Button onClick={() => handleMessage(userInfo.id)}>私信</Button>
         </Space>
         <div className="profile-stats">
           <div className="stat-item">
-            <span className="stat-number">{user.followers}</span>
+            <span className="stat-number">{userInfo.stats.followers}</span>
             <span className="stat-label">关注者</span>
           </div>
           <div className="stat-item">
-            <span className="stat-number">{user.following}</span>
+            <span className="stat-number">{userInfo.stats.following}</span>
             <span className="stat-label">关注</span>
           </div>
           <div className="stat-item">
-            <span className="stat-number">{user.articles}</span>
+            <span className="stat-number">{userInfo.stats.articles}</span>
             <span className="stat-label">文章</span>
           </div>
         </div>
@@ -121,12 +210,12 @@ const Profile: React.FC = () => {
     <div className="profile-container">
       <Card className="profile-card">
         {renderUserInfo()}
-        <Tabs activeKey={activeTab} onChange={setActiveTab}>
+        <Tabs activeKey={activeTab} onChange={(key) => dispatch(setActiveTab(key))}>
           <TabPane
             tab={
               <span>
                 <MailOutlined />
-                <Badge count={unreadCount} offset={[5, 0]} style={{ top: '-3px' }}>
+                <Badge count={unreadCount} offset={[5, 0]}>
                   私信
                 </Badge>
               </span>
@@ -139,7 +228,7 @@ const Profile: React.FC = () => {
               renderItem={message => (
                 <List.Item
                   className={`message-item ${!message.isRead ? 'unread' : ''}`}
-                  onClick={() => handleMessageClick(message)}
+                  onClick={() => handleMessage(message.sender.id)}
                 >
                   <List.Item.Meta
                     avatar={<Avatar src={message.sender.avatar} icon={<UserOutlined />} />}
@@ -307,17 +396,25 @@ const Profile: React.FC = () => {
           >
             <List
               grid={{ gutter: 16, column: 4 }}
-              dataSource={[1, 2, 3, 4]}
-              renderItem={item => (
+              dataSource={following}
+              renderItem={user => (
                 <List.Item>
                   <Card>
                     <div className="user-card">
-                      <Avatar size={64} icon={<UserOutlined />} />
-                      <h3>用户名 {item}</h3>
-                      <p>个人简介...</p>
-                      <Button type="primary" block onClick={handleFollow}>
-                        关注
-                      </Button>
+                      <Avatar size={64} src={user.avatar} icon={<UserOutlined />} />
+                      <h3>{user.name}</h3>
+                      <p>{user.bio}</p>
+                      <Space>
+                        <Button
+                          type={followingMap[user.id] ? 'default' : 'primary'}
+                          block
+                          onClick={handleFollow(user.id)}
+                          icon={followingMap[user.id] ? <CheckOutlined /> : <UserAddOutlined />}
+                        >
+                          {followingMap[user.id] ? '已关注' : '关注'}
+                        </Button>
+                        <Button block onClick={() => handleMessage(user.id)}>私信</Button>
+                      </Space>
                     </div>
                   </Card>
                 </List.Item>
@@ -335,17 +432,25 @@ const Profile: React.FC = () => {
           >
             <List
               grid={{ gutter: 16, column: 4 }}
-              dataSource={[1, 2, 3, 4]}
-              renderItem={item => (
+              dataSource={followers}
+              renderItem={user => (
                 <List.Item>
                   <Card>
                     <div className="user-card">
-                      <Avatar size={64} icon={<UserOutlined />} />
-                      <h3>用户名 {item}</h3>
-                      <p>个人简介...</p>
-                      <Button type="primary" block onClick={handleFollow}>
-                        关注
-                      </Button>
+                      <Avatar size={64} src={user.avatar} icon={<UserOutlined />} />
+                      <h3>{user.name}</h3>
+                      <p>{user.bio}</p>
+                      <Space>
+                        <Button
+                          type={followerFollowingMap[user.id] ? 'default' : 'primary'}
+                          block
+                          onClick={handleFollowerFollow(user.id)}
+                          icon={followerFollowingMap[user.id] ? <CheckOutlined /> : <UserAddOutlined />}
+                        >
+                          {followerFollowingMap[user.id] ? '已关注' : '关注'}
+                        </Button>
+                        <Button block onClick={() => handleMessage(user.id)}>私信</Button>
+                      </Space>
                     </div>
                   </Card>
                 </List.Item>

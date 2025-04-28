@@ -18,39 +18,20 @@ interface MessageState {
 }
 
 const initialState: MessageState = {
-  messages: [
-    {
-      id: "1",
-      sender: {
-        id: "2",
-        name: "用户A",
-        avatar: "",
-      },
-      content: "你好，请问这篇文章的代码可以分享一下吗？",
-      createTime: "2024-01-01 12:00",
-      isRead: false,
-    },
-    {
-      id: "2",
-      sender: {
-        id: "3",
-        name: "用户B",
-        avatar: "",
-      },
-      content: "感谢你的分享，对我帮助很大！",
-      createTime: "2024-01-01 10:00",
-      isRead: false,
-    },
-  ],
-  unreadCount: 2,
+  messages: [],
+  unreadCount: 0,
 };
 
 const messageSlice = createSlice({
   name: "message",
   initialState,
   reducers: {
+    setMessages: (state, action: PayloadAction<Message[]>) => {
+      state.messages = action.payload;
+      state.unreadCount = action.payload.filter((msg) => !msg.isRead).length;
+    },
     addMessage: (state, action: PayloadAction<Message>) => {
-      state.messages.push(action.payload);
+      state.messages.unshift(action.payload);
       if (!action.payload.isRead) {
         state.unreadCount += 1;
       }
@@ -73,5 +54,10 @@ const messageSlice = createSlice({
   },
 });
 
-export const { addMessage, markAsRead, markAllAsRead } = messageSlice.actions;
+export const {
+  setMessages,
+  addMessage,
+  markAsRead,
+  markAllAsRead,
+} = messageSlice.actions;
 export default messageSlice.reducer;
