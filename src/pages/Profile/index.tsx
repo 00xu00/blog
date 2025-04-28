@@ -126,8 +126,9 @@ const Profile: React.FC = () => {
             tab={
               <span>
                 <MailOutlined />
-                私信
-                <Badge count={unreadCount} offset={[5, 0]} />
+                <Badge count={unreadCount} offset={[5, 0]} style={{ top: '-3px' }}>
+                  私信
+                </Badge>
               </span>
             }
             key="messages"
