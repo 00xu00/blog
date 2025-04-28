@@ -1,4 +1,4 @@
-import React from 'react';
+import React, { useState } from 'react';
 import { useParams } from 'react-router-dom';
 import { Col, Row, Breadcrumb } from 'antd';
 import { Link, useLocation } from 'react-router-dom';
@@ -12,6 +12,8 @@ import rehypeRaw from 'rehype-raw';
 import 'highlight.js/styles/github.css';
 import "./index.css";
 import MarkdownToc from '../../components/MarkdownToc';
+import InteractionButtons from '../../components/InteractionButtons';
+import Comments from '../../components/Comments';
 
 const markdown = `
 ## 基础语法
@@ -61,6 +63,7 @@ const hello = () => {
 const Detail = () => {
   const { id } = useParams();
   const location = useLocation();
+  const [showComments, setShowComments] = useState(false);
 
   const breadList = [
     {
@@ -78,7 +81,7 @@ const Detail = () => {
   ];
 
   return (
-    <div className="App">
+    <div>
       <Row className='comm-main' justify={"center"}>
         <Col className='comm-left' xs={24} sm={24} md={16} lg={18} xl={14}>
           <div className='bread-div'>
@@ -112,6 +115,13 @@ const Detail = () => {
                 {markdown}
               </ReactMarkdown>
             </div>
+            <InteractionButtons
+              initialLikes={123}
+              initialStars={45}
+              initialComments={67}
+              onCommentClick={() => setShowComments(!showComments)}
+            />
+            {showComments && <Comments />}
           </div>
         </Col>
         <Col className='comm-right' xs={0} sm={0} md={7} lg={5} xl={4}>

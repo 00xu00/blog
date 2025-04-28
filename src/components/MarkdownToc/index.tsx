@@ -112,7 +112,7 @@ const MarkdownToc: React.FC = () => {
   };
 
   return (
-    <Affix offsetTop={20}>
+    <Affix offsetTop={70}>
       <div className="markdown-toc">
         <div className="toc-title">目录</div>
         <Anchor

@@ -1,11 +1,49 @@
+:root {
+  --primary-color: #1e90ff;
+  --text-color: #333;
+  --bg-color: #f6f6f6;
+  --border-color: #eee;
+  --hover-color: #f5f5f5;
+  --shadow-color: rgba(0, 0, 0, 0.06);
+  --card-bg: #fff;
+  --card-shadow: 0 2px 8px rgba(0, 0, 0, 0.06);
+  --input-bg: #fff;
+  --input-border: #d9d9d9;
+  --input-text: #333;
+  --link-color: #1e90ff;
+  --link-hover: #40a9ff;
+  --code-bg: #f6f8fa;
+  --code-text: #24292e;
+}
+
+.dark-mode {
+  --primary-color: #1890ff;
+  --text-color: rgba(255, 255, 255, 0.85);
+  --bg-color: #141414;
+  --border-color: #303030;
+  --hover-color: #1f1f1f;
+  --shadow-color: rgba(0, 0, 0, 0.2);
+  --card-bg: #1f1f1f;
+  --card-shadow: 0 2px 8px rgba(0, 0, 0, 0.2);
+  --input-bg: #1f1f1f;
+  --input-border: #434343;
+  --input-text: rgba(255, 255, 255, 0.85);
+  --link-color: #1890ff;
+  --link-hover: #40a9ff;
+  --code-bg: #282c34;
+  --code-text: #abb2bf;
+}
+
 body {
-  background-color: #f6f6f6;
+  background-color: var(--bg-color);
   margin: 0;
   padding: 0;
   min-height: 100vh;
   display: flex;
   flex-direction: column;
   overflow-x: hidden;
+  color: var(--text-color);
+  transition: all 0.3s ease;
 }
 
 #root {
@@ -24,38 +62,54 @@ body {
 
 .comm-left {
   height: 100%;
-  background-color: #fff;
-  padding: .3rem;
-  border-radius: .3rem;
-  border-bottom: 1px solid #eee;
+  background-color: var(--card-bg);
+  padding: 1.5rem;
+  border-radius: 12px;
+  box-shadow: 0 2px 8px var(--shadow-color);
+  border: 1px solid var(--border-color);
+  position: relative;
+  overflow: hidden;
+}
+
+.comm-left::before {
+  content: '';
+  position: absolute;
+  top: 0;
+  left: 0;
+  right: 0;
+  height: 4px;
+  background: linear-gradient(90deg, var(--primary-color), transparent);
+  opacity: 0.8;
 }
 
 .comm-box {
-  background-color: #fff;
-  margin-left: .5rem;
-  padding: .3rem .3rem 0;
-  border-radius: .3rem;
-  border: 1px solid #eee;
+  background-color: transparent;
+  margin-left: 0.5rem;
+  padding: 0;
+  border-radius: 0;
+  border: none;
+  box-shadow: 0 2px 8px var(--shadow-color);
 }
 
 .comm-main {
   margin-top: .5rem;
+  padding: 0 1rem;
 }
 
 .list-title {
   font-size: 1.3rem;
-  color: #1e90ff;
+  color: var(--primary-color);
   padding: 0 0.5rem;
 }
 
 .list-context {
-  color: #777;
+  color: var(--text-color);
   padding: .5rem;
 }
 
 .list-icons {
   padding: .5rem 0;
-  color: #AAA;
+  color: var(--text-color);
 }
 
 .list-icon {
@@ -66,16 +120,23 @@ body {
 
 .bread-div {
   padding: .5rem;
-  border-bottom: 1px solid #eee;
-  background-color: #f1f3f4;
+  border-bottom: 1px solid var(--border-color);
+  background-color: var(--hover-color);
 }
 
 .bread-div .ant-breadcrumb-link a {
-  color: #999;
+  color: var(--text-color);
   text-decoration: none;
 }
 
 .bread-div .ant-breadcrumb-link.active a {
-  color: #1e90ff;
+  color: var(--primary-color);
   font-weight: bold;
+}
+
+@media (max-width: 768px) {
+  .comm-left {
+    padding: 1rem;
+    border-radius: 8px;
+  }
 }

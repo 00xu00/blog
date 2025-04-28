@@ -1,8 +1,8 @@
 .markdown-toc {
-  background: #fff;
+  background: var(--card-bg);
   border-radius: 8px;
   padding: 16px;
-  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.15);
+  box-shadow: 0 2px 8px var(--shadow-color);
   max-width: 300px;
 }
 
@@ -10,21 +10,30 @@
   font-size: 16px;
   font-weight: 500;
   margin-bottom: 12px;
-  color: #333;
+  color: var(--text-color);
+  opacity: 0.9;
 }
 
 /* 自定义锚点样式 */
 .ant-anchor {
   font-size: 14px;
+  background: var(--card-bg);
 }
 
 .ant-anchor-link-title {
-  color: #666;
-  transition: color 0.3s;
+  color: var(--text-color);
+  opacity: 0.85;
+  transition: all 0.3s;
+}
+
+.ant-anchor-link-title:hover {
+  color: var(--primary-color);
+  opacity: 1;
 }
 
 .ant-anchor-link-active>.ant-anchor-link-title {
-  color: #1890ff;
+  color: var(--primary-color);
+  opacity: 1;
 }
 
 .ant-anchor-ink {
@@ -54,18 +63,18 @@
 }
 
 .markdown-toc::-webkit-scrollbar-thumb {
-  background: #ddd;
+  background: var(--border-color);
   border-radius: 2px;
 }
 
 .markdown-toc::-webkit-scrollbar-track {
-  background: #f5f5f5;
+  background: var(--hover-color);
   border-radius: 2px;
 }
 
 /* 激活状态的指示器 */
 .markdown-toc .ant-anchor-link-active::before {
-  background-color: #1890ff;
+  background-color: var(--primary-color);
   width: 2px;
   border-radius: 1px;
 }

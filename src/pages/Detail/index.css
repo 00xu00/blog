@@ -1,15 +1,15 @@
 .detail-title {
   font-size: 1.8rem;
   font-weight: bold;
-  color: #1e90ff;
+  color: var(--primary-color);
   text-align: center;
   padding: 0.5rem 0;
-  text-shadow: 1px 1px 2px rgba(0, 0, 0, 0.1);
+  text-shadow: 1px 1px 2px var(--shadow-color);
   transition: all 0.3s ease;
 }
 
 .detail-title:hover {
-  color: #40a9ff;
+  color: var(--link-hover);
   transform: scale(1.02);
 }
 
@@ -20,9 +20,9 @@
 .detail-content {
   font-size: 1.1rem;
   line-height: 1.8;
-  color: #333;
+  color: var(--text-color);
   padding: 0.5rem;
-  background-color: #fff;
+  background-color: var(--card-bg);
   border-radius: 0.3rem;
 }
 
@@ -33,6 +33,7 @@
 .detail-content h4 {
   font-weight: bold;
   margin: 0.5rem 0;
+  color: var(--text-color);
 }
 
 .detail-content h1 {
@@ -53,12 +54,14 @@
 
 .detail-content p {
   margin: 1rem 0;
+  color: var(--text-color);
 }
 
 .detail-content ul,
 .detail-content ol {
   padding-left: 1.5rem;
   margin: 1rem 0;
+  color: var(--text-color);
 }
 
 .detail-content li {
@@ -66,30 +69,35 @@
 }
 
 .detail-content code {
-  background-color: #f6f8fa;
+  background-color: var(--code-bg);
   padding: 0.2rem 0.4rem;
   border-radius: 0.2rem;
   font-family: monospace;
+  color: var(--code-text);
+  border: 1px solid var(--border-color);
 }
 
 .detail-content pre {
-  background-color: #f6f8fa;
+  background-color: var(--code-bg);
   padding: 1rem;
   border-radius: 0.3rem;
   overflow-x: auto;
   margin: 1rem 0;
+  border: 1px solid var(--border-color);
 }
 
 .detail-content pre code {
   background-color: transparent;
   padding: 0;
+  border: none;
+  color: var(--code-text);
 }
 
 .detail-content blockquote {
-  border-left: 4px solid #cdd3d8;
+  border-left: 4px solid var(--border-color);
   padding-left: 1rem;
   margin: 1rem 0;
-  color: #666;
+  color: var(--text-color);
 }
 
 .detail-content table {
@@ -100,33 +108,33 @@
 
 .detail-content th,
 .detail-content td {
-  border: 1px solid #ddd;
+  border: 1px solid var(--border-color);
   padding: 0.5rem;
   text-align: left;
+  color: var(--text-color);
 }
 
 .detail-content th {
-  background-color: #f6f8fa;
+  background-color: var(--hover-color);
 }
 
 .detail-content a {
-  /* color: #1e90ff; */
+  color: var(--link-color);
   text-decoration: none;
 }
 
 .detail-content a:hover {
+  color: var(--link-hover);
   text-decoration: underline;
 }
 
 /* Markdown导航栏样式 */
 .markdown-nav-container {
-  /* position: sticky;
-  top: 80px; */
   margin: 16px 0;
-  background: #fff;
+  background: var(--card-bg);
   border-radius: 4px;
   padding: 16px;
-  box-shadow: 0 1px 3px rgba(0, 0, 0, 0.1);
+  box-shadow: 0 1px 3px var(--shadow-color);
   max-height: calc(100vh - 100px);
   overflow-y: auto;
 }
@@ -141,53 +149,61 @@
 }
 
 .markdown-nav-container .markdown-nav-item a {
-  color: #333;
+  color: var(--text-color);
   text-decoration: none;
 }
 
+.markdown-nav-container .markdown-nav-item a:hover {
+  color: var(--link-color);
+}
+
 .active {
-  color: undefind
+  color: var(--primary-color);
 }
 
 .detail-content mark {
-  background-color: #ffeb3b;
+  background-color: var(--hover-color);
   padding: 0 0.2em;
   border-radius: 0.2em;
+  color: var(--text-color);
 }
 
 .detail-content sub {
   font-size: 0.8em;
   vertical-align: sub;
-  color: #666;
+  color: var(--text-color);
 }
 
 .detail-content sup {
   font-size: 0.8em;
   vertical-align: super;
-  color: #666;
+  color: var(--text-color);
 }
 
 /* Markdown 样式 */
 .markdown-highlight {
-  background-color: #ffeb3b;
+  background-color: var(--hover-color);
   padding: 0 2px;
   border-radius: 2px;
+  color: var(--text-color);
 }
 
 .markdown-sub {
   font-size: 0.8em;
   vertical-align: sub;
+  color: var(--text-color);
 }
 
 .markdown-sup {
   font-size: 0.8em;
   vertical-align: super;
+  color: var(--text-color);
 }
 
 .toc-container {
   margin: 16px 0;
   margin-left: .5rem;
-  background: #fff;
+  background: var(--card-bg);
   border-radius: 4px;
-  box-shadow: 0 1px 3px rgba(0, 0, 0, 0.1);
+  box-shadow: 0 1px 3px var(--shadow-color);
 }

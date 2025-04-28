@@ -1,0 +1,102 @@
+:root {
+  --primary-color: #1e90ff;
+  --text-color: #333;
+  --bg-color: #fff;
+  --border-color: #f0f0f0;
+  --hover-color: #f5f5f5;
+  --shadow-color: rgba(0, 0, 0, 0.06);
+  --card-bg: #fff;
+  --card-shadow: 0 2px 8px rgba(0, 0, 0, 0.06);
+  --input-bg: #fff;
+  --input-border: #d9d9d9;
+  --input-text: #333;
+  --link-color: #1e90ff;
+  --link-hover: #40a9ff;
+}
+
+.dark-mode {
+  --primary-color: #1890ff;
+  --text-color: #fff;
+  --bg-color: #141414;
+  --border-color: #303030;
+  --hover-color: #1f1f1f;
+  --shadow-color: rgba(0, 0, 0, 0.2);
+  --card-bg: #1f1f1f;
+  --card-shadow: 0 2px 8px rgba(0, 0, 0, 0.2);
+  --input-bg: #1f1f1f;
+  --input-border: #434343;
+  --input-text: #fff;
+  --link-color: #1890ff;
+  --link-hover: #40a9ff;
+}
+
+body {
+  background-color: var(--bg-color);
+  color: var(--text-color);
+  transition: all 0.3s ease;
+}
+
+.ant-layout {
+  background-color: var(--bg-color);
+}
+
+.ant-card {
+  background-color: var(--card-bg);
+  box-shadow: var(--card-shadow);
+}
+
+.ant-input {
+  background-color: var(--input-bg);
+  border-color: var(--input-border);
+  color: var(--input-text);
+}
+
+.ant-input:hover,
+.ant-input:focus {
+  border-color: var(--primary-color);
+}
+
+a {
+  color: var(--link-color);
+}
+
+a:hover {
+  color: var(--link-hover);
+}
+
+/* 其他需要深色模式支持的组件样式 */
+.ant-menu {
+  background-color: var(--bg-color);
+  color: var(--text-color);
+}
+
+.ant-menu-item:hover {
+  color: var(--primary-color);
+}
+
+.ant-menu-item-selected {
+  color: var(--primary-color);
+}
+
+.ant-dropdown-menu {
+  background-color: var(--card-bg);
+  color: var(--text-color);
+}
+
+.ant-dropdown-menu-item:hover {
+  background-color: var(--hover-color);
+}
+
+.ant-drawer-content {
+  background-color: var(--bg-color);
+  color: var(--text-color);
+}
+
+.ant-drawer-header {
+  background-color: var(--bg-color);
+  border-bottom-color: var(--border-color);
+}
+
+.ant-drawer-title {
+  color: var(--text-color);
+}
