@@ -84,8 +84,12 @@
   opacity: 1;
 }
 
-.comment-actions .anticon.active {
+.comment-actions .ant-btn .anticon.active {
   color: var(--primary-color);
+}
+
+.comment-actions .ant-btn .anticon.dislike.active {
+  color: #ff4d4f;
 }
 
 .comment-replies {
@@ -203,19 +207,20 @@
 .reply-actions .ant-btn {
   color: var(--text-color);
   opacity: 0.7;
-  transition: all 0.3s;
-  padding: 0.2rem 0.5rem;
-  border-radius: 4px;
+  transition: all 0.3s ease;
 }
 
 .reply-actions .ant-btn:hover {
   color: var(--primary-color);
   opacity: 1;
-  background-color: var(--hover-color);
 }
 
-.reply-actions .anticon.active {
+.reply-actions .ant-btn .anticon.active {
   color: var(--primary-color);
+}
+
+.reply-actions .ant-btn .anticon.dislike.active {
+  color: #ff4d4f;
 }
 
 @media (max-width: 768px) {

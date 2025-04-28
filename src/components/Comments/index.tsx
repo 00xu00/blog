@@ -12,7 +12,9 @@ interface Comment {
   content: string;
   time: string;
   likes: number;
+  dislikes: number;
   isLiked: boolean;
+  isDisliked: boolean;
   replies?: Comment[];
 }
 
@@ -37,7 +39,9 @@ const Comments: React.FC = () => {
       content: '这是一条评论',
       time: '2024-04-28 12:00',
       likes: 10,
+      dislikes: 0,
       isLiked: false,
+      isDisliked: false,
       replies: [
         {
           id: 2,
@@ -48,7 +52,9 @@ const Comments: React.FC = () => {
           content: '这是一条回复',
           time: '2024-04-28 12:01',
           likes: 5,
+          dislikes: 0,
           isLiked: false,
+          isDisliked: false,
         },
       ],
     },
@@ -69,7 +75,9 @@ const Comments: React.FC = () => {
       content: comment,
       time: new Date().toLocaleString(),
       likes: 0,
+      dislikes: 0,
       isLiked: false,
+      isDisliked: false,
     };
 
     setComments([...comments, newComment]);
@@ -92,7 +100,9 @@ const Comments: React.FC = () => {
       content: replyState.content,
       time: new Date().toLocaleString(),
       likes: 0,
+      dislikes: 0,
       isLiked: false,
+      isDisliked: false,
     };
 
     setComments(comments.map(comment => {
@@ -116,6 +126,8 @@ const Comments: React.FC = () => {
           ...comment,
           likes: comment.isLiked ? comment.likes - 1 : comment.likes + 1,
           isLiked: !comment.isLiked,
+          dislikes: comment.isDisliked ? comment.dislikes - 1 : comment.dislikes,
+          isDisliked: false
         };
       }
       if (comment.replies) {
@@ -127,6 +139,40 @@ const Comments: React.FC = () => {
                 ...reply,
                 likes: reply.isLiked ? reply.likes - 1 : reply.likes + 1,
                 isLiked: !reply.isLiked,
+                dislikes: reply.isDisliked ? reply.dislikes - 1 : reply.dislikes,
+                isDisliked: false
+              };
+            }
+            return reply;
+          }),
+        };
+      }
+      return comment;
+    }));
+  };
+
+  const handleDislike = (commentId: number) => {
+    setComments(comments.map(comment => {
+      if (comment.id === commentId) {
+        return {
+          ...comment,
+          dislikes: comment.isDisliked ? comment.dislikes - 1 : comment.dislikes + 1,
+          isDisliked: !comment.isDisliked,
+          likes: comment.isLiked ? comment.likes - 1 : comment.likes,
+          isLiked: false
+        };
+      }
+      if (comment.replies) {
+        return {
+          ...comment,
+          replies: comment.replies.map(reply => {
+            if (reply.id === commentId) {
+              return {
+                ...reply,
+                dislikes: reply.isDisliked ? reply.dislikes - 1 : reply.dislikes + 1,
+                isDisliked: !reply.isDisliked,
+                likes: reply.isLiked ? reply.likes - 1 : reply.likes,
+                isLiked: false
               };
             }
             return reply;
@@ -190,9 +236,15 @@ const Comments: React.FC = () => {
                       {item.likes}
                     </Button>
                   </Tooltip>
-                  <Button type="text" icon={<DislikeOutlined />}>
-                    踩
-                  </Button>
+                  <Tooltip title="点踩">
+                    <Button
+                      type="text"
+                      icon={<DislikeOutlined className={item.isDisliked ? 'active' : ''} />}
+                      onClick={() => handleDislike(item.id)}
+                    >
+                      {item.dislikes}
+                    </Button>
+                  </Tooltip>
                   <Button type="text" onClick={() => startReply(item.id, item.user.name, item.id)}>
                     回复
                   </Button>
@@ -247,9 +299,15 @@ const Comments: React.FC = () => {
                               {reply.likes}
                             </Button>
                           </Tooltip>
-                          <Button type="text" icon={<DislikeOutlined />}>
-                            踩
-                          </Button>
+                          <Tooltip title="点踩">
+                            <Button
+                              type="text"
+                              icon={<DislikeOutlined className={reply.isDisliked ? 'active' : ''} />}
+                              onClick={() => handleDislike(reply.id)}
+                            >
+                              {reply.dislikes}
+                            </Button>
+                          </Tooltip>
                           <Button type="text" onClick={() => startReply(item.id, reply.user.name, reply.id, true)}>
                             回复
                           </Button>
