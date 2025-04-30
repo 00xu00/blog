@@ -1,4 +1,4 @@
-import React, { useState, useRef } from 'react';
+import React, { useState, useRef, useEffect } from 'react';
 import { Card, Input, Select, Tag, Button, Space, message } from 'antd';
 import ReactMarkdown from 'react-markdown';
 import remarkGfm from 'remark-gfm';
@@ -18,6 +18,8 @@ const Editor: React.FC = () => {
   const [inputValue, setInputValue] = useState('');
   const [markdown, setMarkdown] = useState('');
   const textareaRef = useRef<HTMLTextAreaElement>(null);
+  const editorRef = useRef<HTMLDivElement>(null);
+  const previewRef = useRef<HTMLDivElement>(null);
 
   const handleTagClose = (removedTag: string) => {
     const newTags = tags.filter(tag => tag !== removedTag);
@@ -48,6 +50,33 @@ const Editor: React.FC = () => {
     message.success('保存成功');
   };
 
+  useEffect(() => {
+    const editor = editorRef.current;
+    const preview = previewRef.current;
+
+    if (editor && preview) {
+      const handleEditorScroll = () => {
+        if (editor.scrollTop !== preview.scrollTop) {
+          preview.scrollTop = editor.scrollTop;
+        }
+      };
+
+      const handlePreviewScroll = () => {
+        if (preview.scrollTop !== editor.scrollTop) {
+          editor.scrollTop = preview.scrollTop;
+        }
+      };
+
+      editor.addEventListener('scroll', handleEditorScroll);
+      preview.addEventListener('scroll', handlePreviewScroll);
+
+      return () => {
+        editor.removeEventListener('scroll', handleEditorScroll);
+        preview.removeEventListener('scroll', handlePreviewScroll);
+      };
+    }
+  }, []);
+
   return (
     <div className="editor-container">
       <Card className="editor-card">
@@ -65,7 +94,7 @@ const Editor: React.FC = () => {
             className="editor-subtitle"
           />
           <Space className="editor-meta">
-            <Select
+            {/* <Select
               placeholder="选择分类"
               style={{ width: 120 }}
               value={category}
@@ -74,7 +103,7 @@ const Editor: React.FC = () => {
               <Option value="技术">技术</Option>
               <Option value="生活">生活</Option>
               <Option value="随笔">随笔</Option>
-            </Select>
+            </Select> */}
             <div className="editor-tags">
               {tags.map(tag => (
                 <Tag
@@ -96,19 +125,17 @@ const Editor: React.FC = () => {
                 placeholder="添加标签"
               />
             </div>
-            <div>
-              <Space>
-                <Button type="primary" onClick={handleSave}>
-                  保存
-                </Button>
-                <Button>发布</Button>
-              </Space>
-            </div>
+            <Space>
+              <Button type="primary" onClick={handleSave}>
+                保存
+              </Button>
+              <Button>发布</Button>
+            </Space>
           </Space>
         </div>
         <div className="editor-content">
           <div className="editor-preview-container">
-            <div className="editor-area">
+            <div className="editor-area" ref={editorRef}>
               <TextArea
                 ref={textareaRef}
                 value={markdown}
@@ -119,7 +146,7 @@ const Editor: React.FC = () => {
                 className="markdown-editor"
               />
             </div>
-            <div className="preview-area">
+            <div className="preview-area" ref={previewRef}>
               <div className="preview-content">
                 <ReactMarkdown
                   remarkPlugins={[remarkGfm]}
