@@ -1,5 +1,5 @@
 import React, { useState, useEffect, useRef } from "react"
-import { useNavigate } from "react-router-dom"
+import { useNavigate, Link } from "react-router-dom"
 import { Row, Col, Menu, Input, Dropdown, Avatar, Badge, Switch, Drawer, Button, MenuProps, Space } from "antd"
 import { useDispatch, useSelector } from 'react-redux';
 import { RootState } from '../../store';
@@ -9,16 +9,13 @@ import {
     PlayCircleOutlined,
     SmileOutlined,
     SearchOutlined,
-    BellOutlined,
     UserOutlined,
     DownOutlined,
     BookOutlined,
-    MessageOutlined,
-    SettingOutlined,
     MenuOutlined,
     MoonOutlined,
     SunOutlined,
-    MailOutlined
+    MailOutlined,
 } from "@ant-design/icons";
 import "./header.css"
 
@@ -36,22 +33,12 @@ const Header = () => {
 
     const menuItems: MenuProps['items'] = [
         {
-            label: "首页",
+            label: <Link to="/">首页</Link>,
             key: "home",
             icon: <HomeOutlined />
         },
         {
-            label: "视频",
-            key: "video",
-            icon: <PlayCircleOutlined />
-        },
-        {
-            label: "生活",
-            key: "life",
-            icon: <SmileOutlined />
-        },
-        {
-            label: "文章",
+            label: <Link to="/editor">写文章</Link>,
             key: "write",
             icon: <BookOutlined />
         }

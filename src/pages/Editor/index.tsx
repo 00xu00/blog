@@ -1,0 +1,145 @@
+import React, { useState, useRef } from 'react';
+import { Card, Input, Select, Tag, Button, Space, message } from 'antd';
+import ReactMarkdown from 'react-markdown';
+import remarkGfm from 'remark-gfm';
+import rehypeHighlight from 'rehype-highlight';
+import rehypeRaw from 'rehype-raw';
+import 'highlight.js/styles/github.css';
+import './index.css';
+
+const { TextArea } = Input;
+const { Option } = Select;
+
+const Editor: React.FC = () => {
+  const [title, setTitle] = useState('');
+  const [subtitle, setSubtitle] = useState('');
+  const [category, setCategory] = useState('');
+  const [tags, setTags] = useState<string[]>([]);
+  const [inputValue, setInputValue] = useState('');
+  const [markdown, setMarkdown] = useState('');
+  const textareaRef = useRef<HTMLTextAreaElement>(null);
+
+  const handleTagClose = (removedTag: string) => {
+    const newTags = tags.filter(tag => tag !== removedTag);
+    setTags(newTags);
+  };
+
+  const handleInputConfirm = () => {
+    if (inputValue && tags.indexOf(inputValue) === -1) {
+      setTags([...tags, inputValue]);
+    }
+    setInputValue('');
+  };
+
+  const handleSave = () => {
+    if (!title) {
+      message.warning('请输入文章标题');
+      return;
+    }
+    if (!category) {
+      message.warning('请选择文章分类');
+      return;
+    }
+    if (!markdown) {
+      message.warning('请输入文章内容');
+      return;
+    }
+    // TODO: 调用保存API
+    message.success('保存成功');
+  };
+
+  return (
+    <div className="editor-container">
+      <Card className="editor-card">
+        <div className="editor-header">
+          <Input
+            placeholder="请输入文章标题"
+            value={title}
+            onChange={e => setTitle(e.target.value)}
+            className="editor-title"
+          />
+          <Input
+            placeholder="请输入文章副标题（可选）"
+            value={subtitle}
+            onChange={e => setSubtitle(e.target.value)}
+            className="editor-subtitle"
+          />
+          <Space className="editor-meta">
+            <Select
+              placeholder="选择分类"
+              style={{ width: 120 }}
+              value={category}
+              onChange={setCategory}
+            >
+              <Option value="技术">技术</Option>
+              <Option value="生活">生活</Option>
+              <Option value="随笔">随笔</Option>
+            </Select>
+            <div className="editor-tags">
+              {tags.map(tag => (
+                <Tag
+                  key={tag}
+                  closable
+                  onClose={() => handleTagClose(tag)}
+                >
+                  {tag}
+                </Tag>
+              ))}
+              <Input
+                type="text"
+                size="small"
+                className="tag-input"
+                value={inputValue}
+                onChange={e => setInputValue(e.target.value)}
+                onBlur={handleInputConfirm}
+                onPressEnter={handleInputConfirm}
+                placeholder="添加标签"
+              />
+            </div>
+            <div>
+              <Space>
+                <Button type="primary" onClick={handleSave}>
+                  保存
+                </Button>
+                <Button>发布</Button>
+              </Space>
+            </div>
+          </Space>
+        </div>
+        <div className="editor-content">
+          <div className="editor-preview-container">
+            <div className="editor-area">
+              <TextArea
+                ref={textareaRef}
+                value={markdown}
+                onChange={e => setMarkdown(e.target.value)}
+                placeholder="开始写作..."
+                autoSize={true}
+                style={{ resize: 'none' }}
+                className="markdown-editor"
+              />
+            </div>
+            <div className="preview-area">
+              <div className="preview-content">
+                <ReactMarkdown
+                  remarkPlugins={[remarkGfm]}
+                  rehypePlugins={[rehypeHighlight, rehypeRaw]}
+                  skipHtml={false}
+                  components={{
+                    mark: ({ children }) => <mark className="markdown-highlight">{children}</mark>,
+                    sub: ({ children }) => <sub className="markdown-sub">{children}</sub>,
+                    sup: ({ children }) => <sup className="markdown-sup">{children}</sup>
+                  }}
+                >
+                  {markdown}
+                </ReactMarkdown>
+              </div>
+            </div>
+          </div>
+        </div>
+      </Card>
+    </div>
+  );
+};
+
+export default Editor; 

@@ -25,7 +25,7 @@ import {
 import { setMessages, markAsRead } from '../../store/messageSlice';
 import { ProfileState } from '../../store/profile/types';
 import './index.css';
-import { useNavigate } from 'react-router-dom';
+import { useNavigate, Link } from 'react-router-dom';
 
 const { TabPane } = Tabs;
 
@@ -272,7 +272,7 @@ const Profile: React.FC = () => {
                   ]}
                 >
                   <List.Item.Meta
-                    title={<a href={`/detail/${item.id}`}>{item.title}</a>}
+                    title={<Link to={`/detail/${item.id}`}>{item.title}</Link>}
                     description={item.description}
                   />
                   <div className="article-meta">
@@ -305,7 +305,7 @@ const Profile: React.FC = () => {
                   ]}
                 >
                   <List.Item.Meta
-                    title={<a href={`/detail/${item.id}`}>{item.title}</a>}
+                    title={<Link to={`/detail/${item.id}`}>{item.title}</Link>}
                     description={item.description}
                   />
                   <div className="article-meta">
@@ -338,7 +338,7 @@ const Profile: React.FC = () => {
                   ]}
                 >
                   <List.Item.Meta
-                    title={<a href={`/detail/${item.id}`}>{item.title}</a>}
+                    title={<Link to={`/detail/${item.id}`}>{item.title}</Link>}
                     description={item.description}
                   />
                   <div className="article-meta">
@@ -375,7 +375,7 @@ const Profile: React.FC = () => {
                   ]}
                 >
                   <List.Item.Meta
-                    title={<a href={`/detail/${item.id}`}>{item.title}</a>}
+                    title={<Link to={`/detail/${item.id}`}>{item.title}</Link>}
                     description={item.description}
                   />
                   <div className="article-meta">

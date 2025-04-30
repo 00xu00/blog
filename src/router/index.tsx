@@ -8,6 +8,7 @@ import Auth from '../pages/Auth';
 import NotFound from '../pages/NotFound';
 import Profile from '../pages/Profile';
 import Chat from '../pages/Chat';
+import Editor from '../pages/Editor';
 
 const router = createBrowserRouter([
   {
@@ -29,6 +30,10 @@ const router = createBrowserRouter([
       {
         path: 'profile',
         element: <Profile />
+      },
+      {
+        path: 'editor',
+        element: <Editor />
       }
     ]
   },
