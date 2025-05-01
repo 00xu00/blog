@@ -1,0 +1,76 @@
+.latest-box {
+  background: #fff;
+  padding: 15px;
+  border-radius: 8px;
+  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.08);
+  margin-bottom: 20px;
+  margin-left: 0.5rem;
+}
+
+.latest-box .ant-list-header {
+  padding: 0 0 12px 0;
+  border-bottom: 1px solid #f0f0f0;
+  font-size: 16px;
+  font-weight: 600;
+  color: #333;
+}
+
+.latest-item {
+  padding: 12px 0;
+  transition: all 0.3s ease;
+}
+
+.latest-item:hover {
+  background-color: #fafafa;
+  border-radius: 4px;
+  padding-left: 8px;
+}
+
+.latest-title {
+  color: #333;
+  font-size: 14px;
+  margin-bottom: 8px;
+  transition: color 0.3s ease;
+}
+
+.latest-item:hover .latest-title {
+  color: #1890ff;
+}
+
+.latest-info {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 12px;
+}
+
+.latest-icon {
+  color: #999;
+  font-size: 12px;
+  display: flex;
+  align-items: center;
+}
+
+.latest-icon .anticon {
+  margin-right: 4px;
+}
+
+.latest-icon:first-child .anticon {
+  color: #1890ff;
+}
+
+.latest-icon:nth-child(2) .anticon {
+  color: #52c41a;
+}
+
+.latest-icon:last-child .anticon {
+  color: #ff4d4f;
+}
+
+.ant-list-item {
+  padding: 0 !important;
+  border-bottom: 1px solid #f0f0f0;
+}
+
+.ant-list-item:last-child {
+  border-bottom: none;
+}

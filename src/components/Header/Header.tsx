@@ -73,7 +73,7 @@ const Header = () => {
         {
             key: 'logout',
             icon: <UserOutlined />,
-            label: '退出登录',
+            label: <Link to='/auth'>退出登录</Link>,
             danger: true,
         },
     ];
