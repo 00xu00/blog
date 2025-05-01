@@ -4,6 +4,7 @@ import { Row, Col, Menu, Input, Dropdown, Avatar, Badge, Switch, Drawer, Button,
 import { useDispatch, useSelector } from 'react-redux';
 import { RootState } from '../../store';
 import { markAsRead, Message } from '../../store/messageSlice';
+import { useTheme } from '../../contexts/ThemeContext';
 import {
     HomeOutlined,
     PlayCircleOutlined,
@@ -23,13 +24,13 @@ const { Search } = Input;
 
 const Header = () => {
     const [current, setCurrent] = useState('home');
-    const [isDarkMode, setIsDarkMode] = useState(false);
     const [isMobileMenuOpen, setIsMobileMenuOpen] = useState(false);
     const [searchValue, setSearchValue] = useState('');
     const [indicatorStyle, setIndicatorStyle] = useState({ width: '0px', left: '0px' });
     const menuRef = useRef<HTMLDivElement>(null);
     const dispatch = useDispatch();
     const { messages, unreadCount } = useSelector((state: RootState) => state.message);
+    const { isDarkMode, toggleTheme } = useTheme();
 
     const menuItems: MenuProps['items'] = [
         {
@@ -43,33 +44,6 @@ const Header = () => {
             icon: <BookOutlined />
         }
     ];
-
-    const toggleDarkMode = (checked: boolean) => {
-        setIsDarkMode(checked);
-        if (checked) {
-            document.documentElement.classList.add('dark-mode');
-            document.documentElement.classList.remove('light-mode');
-        } else {
-            document.documentElement.classList.remove('dark-mode');
-            document.documentElement.classList.add('light-mode');
-        }
-    };
-
-    useEffect(() => {
-        const savedDarkMode = localStorage.getItem('darkMode') === 'true';
-        setIsDarkMode(savedDarkMode);
-        if (savedDarkMode) {
-            document.documentElement.classList.add('dark-mode');
-            document.documentElement.classList.remove('light-mode');
-        } else {
-            document.documentElement.classList.remove('dark-mode');
-            document.documentElement.classList.add('light-mode');
-        }
-    }, []);
-
-    useEffect(() => {
-        localStorage.setItem('darkMode', isDarkMode.toString());
-    }, [isDarkMode]);
 
     const navigate = useNavigate();
     const userMenuItems: MenuProps['items'] = [
@@ -87,7 +61,7 @@ const Header = () => {
                     <span>{isDarkMode ? '浅色模式' : '深色模式'}</span>
                     <Switch
                         checked={isDarkMode}
-                        onChange={toggleDarkMode}
+                        onChange={toggleTheme}
                         size="small"
                     />
                 </div>

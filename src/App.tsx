@@ -5,6 +5,7 @@ import "./index.css"
 import Header from "./components/Header/Header"
 import Footer from "./components/Footer/Footer"
 import { Outlet, useLocation } from 'react-router-dom';
+import { ThemeProvider } from './contexts/ThemeContext';
 
 function App() {
   const location = useLocation();
@@ -12,13 +13,15 @@ function App() {
 
   return (
     <Provider store={store}>
-      <div className="App">
-        {!isAuthPage && <Header />}
-        <main style={{ flex: 1 }}>
-          <Outlet />
-        </main>
-        {!isAuthPage && <Footer />}
-      </div>
+      <ThemeProvider>
+        <div className="App">
+          {!isAuthPage && <Header />}
+          <main style={{ flex: 1 }}>
+            <Outlet />
+          </main>
+          {!isAuthPage && <Footer />}
+        </div>
+      </ThemeProvider>
     </Provider>
   );
 }
