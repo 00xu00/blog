@@ -2,8 +2,6 @@ import React from 'react';
 import { Col, List, Row, Breadcrumb } from 'antd';
 import { CalendarOutlined, FireOutlined, FolderOpenOutlined } from '@ant-design/icons';
 import { Link, useLocation } from 'react-router-dom';
-import Author from '../Home/Author/Author';
-import Advert from '../Home/Advert/Advert';
 
 const Page = () => {
     const location = useLocation();

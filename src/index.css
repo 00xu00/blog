@@ -14,6 +14,7 @@
   --link-hover: #40a9ff;
   --code-bg: #f6f8fa;
   --code-text: #24292e;
+  --scrollbar-width: 0px;
 }
 
 .dark-mode {
@@ -34,6 +35,13 @@
   --code-text: #abb2bf;
 }
 
+html {
+  overflow-y: scroll;
+  width: 100%;
+  margin-right: calc(-1 * var(--scrollbar-width));
+  margin-left: 0;
+}
+
 body {
   background-color: var(--bg-color);
   margin: 0;
@@ -44,6 +52,7 @@ body {
   overflow-x: hidden;
   color: var(--text-color);
   transition: all 0.3s ease;
+  width: 100%;
 }
 
 #root {

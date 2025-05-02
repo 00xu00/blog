@@ -1,5 +1,5 @@
 import React, { useState, useEffect, useRef } from "react"
-import { useNavigate, Link } from "react-router-dom"
+import { useNavigate, Link, useLocation } from "react-router-dom"
 import { Row, Col, Menu, Input, Dropdown, Avatar, Badge, Switch, Drawer, Button, MenuProps, Space } from "antd"
 import { useDispatch, useSelector } from 'react-redux';
 import { RootState } from '../../store';
@@ -8,8 +8,6 @@ import { useTheme } from '../../contexts/ThemeContext';
 import Logo from '../Logo/Logo';
 import {
     HomeOutlined,
-    PlayCircleOutlined,
-    SmileOutlined,
     SearchOutlined,
     UserOutlined,
     DownOutlined,
@@ -19,12 +17,14 @@ import {
     SunOutlined,
     MailOutlined,
     RobotOutlined,
+    AppstoreOutlined,
 } from "@ant-design/icons";
 import "./header.css"
 
 const { Search } = Input;
 
 const Header = () => {
+    const location = useLocation();
     const [current, setCurrent] = useState('home');
     const [isMobileMenuOpen, setIsMobileMenuOpen] = useState(false);
     const [searchValue, setSearchValue] = useState('');
@@ -33,13 +33,33 @@ const Header = () => {
     const dispatch = useDispatch();
     const { messages, unreadCount } = useSelector((state: RootState) => state.message);
     const { isDarkMode, toggleTheme } = useTheme();
-    const [isLogoHovered, setIsLogoHovered] = useState(false);
+    const navigate = useNavigate();
+
+    // 根据路由路径获取对应的菜单key
+    const getMenuKeyFromPath = (path: string) => {
+        if (path === '/') return 'home';
+        if (path.startsWith('/list')) return 'list';
+        if (path.startsWith('/editor')) return 'write';
+        if (path.startsWith('/ai-helper')) return 'ai-helper';
+        return 'home';
+    };
+
+    // 监听路由变化，更新菜单选中状态
+    useEffect(() => {
+        const menuKey = getMenuKeyFromPath(location.pathname);
+        setCurrent(menuKey);
+    }, [location.pathname]);
 
     const menuItems: MenuProps['items'] = [
         {
             label: <Link to="/">首页</Link>,
             key: "home",
             icon: <HomeOutlined />
+        },
+        {
+            label: <Link to="/list">文章列表</Link>,
+            key: "list",
+            icon: <AppstoreOutlined />
         },
         {
             label: <Link to="/editor">写文章</Link>,
@@ -53,7 +73,6 @@ const Header = () => {
         }
     ];
 
-    const navigate = useNavigate();
     const userMenuItems: MenuProps['items'] = [
         {
             key: 'profile',
@@ -118,7 +137,7 @@ const Header = () => {
             updateIndicator(current);
         }, 100);
         return () => clearTimeout(timer);
-    }, []);
+    }, [current]);
 
     const handleMenuClick = (e: { key: string }) => {
         setCurrent(e.key);
@@ -247,7 +266,7 @@ const Header = () => {
                 />
             </Drawer>
         </>
-    )
-}
+    );
+};
 
 export default Header;
