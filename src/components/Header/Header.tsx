@@ -5,6 +5,7 @@ import { useDispatch, useSelector } from 'react-redux';
 import { RootState } from '../../store';
 import { markAsRead, Message } from '../../store/messageSlice';
 import { useTheme } from '../../contexts/ThemeContext';
+import Logo from '../Logo/Logo';
 import {
     HomeOutlined,
     PlayCircleOutlined,
@@ -32,6 +33,7 @@ const Header = () => {
     const dispatch = useDispatch();
     const { messages, unreadCount } = useSelector((state: RootState) => state.message);
     const { isDarkMode, toggleTheme } = useTheme();
+    const [isLogoHovered, setIsLogoHovered] = useState(false);
 
     const menuItems: MenuProps['items'] = [
         {
@@ -164,10 +166,12 @@ const Header = () => {
             <div className={`header ${isDarkMode ? 'dark' : 'light'}`}>
                 <Row justify="space-between" align="middle" className="header-container">
                     <Col xs={4} sm={4} md={3} lg={2} xl={2}>
-                        <div className="header-logo-container">
-                            <span className="header-logo">曦景</span>
-                            <span className="header-text">博客</span>
-                        </div>
+                        <Logo
+                            className="header-logo"
+                            size="medium"
+                            theme={isDarkMode ? "dark" : "light"}
+                            onClick={() => navigate('/')}
+                        />
                     </Col>
 
                     <Col xs={0} sm={0} md={10} lg={12} xl={12}>

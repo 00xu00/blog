@@ -1,0 +1,175 @@
+.logo-container {
+  display: flex;
+  align-items: center;
+  cursor: pointer;
+  position: relative;
+}
+
+/* 尺寸样式 */
+.logo-container.small .logo-text {
+  font-size: 1.2rem;
+}
+
+.logo-container.medium .logo-text {
+  font-size: 1.6rem;
+}
+
+.logo-container.large .logo-text {
+  font-size: 2rem;
+}
+
+.logo-container.small .logo-subtext {
+  font-size: 0.7rem;
+}
+
+.logo-container.medium .logo-subtext {
+  font-size: 0.8rem;
+}
+
+.logo-container.large .logo-subtext {
+  font-size: 1rem;
+}
+
+/* 主题样式 */
+.logo-container.light .logo-text {
+  color: var(--primary-color);
+}
+
+.logo-container.dark .logo-text {
+  color: #fff;
+}
+
+.logo-container.light .logo-subtext {
+  color: var(--text-color);
+}
+
+.logo-container.dark .logo-subtext {
+  color: rgba(255, 255, 255, 0.8);
+}
+
+.logo-wrapper {
+  position: relative;
+  display: inline-block;
+}
+
+.logo-text {
+  font-weight: bold;
+  margin-right: 0.5rem;
+  transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+  position: relative;
+  z-index: 2;
+  display: inline-block;
+  transform-origin: center;
+}
+
+.logo-container:hover .logo-text {
+  transform: scale(1.1);
+  text-shadow: 0 0 10px rgba(30, 144, 255, 0.5);
+}
+
+.logo-particles {
+  position: absolute;
+  top: 50%;
+  left: 50%;
+  transform: translate(-50%, -50%);
+  width: 100%;
+  height: 100%;
+  pointer-events: none;
+}
+
+.particle {
+  position: absolute;
+  width: 4px;
+  height: 4px;
+  background-color: var(--primary-color);
+  border-radius: 50%;
+  opacity: 0;
+  transition: all 0.5s cubic-bezier(0.4, 0, 0.2, 1);
+}
+
+.logo-container:hover .particle {
+  opacity: 0.6;
+}
+
+.particle-1 {
+  top: -10px;
+  left: 20%;
+  animation: float 2s ease-in-out infinite;
+}
+
+.particle-2 {
+  top: -5px;
+  right: 20%;
+  animation: float 2.2s ease-in-out infinite;
+}
+
+.particle-3 {
+  bottom: -10px;
+  left: 30%;
+  animation: float 2.4s ease-in-out infinite;
+}
+
+.particle-4 {
+  bottom: -5px;
+  right: 30%;
+  animation: float 2.6s ease-in-out infinite;
+}
+
+.particle-5 {
+  top: 50%;
+  right: -10px;
+  animation: float 2.8s ease-in-out infinite;
+}
+
+@keyframes float {
+
+  0%,
+  100% {
+    transform: translateY(0);
+  }
+
+  50% {
+    transform: translateY(-5px);
+  }
+}
+
+.logo-subtext {
+  opacity: 0.8;
+  transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+  position: relative;
+  overflow: hidden;
+}
+
+.logo-subtext::after {
+  content: '';
+  position: absolute;
+  bottom: -2px;
+  left: 0;
+  width: 0;
+  height: 2px;
+  background-color: var(--primary-color);
+  transition: width 0.3s ease;
+}
+
+.logo-container:hover .logo-subtext::after {
+  width: 100%;
+}
+
+.logo-container:hover .logo-subtext {
+  opacity: 1;
+  transform: translateX(5px);
+}
+
+@media (max-width: 768px) {
+  .logo-container.medium .logo-text {
+    font-size: 1.4rem;
+  }
+
+  .logo-container.large .logo-text {
+    font-size: 1.8rem;
+  }
+
+  .logo-subtext {
+    display: none;
+  }
+}
