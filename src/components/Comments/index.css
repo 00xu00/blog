@@ -6,6 +6,19 @@
   box-shadow: 0 1px 3px var(--shadow-color);
 }
 
+.comments-container .ant-list-item {
+  transition: none !important;
+  transform: none !important;
+  background-color: transparent !important;
+  box-shadow: none !important;
+}
+
+.comments-container .ant-list-item:hover {
+  background-color: transparent !important;
+  transform: none !important;
+  box-shadow: none !important;
+}
+
 .comment-input {
   display: flex;
   gap: 1rem;
@@ -357,17 +370,6 @@
       #e6e6e6 50%,
       #f3f3f3 75%,
       #fff 100%);
-  animation: shine 3s infinite linear;
-}
-
-@keyframes shine {
-  0% {
-    background-position: 0% 50%;
-  }
-
-  100% {
-    background-position: 100% 50%;
-  }
 }
 
 .avatar-overlay:hover {
