@@ -1,0 +1,146 @@
+.ai-helper-container {
+  padding: 20px;
+  max-width: 1200px;
+  margin: 0 auto;
+}
+
+.ai-helper-tabs {
+  background: #fff;
+  padding: 20px;
+  border-radius: 8px;
+  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.1);
+}
+
+.ai-writer-card {
+  margin-bottom: 24px;
+  border-radius: 8px;
+  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.1);
+}
+
+.ai-writer-header {
+  text-align: center;
+  margin-bottom: 24px;
+}
+
+.ai-writer-header h2 {
+  font-size: 24px;
+  color: #1890ff;
+  margin-bottom: 8px;
+}
+
+.ai-writer-header p {
+  color: #666;
+  font-size: 16px;
+}
+
+.ai-writer-input {
+  display: flex;
+  gap: 16px;
+  margin-bottom: 24px;
+}
+
+.topic-input {
+  flex: 1;
+}
+
+.generate-btn {
+  min-width: 120px;
+}
+
+.suggestions-container {
+  display: grid;
+  gap: 16px;
+  margin-top: 24px;
+}
+
+.suggestion-card {
+  transition: all 0.3s ease;
+}
+
+.suggestion-card:hover {
+  transform: translateY(-2px);
+  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.15);
+}
+
+.suggestion-content {
+  background: #f5f5f5;
+  padding: 16px;
+  border-radius: 4px;
+  white-space: pre-wrap;
+  font-family: monospace;
+  line-height: 1.6;
+}
+
+.recommendations-card {
+  margin-bottom: 24px;
+}
+
+.recommendations-header {
+  text-align: center;
+  margin-bottom: 24px;
+}
+
+.recommendations-header h2 {
+  font-size: 24px;
+  color: #1890ff;
+  margin-bottom: 8px;
+}
+
+.recommendations-header p {
+  color: #666;
+  font-size: 16px;
+}
+
+.fetch-btn {
+  margin-bottom: 24px;
+}
+
+.article-list {
+  background: #fff;
+}
+
+.article-item {
+  padding: 16px;
+  border-radius: 8px;
+  margin-bottom: 16px;
+  transition: all 0.3s ease;
+}
+
+.article-item:hover {
+  background: #f5f5f5;
+  transform: translateX(4px);
+}
+
+.article-title {
+  font-size: 18px;
+  color: #1890ff;
+  margin-bottom: 8px;
+}
+
+.article-description {
+  color: #666;
+  line-height: 1.6;
+}
+
+.article-tags {
+  margin-top: 8px;
+}
+
+.read-more-btn {
+  color: #1890ff;
+}
+
+/* 响应式设计 */
+@media (max-width: 768px) {
+  .ai-writer-input {
+    flex-direction: column;
+  }
+
+  .generate-btn {
+    width: 100%;
+  }
+
+  .suggestions-container {
+    grid-template-columns: 1fr;
+  }
+}

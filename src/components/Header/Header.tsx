@@ -17,6 +17,7 @@ import {
     MoonOutlined,
     SunOutlined,
     MailOutlined,
+    RobotOutlined,
 } from "@ant-design/icons";
 import "./header.css"
 
@@ -42,6 +43,11 @@ const Header = () => {
             label: <Link to="/editor">写文章</Link>,
             key: "write",
             icon: <BookOutlined />
+        },
+        {
+            label: <Link to="/ai-helper">AI助手</Link>,
+            key: "ai-helper",
+            icon: <RobotOutlined />
         }
     ];
 

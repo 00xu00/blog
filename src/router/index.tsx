@@ -9,6 +9,7 @@ import NotFound from '../pages/NotFound';
 import Profile from '../pages/Profile';
 import Chat from '../pages/Chat';
 import Editor from '../pages/Editor';
+import AIHelper from '../pages/AIHelper';
 
 const router = createBrowserRouter([
   {
@@ -34,6 +35,10 @@ const router = createBrowserRouter([
       {
         path: 'editor',
         element: <Editor />
+      },
+      {
+        path: 'ai-helper',
+        element: <AIHelper />
       }
     ]
   },
