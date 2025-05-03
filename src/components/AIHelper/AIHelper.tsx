@@ -198,7 +198,7 @@ const AIHelper: React.FC = () => {
                     </Tooltip>,
                     <Button
                       type="link"
-                      onClick={() => navigate(`/article/${item.id}`)}
+                      onClick={() => navigate(`/detail/${item.id}`)}
                       className="read-more-btn"
                     >
                       阅读全文
