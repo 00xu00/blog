@@ -2,6 +2,7 @@ import React, { useState } from 'react';
 import { Form, Input, Button, message } from 'antd';
 import { UserOutlined, LockOutlined, MailOutlined } from '@ant-design/icons';
 import { useNavigate } from 'react-router-dom';
+import { authApi } from '../../services/api';
 import './index.css';
 
 interface LoginForm {
@@ -24,14 +25,13 @@ const Auth: React.FC = () => {
   const onLoginFinish = async (values: LoginForm) => {
     setLoading(true);
     try {
-      // TODO: 调用登录接口
-      // const response = await login(values);
-      // localStorage.setItem('token', response.token);
-      // localStorage.setItem('userInfo', JSON.stringify(response.userInfo));
+      const response = await authApi.login(values);
+      localStorage.setItem('token', response.access_token);
+      localStorage.setItem('userInfo', JSON.stringify(response.user));
       message.success('登录成功');
       navigate('/');
     } catch (error) {
-      message.error('登录失败，请检查邮箱和密码');
+      message.error(error instanceof Error ? error.message : '登录失败，请检查邮箱和密码');
     } finally {
       setLoading(false);
     }
@@ -45,12 +45,15 @@ const Auth: React.FC = () => {
 
     setLoading(true);
     try {
-      // TODO: 调用注册接口
-      // const response = await register(values);
+      await authApi.register({
+        name: values.name,
+        email: values.email,
+        password: values.password,
+      });
       message.success('注册成功，请登录');
       setIsLogin(true);
     } catch (error) {
-      message.error('注册失败，请稍后重试');
+      message.error(error instanceof Error ? error.message : '注册失败，请稍后重试');
     } finally {
       setLoading(false);
     }

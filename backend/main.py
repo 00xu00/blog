@@ -1,7 +1,7 @@
 from fastapi import FastAPI
 from fastapi.middleware.cors import CORSMiddleware
-from backend.database import engine, Base
-from backend.routers import blog, user, auth, db
+from database import engine, Base
+from routers import blog, user, auth, db
 
 # 创建数据库表
 Base.metadata.create_all(bind=engine)
@@ -11,7 +11,12 @@ app = FastAPI(title="曦景博客API")
 # 配置CORS
 app.add_middleware(
     CORSMiddleware,
-    allow_origins=["http://localhost:3000"],  # 前端开发服务器地址
+    allow_origins=[
+        "http://localhost:3000",  # 前端开发服务器地址
+        "http://localhost:3001",  # 另一个前端开发服务器地址
+        "http://127.0.0.1:3000",
+        "http://127.0.0.1:3001"
+    ],
     allow_credentials=True,
     allow_methods=["*"],
     allow_headers=["*"],
