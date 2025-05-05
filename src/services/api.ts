@@ -60,9 +60,15 @@ export interface RegisterParams {
 
 export const authApi = {
   login: (data: LoginParams): Promise<LoginResponse> => {
-    return api.post("/auth/token", {
-      username: data.email,
-      password: data.password,
+    // 创建表单数据
+    const formData = new URLSearchParams();
+    formData.append("username", data.email);
+    formData.append("password", data.password);
+
+    return api.post("/auth/token", formData, {
+      headers: {
+        "Content-Type": "application/x-www-form-urlencoded",
+      },
     });
   },
 

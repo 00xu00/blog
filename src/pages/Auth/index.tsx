@@ -2,7 +2,7 @@ import React, { useState } from 'react';
 import { Form, Input, Button, message } from 'antd';
 import { UserOutlined, LockOutlined, MailOutlined } from '@ant-design/icons';
 import { useNavigate } from 'react-router-dom';
-import { authApi } from '../../services/api';
+import { authApi, LoginResponse } from '../../services/api';
 import './index.css';
 
 interface LoginForm {
@@ -26,8 +26,9 @@ const Auth: React.FC = () => {
     setLoading(true);
     try {
       const response = await authApi.login(values);
-      localStorage.setItem('token', response.access_token);
-      localStorage.setItem('userInfo', JSON.stringify(response.user));
+      const { access_token, user } = response as LoginResponse;
+      localStorage.setItem('token', access_token);
+      localStorage.setItem('userInfo', JSON.stringify(user));
       message.success('登录成功');
       navigate('/');
     } catch (error) {
