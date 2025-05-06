@@ -1,11 +1,12 @@
 import React, { useState, useEffect, useRef } from "react"
 import { useNavigate, Link, useLocation } from "react-router-dom"
-import { Row, Col, Menu, Input, Dropdown, Avatar, Badge, Switch, Drawer, Button, MenuProps, Space } from "antd"
+import { Row, Col, Menu, Input, Dropdown, Avatar, Badge, Switch, Drawer, Button, MenuProps, Space, message } from "antd"
 import { useDispatch, useSelector } from 'react-redux';
 import { RootState } from '../../store';
 import { markAsRead, Message } from '../../store/messageSlice';
 import { useTheme } from '../../contexts/ThemeContext';
 import Logo from '../Logo/Logo';
+import Cookies from 'js-cookie';
 import {
     HomeOutlined,
     SearchOutlined,
@@ -18,10 +19,20 @@ import {
     MailOutlined,
     RobotOutlined,
     AppstoreOutlined,
+    LogoutOutlined,
+    LoginOutlined,
 } from "@ant-design/icons";
 import "./header.css"
 
 const { Search } = Input;
+
+interface UserInfo {
+    id: number;
+    username: string;
+    email: string;
+    avatar?: string;
+    created_at: string;
+}
 
 const Header = () => {
     const location = useLocation();
@@ -34,6 +45,28 @@ const Header = () => {
     const { messages, unreadCount } = useSelector((state: RootState) => state.message);
     const { isDarkMode, toggleTheme } = useTheme();
     const navigate = useNavigate();
+    const [isLoggedIn, setIsLoggedIn] = useState(false);
+    const [userInfo, setUserInfo] = useState<UserInfo | null>(null);
+
+    // 检查登录状态和获取用户信息
+    useEffect(() => {
+        const token = Cookies.get('token');
+        const storedUserInfo = localStorage.getItem('userInfo');
+
+        if (token && storedUserInfo) {
+            try {
+                const parsedUserInfo = JSON.parse(storedUserInfo) as UserInfo;
+                setUserInfo(parsedUserInfo);
+                setIsLoggedIn(true);
+            } catch (error) {
+                console.error('解析用户信息失败:', error);
+                handleLogout();
+            }
+        } else {
+            setIsLoggedIn(false);
+            setUserInfo(null);
+        }
+    }, []);
 
     // 根据路由路径获取对应的菜单key
     const getMenuKeyFromPath = (path: string) => {
@@ -73,6 +106,15 @@ const Header = () => {
         }
     ];
 
+    const handleLogout = () => {
+        Cookies.remove('token');
+        localStorage.removeItem('userInfo');
+        setUserInfo(null);
+        setIsLoggedIn(false);
+        message.success('已退出登录');
+        navigate('/auth');
+    };
+
     const userMenuItems: MenuProps['items'] = [
         {
             key: 'profile',
@@ -99,8 +141,9 @@ const Header = () => {
         },
         {
             key: 'logout',
-            icon: <UserOutlined />,
-            label: <Link to='/auth'>退出登录</Link>,
+            icon: <LogoutOutlined />,
+            label: '退出登录',
+            onClick: handleLogout,
             danger: true,
         },
     ];
@@ -180,6 +223,10 @@ const Header = () => {
         }
     ];
 
+    const handleLogin = () => {
+        navigate('/auth');
+    };
+
     return (
         <>
             <div className={`header ${isDarkMode ? 'dark' : 'light'}`}>
@@ -217,25 +264,41 @@ const Header = () => {
                                 prefix={<SearchOutlined />}
                                 allowClear
                             />
-                            <Space size="large">
-                                <Dropdown
-                                    menu={{ items: messageItems }}
-                                    placement="bottomRight"
-                                    trigger={['click']}
-                                    overlayClassName="header-notification-dropdown"
+                            {isLoggedIn ? (
+                                <>
+                                    <Space size="large">
+                                        <Dropdown
+                                            menu={{ items: messageItems }}
+                                            placement="bottomRight"
+                                            trigger={['click']}
+                                            overlayClassName="header-notification-dropdown"
+                                        >
+                                            <Badge count={unreadCount} className="header-notification">
+                                                <MailOutlined className="header-icon" />
+                                            </Badge>
+                                        </Dropdown>
+                                    </Space>
+                                    <Dropdown menu={{ items: userMenuItems }} placement="bottomRight">
+                                        <div className="header-user">
+                                            <Avatar
+                                                src={userInfo?.avatar}
+                                                icon={<UserOutlined />}
+                                            />
+                                            <span className="header-username">{userInfo?.username || '用户'}</span>
+                                            <DownOutlined className="header-user-arrow" />
+                                        </div>
+                                    </Dropdown>
+                                </>
+                            ) : (
+                                <Button
+                                    type="primary"
+                                    icon={<LoginOutlined />}
+                                    onClick={handleLogin}
+                                    className="header-login-button"
                                 >
-                                    <Badge count={unreadCount} className="header-notification">
-                                        <MailOutlined className="header-icon" />
-                                    </Badge>
-                                </Dropdown>
-                            </Space>
-                            <Dropdown menu={{ items: userMenuItems }} placement="bottomRight">
-                                <div className="header-user">
-                                    <Avatar icon={<UserOutlined />} />
-                                    <span className="">曦景</span>
-                                    <DownOutlined className="header-user-arrow" />
-                                </div>
-                            </Dropdown>
+                                    登录
+                                </Button>
+                            )}
                             <Button
                                 type="text"
                                 icon={<MenuOutlined />}

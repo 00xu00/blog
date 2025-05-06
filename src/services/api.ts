@@ -1,4 +1,9 @@
-import axios from "axios";
+import axios, {
+  InternalAxiosRequestConfig,
+  AxiosResponse,
+  AxiosError,
+} from "axios";
+import Cookies from "js-cookie";
 
 const API_BASE_URL = "http://localhost:8000/api";
 
@@ -11,25 +16,25 @@ const api = axios.create({
 
 // 请求拦截器
 api.interceptors.request.use(
-  (config) => {
-    const token = localStorage.getItem("token");
+  (config: InternalAxiosRequestConfig) => {
+    const token = Cookies.get("token");
     if (token) {
       config.headers.Authorization = `Bearer ${token}`;
     }
     return config;
   },
-  (error) => {
+  (error: AxiosError) => {
     return Promise.reject(error);
   }
 );
 
 // 响应拦截器
 api.interceptors.response.use(
-  (response) => response.data,
-  (error) => {
-    if (error.response) {
-      // 处理错误响应
-      const message = error.response.data.detail || "请求失败";
+  (response: AxiosResponse) => response.data,
+  (error: AxiosError) => {
+    if (error.response?.data && typeof error.response.data === "object") {
+      const errorData = error.response.data as { detail?: string };
+      const message = errorData.detail || "请求失败";
       return Promise.reject(new Error(message));
     }
     return Promise.reject(error);

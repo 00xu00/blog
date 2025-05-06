@@ -3,6 +3,7 @@ import { Form, Input, Button, message } from 'antd';
 import { UserOutlined, LockOutlined, MailOutlined } from '@ant-design/icons';
 import { useNavigate } from 'react-router-dom';
 import { authApi, LoginResponse } from '../../services/api';
+import Cookies from 'js-cookie';
 import './index.css';
 
 interface LoginForm {
@@ -27,7 +28,7 @@ const Auth: React.FC = () => {
     try {
       const response = await authApi.login(values);
       const { access_token, user } = response as LoginResponse;
-      localStorage.setItem('token', access_token);
+      Cookies.set('token', access_token, { expires: 7 });
       localStorage.setItem('userInfo', JSON.stringify(user));
       message.success('登录成功');
       navigate('/');
@@ -58,6 +59,13 @@ const Auth: React.FC = () => {
     } finally {
       setLoading(false);
     }
+  };
+
+  const handleLogout = () => {
+    Cookies.remove('token');
+    localStorage.removeItem('userInfo');
+    message.success('已退出登录');
+    navigate('/auth');
   };
 
   return (
