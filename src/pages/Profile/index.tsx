@@ -26,6 +26,7 @@ import { setMessages, markAsRead } from '../../store/messageSlice';
 import { ProfileState } from '../../store/profile/types';
 import './index.css';
 import { useNavigate, Link } from 'react-router-dom';
+import Cookies from 'js-cookie';
 
 const { TabPane } = Tabs;
 
@@ -34,9 +35,9 @@ const Profile: React.FC = () => {
   const navigate = useNavigate();
   const [followingMap, setFollowingMap] = useState<Record<string, boolean>>({});
   const [followerFollowingMap, setFollowerFollowingMap] = useState<Record<string, boolean>>({});
+  const [userInfo, setUserInfo] = useState<any>(null);
 
   const {
-    userInfo,
     articles,
     following,
     followers,
@@ -44,22 +45,77 @@ const Profile: React.FC = () => {
   } = useSelector((state: RootState) => state.profile);
   const { messages, unreadCount } = useSelector((state: RootState) => state.message);
 
+  // 获取用户真实数据
   useEffect(() => {
-    // 模拟获取数据
-    const fetchData = async () => {
-      // 这里应该是实际的API调用
-      const mockData = {
-        userInfo: {
-          id: '1',
-          name: '用户名',
-          avatar: '',
-          bio: '个人简介',
-          stats: {
-            articles: 10,
-            followers: 100,
-            following: 50
+    const fetchUserInfo = async () => {
+      try {
+        const token = Cookies.get('token');
+        if (!token) {
+          message.error('请先登录');
+          navigate('/auth');
+          return;
+        }
+
+        // 添加重试机制
+        let retryCount = 0;
+        const maxRetries = 3;
+
+        while (retryCount < maxRetries) {
+          try {
+            const response = await fetch('http://localhost:8000/api/users/me', {
+              method: 'GET',
+              headers: {
+                'Authorization': `Bearer ${token}`,
+                'Content-Type': 'application/json',
+              },
+            });
+
+            if (response.ok) {
+              const data = await response.json();
+              console.log('data', data);
+              setUserInfo(data);
+              break; // 成功获取数据，跳出重试循环
+            } else if (response.status === 401) {
+              message.error('登录已过期，请重新登录');
+              // 清除无效的token和用户信息
+              Cookies.remove('token');
+              localStorage.removeItem('userInfo');
+              navigate('/auth');
+              break;
+            } else {
+              const errorData = await response.json().catch(() => ({}));
+              console.error('获取用户信息失败:', errorData);
+              message.error(errorData.detail || '获取用户信息失败');
+
+              if (retryCount < maxRetries - 1) {
+                retryCount++;
+                await new Promise(resolve => setTimeout(resolve, 1000 * retryCount)); // 延迟重试
+                continue;
+              }
+            }
+          } catch (error) {
+            console.error('请求出错:', error);
+            if (retryCount < maxRetries - 1) {
+              retryCount++;
+              await new Promise(resolve => setTimeout(resolve, 1000 * retryCount));
+              continue;
+            }
+            throw error;
           }
-        },
+        }
+      } catch (error) {
+        console.error('获取用户信息出错:', error);
+        message.error('获取用户信息失败，请稍后重试');
+      }
+    };
+
+    fetchUserInfo();
+  }, [navigate]);
+
+  // 获取其他mock数据
+  useEffect(() => {
+    const fetchMockData = async () => {
+      const mockData = {
         messages: [
           {
             id: '1',
@@ -113,14 +169,13 @@ const Profile: React.FC = () => {
         ]
       };
 
-      dispatch(setProfile(mockData.userInfo));
       dispatch(setMessages(mockData.messages));
       dispatch(setArticles(mockData.articles));
       dispatch(setFollowing(mockData.following));
       dispatch(setFollowers(mockData.followers));
     };
 
-    fetchData();
+    fetchMockData();
   }, [dispatch]);
 
   useEffect(() => {
@@ -181,43 +236,49 @@ const Profile: React.FC = () => {
     return <img src={avatar} alt="avatar" />;
   };
 
-  const renderUserInfo = () => (
-    <div className="profile-header">
-      <div className="avatar-container">
-        <Avatar
-          size={100}
-          src={userInfo.avatar}
-          icon={<UserOutlined />}
-          className="avatar"
-        />
-        <div className="avatar-overlay">个人中心</div>
-      </div>
-      <div className="profile-info">
-        <h2>{userInfo.name}</h2>
-        <p>{userInfo.bio}</p>
-        <Space>
-          <Button type="primary" onClick={handleFollow(userInfo.id)}>
-            <UserAddOutlined /> 关注
-          </Button>
-          <Button onClick={() => handleMessage(userInfo.id)}>私信</Button>
-        </Space>
-        <div className="profile-stats">
-          <div className="stat-item">
-            <span className="stat-number">{userInfo.stats.followers}</span>
-            <span className="stat-label">关注者</span>
-          </div>
-          <div className="stat-item">
-            <span className="stat-number">{userInfo.stats.following}</span>
-            <span className="stat-label">关注</span>
-          </div>
-          <div className="stat-item">
-            <span className="stat-number">{userInfo.stats.articles}</span>
-            <span className="stat-label">文章</span>
+  const renderUserInfo = () => {
+    if (!userInfo) {
+      return <div>加载中...</div>;
+    }
+
+    return (
+      <div className="profile-header">
+        <div className="avatar-container">
+          <Avatar
+            size={100}
+            src={userInfo.avatar}
+            icon={<UserOutlined />}
+            className="avatar"
+          />
+          <div className="avatar-overlay">个人中心</div>
+        </div>
+        <div className="profile-info">
+          <h2>{userInfo.username}</h2>
+          <p>{userInfo.bio || '这个人很懒，什么都没写~'}</p>
+          <Space>
+            <Button type="primary" onClick={handleFollow(userInfo.id)}>
+              <UserAddOutlined /> 关注
+            </Button>
+            <Button onClick={() => handleMessage(userInfo.id)}>私信</Button>
+          </Space>
+          <div className="profile-stats">
+            <div className="stat-item">
+              <span className="stat-number">{userInfo.followers_count}</span>
+              <span className="stat-label">关注者</span>
+            </div>
+            <div className="stat-item">
+              <span className="stat-number">{userInfo.following_count}</span>
+              <span className="stat-label">关注</span>
+            </div>
+            <div className="stat-item">
+              <span className="stat-number">{userInfo.articles_count}</span>
+              <span className="stat-label">文章</span>
+            </div>
           </div>
         </div>
       </div>
-    </div>
-  );
+    );
+  };
 
   return (
     <div className="profile-container">
