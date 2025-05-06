@@ -174,10 +174,23 @@ const Profile: React.FC = () => {
     message.success(followerFollowingMap[userId] ? '已取消关注' : '关注成功');
   };
 
+  const getAvatar = (avatar: string | null) => {
+    if (!avatar) {
+      return <UserOutlined style={{ fontSize: '24px' }} />;
+    }
+    return <img src={avatar} alt="avatar" />;
+  };
+
   const renderUserInfo = () => (
     <div className="profile-header">
-      <div className="profile-avatar">
-        <Avatar size={100} src={userInfo.avatar} icon={<UserOutlined />} />
+      <div className="avatar-container">
+        <Avatar
+          size={100}
+          src={userInfo.avatar}
+          icon={<UserOutlined />}
+          className="avatar"
+        />
+        <div className="avatar-overlay">个人中心</div>
       </div>
       <div className="profile-info">
         <h2>{userInfo.name}</h2>

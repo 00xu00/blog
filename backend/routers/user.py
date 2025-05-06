@@ -19,7 +19,11 @@ def create_user(user: UserCreate, db: Session = Depends(get_db)):
     db_user = User(
         username=user.username,
         email=user.email,
-        hashed_password=hashed_password
+        hashed_password=hashed_password,
+        avatar=None,  # 默认头像为空
+        following_count=0,
+        followers_count=0,
+        articles_count=0
     )
     db.add(db_user)
     db.commit()

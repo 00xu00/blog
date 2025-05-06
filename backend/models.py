@@ -10,6 +10,10 @@ class User(Base):
     username = Column(String(50), unique=True, index=True)
     email = Column(String(100), unique=True, index=True)
     hashed_password = Column(String(100))
+    avatar = Column(String(200), nullable=True)
+    following_count = Column(Integer, default=0)
+    followers_count = Column(Integer, default=0)
+    articles_count = Column(Integer, default=0)
     created_at = Column(DateTime, default=datetime.utcnow)
     
     blogs = relationship("Blog", back_populates="author")
