@@ -26,13 +26,16 @@ const Auth: React.FC = () => {
   const onLoginFinish = async (values: LoginForm) => {
     setLoading(true);
     try {
+      console.log('登录请求数据:', values);
       const response = await authApi.login(values);
+      console.log('登录响应:', response);
       const { access_token, user } = response as LoginResponse;
       Cookies.set('token', access_token, { expires: 7 });
       localStorage.setItem('userInfo', JSON.stringify(user));
       message.success('登录成功');
       navigate('/');
     } catch (error) {
+      console.error('登录错误:', error);
       message.error(error instanceof Error ? error.message : '登录失败，请检查邮箱和密码');
     } finally {
       setLoading(false);
@@ -55,7 +58,13 @@ const Auth: React.FC = () => {
       message.success('注册成功，请登录');
       setIsLogin(true);
     } catch (error) {
-      message.error(error instanceof Error ? error.message : '注册失败，请稍后重试');
+      const errorMessage = error instanceof Error ? error.message : '注册失败，请稍后重试';
+      // 处理密码验证错误
+      if (errorMessage.includes('密码必须包含')) {
+        message.error('密码要求：' + errorMessage.split('密码必须包含')[1]);
+      } else {
+        message.error(errorMessage);
+      }
     } finally {
       setLoading(false);
     }

@@ -5,7 +5,7 @@ import axios, {
 } from "axios";
 import Cookies from "js-cookie";
 
-const API_BASE_URL = "http://localhost:8000/api";
+const API_BASE_URL = "http://localhost:8000/api/v1";
 
 const api = axios.create({
   baseURL: API_BASE_URL,
@@ -30,14 +30,23 @@ api.interceptors.request.use(
 
 // 响应拦截器
 api.interceptors.response.use(
-  (response: AxiosResponse) => response.data,
-  (error: AxiosError) => {
-    if (error.response?.data && typeof error.response.data === "object") {
-      const errorData = error.response.data as { detail?: string };
-      const message = errorData.detail || "请求失败";
-      return Promise.reject(new Error(message));
+  (response: AxiosResponse) => {
+    return response.data;
+  },
+  (error: AxiosError<{ detail: string }>) => {
+    // 只有在token过期时才重定向
+    if (
+      error.response?.status === 401 &&
+      error.response?.data?.detail === "无效的认证凭据"
+    ) {
+      Cookies.remove("token");
+      localStorage.removeItem("userInfo");
+      window.location.href = "/auth";
     }
-    return Promise.reject(error);
+    // 提取错误信息
+    const errorMessage =
+      error.response?.data?.detail || error.message || "请求失败";
+    return Promise.reject(new Error(errorMessage));
   }
 );
 
@@ -65,15 +74,9 @@ export interface RegisterParams {
 
 export const authApi = {
   login: (data: LoginParams): Promise<LoginResponse> => {
-    // 创建表单数据
-    const formData = new URLSearchParams();
-    formData.append("username", data.email);
-    formData.append("password", data.password);
-
-    return api.post("/auth/token", formData, {
-      headers: {
-        "Content-Type": "application/x-www-form-urlencoded",
-      },
+    return api.post("/auth/token", {
+      email: data.email,
+      password: data.password,
     });
   },
 

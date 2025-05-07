@@ -1,23 +1,17 @@
 from sqlalchemy import create_engine
 from sqlalchemy.ext.declarative import declarative_base
 from sqlalchemy.orm import sessionmaker
-from config import settings
-import os
-from dotenv import load_dotenv
+from app.core.config import settings
 import logging
 
 # 配置日志
 logging.basicConfig(level=logging.INFO)
 logger = logging.getLogger(__name__)
 
-load_dotenv()
-
-SQLALCHEMY_DATABASE_URL = os.getenv("DATABASE_URL", "sqlite:///./blog.db")
-logger.info(f"数据库连接URL: {SQLALCHEMY_DATABASE_URL}")
-
 try:
     engine = create_engine(
-        SQLALCHEMY_DATABASE_URL, connect_args={"check_same_thread": False}
+        settings.DATABASE_URL,
+        connect_args={"check_same_thread": False}  # 仅用于SQLite
     )
     logger.info("数据库引擎创建成功")
 except Exception as e:
@@ -26,15 +20,14 @@ except Exception as e:
 
 SessionLocal = sessionmaker(autocommit=False, autoflush=False, bind=engine)
 logger.info("数据库会话工厂创建成功")
-
 Base = declarative_base()
 
-# 依赖项
+# 数据库依赖项
 def get_db():
     db = SessionLocal()
     try:
-        logger.info("数据库会话创建成功")
+        logger.info("创建新的数据库会话")
         yield db
     finally:
-        db.close()
-        logger.info("数据库会话已关闭") 
+        logger.info("关闭数据库会话")
+        db.close() 
