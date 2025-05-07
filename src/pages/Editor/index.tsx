@@ -35,6 +35,17 @@ const Editor: React.FC = () => {
   const editorRef = useRef<HTMLDivElement>(null);
   const previewRef = useRef<HTMLDivElement>(null);
 
+  // 清空编辑器
+  const clearEditor = () => {
+    setTitle('');
+    setSubtitle('');
+    setCategory('');
+    setTags([]);
+    setInputValue('');
+    setMarkdown('');
+    setBlogId(null);
+  };
+
   useEffect(() => {
     // 检查是否已登录
     const token = localStorage.getItem('token');
@@ -104,6 +115,7 @@ const Editor: React.FC = () => {
 
       if (isPublish) {
         message.success('发布成功');
+        clearEditor(); // 清空编辑器
       }
     } catch (error: any) {
       console.error('保存失败:', error);
@@ -193,10 +205,10 @@ const Editor: React.FC = () => {
             </div>
             <Space>
               <Button type="primary" onClick={() => handleSave(false)}>
-                保存
+                保存草稿
               </Button>
               <Button type="primary" onClick={() => handleSave(true)}>
-                发布
+                发布文章
               </Button>
             </Space>
           </Space>
