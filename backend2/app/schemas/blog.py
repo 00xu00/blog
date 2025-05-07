@@ -1,6 +1,7 @@
 from pydantic import BaseModel, Field
 from typing import Optional, List
 from datetime import datetime
+from .user import UserInDB
 
 class BlogBase(BaseModel):
     title: str = Field(..., min_length=1, max_length=100)
@@ -22,6 +23,13 @@ class BlogInDB(BlogBase):
     created_at: datetime
     updated_at: datetime
     is_published: int
+    likes_count: int = 0
+    favorites_count: int = 0
+    views_count: int = 0
+    is_liked: bool = False
+    is_favorited: bool = False
+    comments_count: int = 0
+    author: UserInDB
 
     class Config:
         from_attributes = True 

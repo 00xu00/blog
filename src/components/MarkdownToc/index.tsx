@@ -1,5 +1,6 @@
 import React, { useEffect, useState, useCallback } from 'react';
 import { Anchor, Affix } from 'antd';
+import { Link } from 'react-router-dom';
 import './index.css';
 
 interface TocItem {
@@ -16,7 +17,11 @@ interface AnchorItem {
   children: AnchorItem[];
 }
 
-const MarkdownToc: React.FC = () => {
+interface MarkdownTocProps {
+  content: string;
+}
+
+const MarkdownToc: React.FC<MarkdownTocProps> = ({ content }) => {
   const [tocItems, setTocItems] = useState<TocItem[]>([]);
   const [activeId, setActiveId] = useState<string>('');
 
@@ -111,16 +116,33 @@ const MarkdownToc: React.FC = () => {
     }));
   };
 
+  const getTocItems = (content: string) => {
+    const headings = content.match(/^#{1,6}\s.+$/gm) || [];
+    return headings.map((heading, index) => {
+      const level = heading.match(/^#+/)?.[0].length || 1;
+      const text = heading.replace(/^#+\s/, '');
+      return {
+        key: `heading-${index}`,
+        href: `#${text.toLowerCase().replace(/\s+/g, '-')}`,
+        title: text,
+        level
+      };
+    });
+  };
+
+  const items = getTocItems(content);
+
   return (
     <Affix offsetTop={70}>
       <div className="markdown-toc">
         <div className="toc-title">目录</div>
         <Anchor
-          items={convertToAnchorItems(tocItems)}
-          affix={false}
-          getCurrentAnchor={() => `#${activeId}`}
-          targetOffset={100}
-          getContainer={() => document.querySelector('.detail-content') as HTMLElement}
+          items={items.map(item => ({
+            key: item.key,
+            href: item.href,
+            title: item.title,
+            children: []
+          }))}
         />
       </div>
     </Affix>

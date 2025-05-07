@@ -1,6 +1,6 @@
-import React, { useState } from 'react';
-import { useParams } from 'react-router-dom';
-import { Col, Row, Breadcrumb } from 'antd';
+import React, { useState, useEffect } from 'react';
+import { useParams, useNavigate } from 'react-router-dom';
+import { Col, Row, Breadcrumb, message, Spin } from 'antd';
 import { Link, useLocation } from 'react-router-dom';
 import Author from '../Home/Author/Author';
 import Advert from '../Home/Advert/Advert';
@@ -14,56 +14,101 @@ import "./index.css";
 import MarkdownToc from '../../components/MarkdownToc';
 import InteractionButtons from '../../components/InteractionButtons';
 import Comments from '../../components/Comments';
+import { getBlogDetail, likeBlog, unlikeBlog, favoriteBlog, unfavoriteBlog } from '../../api/blog';
+import { formatDate } from '../../utils/date';
 
-const markdown = `
-## 基础语法
-### 标题
-# H1
-## H2
-### H3
-#### H4
-
-### 文本格式
-*斜体文本*  
-**粗体文本**  
-~~删除线文本~~  
-<mark>高亮文本</mark>  
-行内\`代码\`示例  
-H<sub>2</sub>O 下标  
-X<sup>2</sup> 上标
-
-### 列表
-- 无序列表项
-- 嵌套列表
-  - 子项1
-  - 子项2
-
-1. 有序列表项
-2. 第二项
-   1. 嵌套有序列表
-
-### 代码块
-\`\`\`javascript
-const hello = () => {
-  console.log('Hello, World!');
+interface BlogAuthor {
+  id: number;
+  username: string;
+  avatar?: string;
+  bio?: string;
+  introduction?: string;
+  social_links?: {
+    github?: string;
+    [key: string]: string | undefined;
+  };
 }
-\`\`\`
 
-### 表格
-| 表头1 | 表头2 |
-|-------|-------|
-| 内容1 | 内容2 |
-| 内容3 | 内容4 |
-
-### 引用
-> 这是一段引用文本
-> 可以有多行
-`;
+interface Blog {
+  id: number;
+  title: string;
+  subtitle?: string;
+  content: string;
+  created_at: string;
+  views_count: number;
+  likes_count: number;
+  favorites_count: number;
+  comments_count: number;
+  is_liked: boolean;
+  is_favorited: boolean;
+  tags?: string[];
+  author: BlogAuthor;
+}
 
 const Detail = () => {
   const { id } = useParams();
   const location = useLocation();
+  const navigate = useNavigate();
   const [showComments, setShowComments] = useState(false);
+  const [loading, setLoading] = useState(true);
+  const [blog, setBlog] = useState<Blog | null>(null);
+  const [likes, setLikes] = useState(0);
+  const [favorites, setFavorites] = useState(0);
+  const [isLiked, setIsLiked] = useState(false);
+  const [isFavorited, setIsFavorited] = useState(false);
+
+  useEffect(() => {
+    fetchBlogDetail();
+  }, [id]);
+
+  const fetchBlogDetail = async () => {
+    try {
+      setLoading(true);
+      const response = await getBlogDetail(Number(id));
+      console.log('detail data', response.data);
+
+      setBlog(response.data);
+      setLikes(response.data.likes_count);
+      setFavorites(response.data.favorites_count);
+      setIsLiked(response.data.is_liked);
+      setIsFavorited(response.data.is_favorited);
+    } catch (error) {
+      message.error('获取文章详情失败');
+      navigate('/');
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  const handleLike = async () => {
+    try {
+      if (isLiked) {
+        await unlikeBlog(Number(id));
+        setLikes(prev => prev - 1);
+      } else {
+        await likeBlog(Number(id));
+        setLikes(prev => prev + 1);
+      }
+      setIsLiked(!isLiked);
+    } catch (error) {
+      message.error('操作失败');
+    }
+  };
+
+  const handleFavorite = async () => {
+    try {
+      if (isFavorited) {
+        await unfavoriteBlog(Number(id));
+        setFavorites(prev => prev - 1);
+      } else {
+        await favoriteBlog(Number(id));
+        setFavorites(prev => prev + 1);
+      }
+      setIsFavorited(!isFavorited);
+    } catch (error) {
+      message.error('操作失败');
+    }
+  };
 
   const breadList = [
     {
@@ -75,10 +120,22 @@ const Detail = () => {
       path: "/list"
     },
     {
-      title: "详情",
+      title: blog?.title || "文章详情",
       path: `/detail/${id}`
     }
   ];
+
+  if (loading) {
+    return (
+      <div style={{ textAlign: 'center', padding: '50px' }}>
+        <Spin size="large" />
+      </div>
+    );
+  }
+
+  if (!blog) {
+    return null;
+  }
 
   return (
     <div>
@@ -94,12 +151,19 @@ const Detail = () => {
           </div>
           <div>
             <div className='detail-title'>
-              react 文章详情页
+              {blog.title}
             </div>
+            {blog.subtitle && (
+              <div className='detail-subtitle'>
+                {blog.subtitle}
+              </div>
+            )}
             <div className='list-icons center'>
-              <span className='list-icon'><CalendarOutlined /> 2024-10-22 </span>
-              <span className='list-icon'><FolderOpenOutlined /> 视频教学 </span>
-              <span className='list-icon'><FireOutlined /> 1234人 </span>
+              <span className='list-icon'><CalendarOutlined /> {formatDate(blog.created_at)} </span>
+              {blog.tags && blog.tags.length > 0 && (
+                <span className='list-icon'><FolderOpenOutlined /> {blog.tags.join(', ')} </span>
+              )}
+              <span className='list-icon'><FireOutlined /> {blog.views_count || 0} 阅读 </span>
             </div>
             <div className='detail-content'>
               <ReactMarkdown
@@ -112,22 +176,36 @@ const Detail = () => {
                   sup: ({ children }) => <sup className="markdown-sup">{children}</sup>
                 }}
               >
-                {markdown}
+                {blog.content}
               </ReactMarkdown>
             </div>
             <InteractionButtons
-              initialLikes={123}
-              initialStars={45}
-              initialComments={67}
+              initialLikes={likes}
+              initialStars={favorites}
+              initialComments={blog.comments_count || 0}
+              isLiked={isLiked}
+              isFavorited={isFavorited}
+              onLikeClick={handleLike}
+              onStarClick={handleFavorite}
               onCommentClick={() => setShowComments(!showComments)}
             />
-            {showComments && <Comments />}
+            {showComments && <Comments blogId={Number(id)} />}
           </div>
         </Col>
         <Col className='comm-right' xs={0} sm={0} md={7} lg={5} xl={4}>
-          <Author />
+          {blog.author && (
+            <Author
+              author={{
+                username: blog.author.username,
+                avatar: blog.author.avatar,
+                bio: blog.author.bio,
+                introduction: blog.author.introduction,
+                social_links: blog.author.social_links
+              }}
+            />
+          )}
           <div className="toc-container">
-            <MarkdownToc />
+            <MarkdownToc content={blog.content} />
           </div>
           <Advert />
         </Col>

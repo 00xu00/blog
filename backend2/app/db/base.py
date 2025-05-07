@@ -1,8 +1,9 @@
 from sqlalchemy import create_engine
-from sqlalchemy.ext.declarative import declarative_base
 from sqlalchemy.orm import sessionmaker
 from app.core.config import settings
 import logging
+from app.db.base_class import Base
+from app.models import User, Blog, Comment, BlogLike, BlogFavorite, CommentLike
 
 # 配置日志
 logging.basicConfig(level=logging.INFO)
@@ -20,7 +21,18 @@ except Exception as e:
 
 SessionLocal = sessionmaker(autocommit=False, autoflush=False, bind=engine)
 logger.info("数据库会话工厂创建成功")
-Base = declarative_base()
+
+# 确保所有模型都被导入
+__all__ = [
+    "Base",
+    "engine",
+    "User",
+    "Blog",
+    "Comment",
+    "BlogLike",
+    "BlogFavorite",
+    "CommentLike"
+]
 
 # 数据库依赖项
 def get_db():

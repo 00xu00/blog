@@ -25,11 +25,4 @@ class User(Base):
     articles_count = Column(Integer, default=0)
     created_at = Column(DateTime, default=datetime.utcnow)
     
-    # 关系
-    following = relationship(
-        "User",
-        secondary=user_following,
-        primaryjoin="User.id==user_following.c.follower_id",
-        secondaryjoin="User.id==user_following.c.followed_id",
-        backref="followers"
-    ) 
+    # 关系将在 __init__.py 中定义 

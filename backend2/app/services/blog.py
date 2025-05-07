@@ -1,4 +1,4 @@
-from sqlalchemy.orm import Session
+from sqlalchemy.orm import Session, joinedload
 from app.models.blog import Blog
 from app.schemas.blog import BlogCreate, BlogUpdate
 from typing import List, Optional
@@ -37,7 +37,7 @@ def update_blog(db: Session, blog_id: int, blog_in: BlogUpdate, author_id: int) 
     return db_blog
 
 def get_blog(db: Session, blog_id: int) -> Optional[Blog]:
-    return db.query(Blog).filter(Blog.id == blog_id).first()
+    return db.query(Blog).options(joinedload(Blog.author)).filter(Blog.id == blog_id).first()
 
 def get_user_blogs(db: Session, author_id: int, skip: int = 0, limit: int = 100) -> List[Blog]:
     return db.query(Blog).filter(Blog.author_id == author_id).offset(skip).limit(limit).all()

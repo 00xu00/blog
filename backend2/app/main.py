@@ -13,19 +13,12 @@ import os
 logging.basicConfig(level=logging.INFO)
 logger = logging.getLogger(__name__)
 
-# 创建数据库表
-logger.info("开始创建数据库表...")
-Base.metadata.drop_all(bind=engine)  # 删除所有表
-Base.metadata.create_all(bind=engine)  # 重新创建所有表
-logger.info("数据库表创建完成")
-
 app = FastAPI(
     title=settings.PROJECT_NAME,
-    version=settings.VERSION,
     openapi_url=f"{settings.API_V1_STR}/openapi.json"
 )
 
-# 配置CORS
+# 配置 CORS
 app.add_middleware(
     CORSMiddleware,
     allow_origins=settings.BACKEND_CORS_ORIGINS,
@@ -56,4 +49,12 @@ async def root():
     return {
         "message": "欢迎使用曦景博客API",
         "version": settings.VERSION
-    } 
+    }
+
+# 创建数据库表
+@app.on_event("startup")
+async def startup_event():
+    logger.info("开始创建数据库表...")
+    Base.metadata.drop_all(bind=engine)
+    Base.metadata.create_all(bind=engine)
+    logger.info("数据库表创建完成") 
