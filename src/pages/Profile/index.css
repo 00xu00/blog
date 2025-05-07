@@ -17,13 +17,38 @@
 
 .avatar-container {
   position: relative;
-  display: inline-block;
+  margin-bottom: 20px;
+}
+
+.avatar-wrapper {
+  position: relative;
   cursor: pointer;
-  width: 100px;
-  height: 100px;
-  overflow: hidden;
+  display: inline-block;
+}
+
+.avatar-wrapper:hover .avatar-overlay {
+  opacity: 1;
+}
+
+.avatar-overlay {
+  position: absolute;
+  top: 0;
+  left: 0;
+  width: 100%;
+  height: 100%;
+  background: rgba(0, 0, 0, 0.5);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  color: white;
   border-radius: 50%;
-  margin-right: 20px;
+  opacity: 0;
+  transition: opacity 0.3s;
+}
+
+.avatar-overlay .anticon {
+  font-size: 24px;
+  margin-right: 8px;
 }
 
 .avatar {
@@ -40,27 +65,6 @@
   filter: blur(0.8px) brightness(80%);
 }
 
-.avatar-overlay {
-  position: absolute;
-  top: 0;
-  left: 0;
-  width: 100%;
-  height: 100%;
-  background-color: rgba(0, 0, 0, 0.5);
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  color: white;
-  font-size: 16px;
-  opacity: 0;
-  transition: opacity 0.3s ease;
-  border-radius: 50%;
-}
-
-.avatar-container:hover .avatar-overlay {
-  opacity: 1;
-}
-
 .profile-info {
   flex: 1;
 }
@@ -74,6 +78,18 @@
 .profile-info p {
   margin: 0 0 15px 0;
   color: #666;
+  cursor: pointer;
+  padding: 8px;
+  border-radius: 4px;
+  transition: background-color 0.3s;
+}
+
+.profile-info p:hover {
+  background-color: #f5f5f5;
+}
+
+.profile-info p .anticon {
+  color: #1890ff;
 }
 
 .profile-stats {
@@ -204,4 +220,12 @@
 .profile-container .message-item .ant-list-item-meta .ant-list-item-meta-description .message-content .message-time {
   font-size: 12px;
   color: rgba(0, 0, 0, 0.45);
+}
+
+.bio-edit {
+  margin: 16px 0;
+}
+
+.bio-edit .ant-input {
+  margin-bottom: 8px;
 }

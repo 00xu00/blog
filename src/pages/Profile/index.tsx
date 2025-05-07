@@ -1,6 +1,6 @@
 import React, { useEffect, useState } from 'react';
 import { useDispatch, useSelector } from 'react-redux';
-import { Tabs, List, Avatar, Space, Badge, Button, Card, Tag, message } from 'antd';
+import { Tabs, List, Avatar, Space, Badge, Button, Card, Tag, message, Input, Modal, Upload } from 'antd';
 import {
   MailOutlined,
   HistoryOutlined,
@@ -12,7 +12,8 @@ import {
   EyeOutlined,
   MessageOutlined,
   UserAddOutlined,
-  CheckOutlined
+  CheckOutlined,
+  UploadOutlined
 } from '@ant-design/icons';
 import { RootState } from '../../store';
 import {
@@ -29,13 +30,27 @@ import { useNavigate, Link } from 'react-router-dom';
 
 const { TabPane } = Tabs;
 
+interface UserInfo {
+  id: string;
+  username: string;
+  email: string;
+  avatar: string | null;
+  bio: string | null;
+  followers_count: number;
+  following_count: number;
+  articles_count: number;
+}
+
 const Profile: React.FC = () => {
   const dispatch = useDispatch();
   const navigate = useNavigate();
   const [followingMap, setFollowingMap] = useState<Record<string, boolean>>({});
   const [followerFollowingMap, setFollowerFollowingMap] = useState<Record<string, boolean>>({});
-  const [userInfo, setUserInfo] = useState<any>(null);
+  const [userInfo, setUserInfo] = useState<UserInfo | null>(null);
   const [isLoading, setIsLoading] = useState(true);
+  const [isEditingBio, setIsEditingBio] = useState(false);
+  const [newBio, setNewBio] = useState('');
+  const [isUploading, setIsUploading] = useState(false);
 
   const {
     articles,
@@ -201,6 +216,7 @@ const Profile: React.FC = () => {
   }, [following, followers]);
 
   const handleMessage = (userId: string) => {
+    if (!userInfo) return;
     if (userId === userInfo.id) {
       message.warning('不能给自己发送私信');
       return;
@@ -210,6 +226,7 @@ const Profile: React.FC = () => {
 
   const handleFollow = (userId: string) => (e: React.MouseEvent) => {
     e.preventDefault();
+    if (!userInfo) return;
     if (userId === userInfo.id) {
       message.warning('不能关注自己');
       return;
@@ -223,6 +240,7 @@ const Profile: React.FC = () => {
 
   const handleFollowerFollow = (userId: string) => (e: React.MouseEvent) => {
     e.preventDefault();
+    if (!userInfo) return;
     if (userId === userInfo.id) {
       message.warning('不能关注自己');
       return;
@@ -232,6 +250,64 @@ const Profile: React.FC = () => {
       [userId]: !prev[userId]
     }));
     message.success(followerFollowingMap[userId] ? '已取消关注' : '关注成功');
+  };
+
+  // 处理头像上传
+  const handleAvatarUpload = async (file: File) => {
+    try {
+      setIsUploading(true);
+      const formData = new FormData();
+      formData.append('file', file);
+
+      const token = localStorage.getItem('token');
+      const response = await fetch('http://localhost:8000/api/v1/users/me/avatar', {
+        method: 'POST',
+        headers: {
+          'Authorization': `Bearer ${token}`,
+        },
+        body: formData,
+      });
+
+      if (response.ok) {
+        const data = await response.json();
+        setUserInfo((prev: UserInfo | null) => prev ? { ...prev, avatar: data.avatar_url } : null);
+        message.success('头像上传成功');
+      } else {
+        message.error('头像上传失败');
+      }
+    } catch (error) {
+      console.error('上传头像出错:', error);
+      message.error('上传头像失败，请稍后重试');
+    } finally {
+      setIsUploading(false);
+    }
+  };
+
+  // 处理简介更新
+  const handleBioUpdate = async () => {
+    try {
+      const token = localStorage.getItem('token');
+      const response = await fetch('http://localhost:8000/api/v1/users/me', {
+        method: 'PUT',
+        headers: {
+          'Authorization': `Bearer ${token}`,
+          'Content-Type': 'application/json',
+        },
+        body: JSON.stringify({ bio: newBio }),
+      });
+
+      if (response.ok) {
+        const data = await response.json();
+        setUserInfo((prev: UserInfo | null) => prev ? { ...prev, bio: data.bio } : null);
+        setIsEditingBio(false);
+        message.success('简介更新成功');
+      } else {
+        message.error('简介更新失败');
+      }
+    } catch (error) {
+      console.error('更新简介出错:', error);
+      message.error('更新简介失败，请稍后重试');
+    }
   };
 
   const getAvatar = (avatar: string | null) => {
@@ -249,17 +325,56 @@ const Profile: React.FC = () => {
     return (
       <div className="profile-header">
         <div className="avatar-container">
-          <Avatar
-            size={100}
-            src={userInfo.avatar}
-            icon={<UserOutlined />}
-            className="avatar"
-          />
-          <div className="avatar-overlay">个人中心</div>
+          <Upload
+            name="avatar"
+            showUploadList={false}
+            beforeUpload={(file) => {
+              handleAvatarUpload(file);
+              return false;
+            }}
+            accept="image/*"
+          >
+            <div className="avatar-wrapper">
+              <Avatar
+                size={100}
+                src={userInfo.avatar}
+                icon={<UserOutlined />}
+                className="avatar"
+              />
+              <div className="avatar-overlay">
+                <UploadOutlined /> 更换头像
+              </div>
+            </div>
+          </Upload>
         </div>
         <div className="profile-info">
           <h2>{userInfo.username}</h2>
-          <p>{userInfo.bio || '这个人很懒，什么都没写~'}</p>
+          {isEditingBio ? (
+            <div className="bio-edit">
+              <Input.TextArea
+                value={newBio}
+                onChange={(e) => setNewBio(e.target.value)}
+                placeholder="请输入个人简介"
+                autoSize={{ minRows: 2, maxRows: 4 }}
+              />
+              <Space style={{ marginTop: 8 }}>
+                <Button type="primary" onClick={handleBioUpdate}>
+                  保存
+                </Button>
+                <Button onClick={() => setIsEditingBio(false)}>
+                  取消
+                </Button>
+              </Space>
+            </div>
+          ) : (
+            <p onClick={() => {
+              setNewBio(userInfo.bio || '');
+              setIsEditingBio(true);
+            }}>
+              {userInfo.bio || '这个人很懒，什么都没写~'}
+              <EditOutlined style={{ marginLeft: 8, cursor: 'pointer' }} />
+            </p>
+          )}
           <Space>
             <Button type="primary" onClick={handleFollow(userInfo.id)}>
               <UserAddOutlined /> 关注
