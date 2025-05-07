@@ -9,6 +9,7 @@ import os
 import shutil
 from datetime import datetime
 from typing import Optional
+import base64
 
 router = APIRouter()
 
@@ -58,34 +59,28 @@ async def upload_avatar(
             detail="只能上传图片文件"
         )
     
-    # 生成文件名
-    timestamp = datetime.now().strftime('%Y%m%d_%H%M%S')
-    file_extension = os.path.splitext(file.filename)[1]
-    filename = f"{current_user.id}_{timestamp}{file_extension}"
-    
-    # 确保上传目录存在
-    upload_dir = os.path.join("app", "static", "uploads", "avatars")
-    os.makedirs(upload_dir, exist_ok=True)
-    
-    # 保存文件
-    file_path = os.path.join(upload_dir, filename)
     try:
-        with open(file_path, "wb") as buffer:
-            shutil.copyfileobj(file.file, buffer)
+        # 读取文件内容
+        contents = await file.read()
+        
+        # 将图片内容转换为BASE64
+        base64_data = base64.b64encode(contents).decode('utf-8')
+        
+        # 构建完整的BASE64字符串（包含MIME类型）
+        mime_type = file.content_type
+        avatar_data = f"data:{mime_type};base64,{base64_data}"
+        
+        # 更新用户头像
+        current_user.avatar = avatar_data
+        db.commit()
+        db.refresh(current_user)
+        
+        return current_user
+        
     except Exception as e:
         raise HTTPException(
             status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
-            detail=f"文件上传失败: {str(e)}"
+            detail=f"头像上传失败: {str(e)}"
         )
     finally:
-        file.file.close()
-    
-    # 更新用户头像URL
-    avatar_url = f"/static/uploads/avatars/{filename}"
-    
-    # 直接更新数据库中的avatar字段
-    current_user.avatar = avatar_url
-    db.commit()
-    db.refresh(current_user)
-    
-    return current_user 
+        await file.close() 

@@ -1,4 +1,4 @@
-from sqlalchemy import Column, Integer, String, DateTime, Table, ForeignKey
+from sqlalchemy import Column, Integer, String, DateTime, Table, ForeignKey, Text
 from sqlalchemy.orm import relationship
 from datetime import datetime
 from app.db.base import Base
@@ -18,7 +18,7 @@ class User(Base):
     username = Column(String(50), unique=True, index=True)
     email = Column(String(100), unique=True, index=True)
     hashed_password = Column(String(100))
-    avatar = Column(String(200), nullable=True)
+    avatar = Column(Text, nullable=True)
     bio = Column(String(500), nullable=True)
     following_count = Column(Integer, default=0)
     followers_count = Column(Integer, default=0)

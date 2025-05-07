@@ -86,10 +86,7 @@ const Profile: React.FC = () => {
 
             if (response.ok) {
               const data = await response.json();
-              // 构建完整的头像URL
-              if (data.avatar) {
-                data.avatar = `http://localhost:8000${data.avatar}`;
-              }
+              // 不再需要构建完整的头像URL，因为已经是BASE64格式
               console.log('用户信息:', data);
               setUserInfo(data);
               setIsLoading(false);
@@ -272,10 +269,7 @@ const Profile: React.FC = () => {
 
       if (response.ok) {
         const data = await response.json();
-        // 构建完整的头像URL
-        if (data.avatar) {
-          data.avatar = `http://localhost:8000${data.avatar}`;
-        }
+        // 直接使用返回的BASE64数据
         setUserInfo((prev: UserInfo | null) => prev ? { ...prev, avatar: data.avatar } : null);
         message.success('头像上传成功');
       } else {
