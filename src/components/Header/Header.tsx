@@ -26,11 +26,14 @@ import "./header.css"
 const { Search } = Input;
 
 interface UserInfo {
-    id: number;
+    id: string;
     username: string;
     email: string;
-    avatar?: string;
-    created_at: string;
+    avatar: string | null;
+    bio: string | null;
+    followers_count: number;
+    following_count: number;
+    articles_count: number;
 }
 
 const Header = () => {
@@ -46,26 +49,80 @@ const Header = () => {
     const navigate = useNavigate();
     const [isLoggedIn, setIsLoggedIn] = useState(false);
     const [userInfo, setUserInfo] = useState<UserInfo | null>(null);
+    const [isLoading, setIsLoading] = useState(true);
 
-    // 检查登录状态和获取用户信息
+    // 获取用户真实数据
     useEffect(() => {
-        const token = localStorage.getItem('token');
-        const storedUserInfo = localStorage.getItem('userInfo');
-
-        if (token && storedUserInfo) {
+        const fetchUserInfo = async () => {
             try {
-                const parsedUserInfo = JSON.parse(storedUserInfo) as UserInfo;
-                setUserInfo(parsedUserInfo);
-                setIsLoggedIn(true);
+                const token = localStorage.getItem('token');
+                if (!token) {
+                    setIsLoggedIn(false);
+                    setUserInfo(null);
+                    setIsLoading(false);
+                    return;
+                }
+
+                let retryCount = 0;
+                const maxRetries = 3;
+                let lastError = null;
+
+                while (retryCount < maxRetries) {
+                    try {
+                        const response = await fetch('http://localhost:8000/api/v1/users/me', {
+                            method: 'GET',
+                            headers: {
+                                'Authorization': `Bearer ${token.trim()}`,
+                                'Content-Type': 'application/json',
+                            },
+                        });
+
+                        if (response.ok) {
+                            const data = await response.json();
+                            setUserInfo(data);
+                            setIsLoggedIn(true);
+                            setIsLoading(false);
+                            return;
+                        } else if (response.status === 401) {
+                            console.error('Token 验证失败:', token);
+                            localStorage.removeItem('token');
+                            setIsLoggedIn(false);
+                            setUserInfo(null);
+                            navigate('/auth');
+                            return;
+                        } else {
+                            const errorData = await response.json().catch(() => ({}));
+                            lastError = errorData.detail || '获取用户信息失败';
+
+                            if (retryCount < maxRetries - 1) {
+                                retryCount++;
+                                await new Promise(resolve => setTimeout(resolve, 1000 * retryCount));
+                                continue;
+                            }
+                        }
+                    } catch (error) {
+                        lastError = '请求出错';
+                        if (retryCount < maxRetries - 1) {
+                            retryCount++;
+                            await new Promise(resolve => setTimeout(resolve, 1000 * retryCount));
+                            continue;
+                        }
+                    }
+                }
+
+                if (lastError) {
+                    message.error(lastError);
+                }
+                setIsLoading(false);
             } catch (error) {
-                console.error('解析用户信息失败:', error);
-                handleLogout();
+                console.error('获取用户信息出错:', error);
+                message.error('获取用户信息失败，请稍后重试');
+                setIsLoading(false);
             }
-        } else {
-            setIsLoggedIn(false);
-            setUserInfo(null);
-        }
-    }, []);
+        };
+
+        fetchUserInfo();
+    }, [navigate]);
 
     // 根据路由路径获取对应的菜单key
     const getMenuKeyFromPath = (path: string) => {
@@ -107,7 +164,6 @@ const Header = () => {
 
     const handleLogout = () => {
         localStorage.removeItem('token');
-        localStorage.removeItem('userInfo');
         setUserInfo(null);
         setIsLoggedIn(false);
         message.success('已退出登录');
