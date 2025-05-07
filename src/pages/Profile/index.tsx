@@ -349,7 +349,8 @@ const Profile: React.FC = () => {
                 className="avatar"
               />
               <div className="avatar-overlay">
-                <UploadOutlined /> 更换头像
+                <UploadOutlined />
+                <span>更换头像</span>
               </div>
             </div>
           </Upload>
@@ -379,15 +380,15 @@ const Profile: React.FC = () => {
               setIsEditingBio(true);
             }}>
               {userInfo.bio || '这个人很懒，什么都没写~'}
-              <EditOutlined style={{ marginLeft: 8, cursor: 'pointer' }} />
+              <EditOutlined />
             </p>
           )}
-          <Space>
+          <div className="profile-actions">
             <Button type="primary" onClick={handleFollow(userInfo.id)}>
               <UserAddOutlined /> 关注
             </Button>
             <Button onClick={() => handleMessage(userInfo.id)}>私信</Button>
-          </Space>
+          </div>
           <div className="profile-stats">
             <div className="stat-item">
               <span className="stat-number">{userInfo.followers_count}</span>
