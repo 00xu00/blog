@@ -14,7 +14,10 @@ logging.basicConfig(level=logging.INFO)
 logger = logging.getLogger(__name__)
 
 # 创建数据库表
-Base.metadata.create_all(bind=engine)
+logger.info("开始创建数据库表...")
+Base.metadata.drop_all(bind=engine)  # 删除所有表
+Base.metadata.create_all(bind=engine)  # 重新创建所有表
+logger.info("数据库表创建完成")
 
 app = FastAPI(
     title=settings.PROJECT_NAME,

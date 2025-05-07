@@ -1,0 +1,27 @@
+from pydantic import BaseModel, Field
+from typing import Optional, List
+from datetime import datetime
+
+class BlogBase(BaseModel):
+    title: str = Field(..., min_length=1, max_length=100)
+    subtitle: Optional[str] = Field(None, max_length=200)
+    content: str = Field(...)
+    tags: List[str] = Field(default_factory=list)
+
+class BlogCreate(BlogBase):
+    pass
+
+class BlogUpdate(BlogBase):
+    title: Optional[str] = Field(None, min_length=1, max_length=100)
+    content: Optional[str] = None
+    is_published: Optional[int] = None
+
+class BlogInDB(BlogBase):
+    id: int
+    author_id: int
+    created_at: datetime
+    updated_at: datetime
+    is_published: int
+
+    class Config:
+        from_attributes = True 
