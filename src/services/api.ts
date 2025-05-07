@@ -3,7 +3,6 @@ import axios, {
   AxiosResponse,
   AxiosError,
 } from "axios";
-import Cookies from "js-cookie";
 
 const API_BASE_URL = "http://localhost:8000/api/v1";
 
@@ -17,7 +16,7 @@ const api = axios.create({
 // 请求拦截器
 api.interceptors.request.use(
   (config: InternalAxiosRequestConfig) => {
-    const token = Cookies.get("token");
+    const token = localStorage.getItem("token");
     if (token) {
       config.headers.Authorization = `Bearer ${token}`;
     }
@@ -39,7 +38,7 @@ api.interceptors.response.use(
       error.response?.status === 401 &&
       error.response?.data?.detail === "无效的认证凭据"
     ) {
-      Cookies.remove("token");
+      localStorage.removeItem("token");
       localStorage.removeItem("userInfo");
       window.location.href = "/auth";
     }

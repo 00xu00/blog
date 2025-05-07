@@ -6,7 +6,6 @@ import { RootState } from '../../store';
 import { markAsRead, Message } from '../../store/messageSlice';
 import { useTheme } from '../../contexts/ThemeContext';
 import Logo from '../Logo/Logo';
-import Cookies from 'js-cookie';
 import {
     HomeOutlined,
     SearchOutlined,
@@ -50,7 +49,7 @@ const Header = () => {
 
     // 检查登录状态和获取用户信息
     useEffect(() => {
-        const token = Cookies.get('token');
+        const token = localStorage.getItem('token');
         const storedUserInfo = localStorage.getItem('userInfo');
 
         if (token && storedUserInfo) {
@@ -107,7 +106,7 @@ const Header = () => {
     ];
 
     const handleLogout = () => {
-        Cookies.remove('token');
+        localStorage.removeItem('token');
         localStorage.removeItem('userInfo');
         setUserInfo(null);
         setIsLoggedIn(false);

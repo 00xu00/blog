@@ -3,7 +3,7 @@ import { Form, Input, Button, message } from 'antd';
 import { UserOutlined, LockOutlined, MailOutlined } from '@ant-design/icons';
 import { useNavigate } from 'react-router-dom';
 import { authApi, LoginResponse } from '../../services/api';
-import Cookies from 'js-cookie';
+import { setToken, removeToken } from '../../utils/auth';
 import './index.css';
 
 interface LoginForm {
@@ -30,10 +30,24 @@ const Auth: React.FC = () => {
       const response = await authApi.login(values);
       console.log('登录响应:', response);
       const { access_token, user } = response as LoginResponse;
-      Cookies.set('token', access_token, { expires: 7 });
+
+      // 先清除可能存在的旧数据
+      localStorage.removeItem('token');
+      localStorage.removeItem('userInfo');
+
+      // 确保 token 格式正确
+      const token = access_token.trim();
+      if (!token) {
+        throw new Error('获取到的 token 无效');
+      }
+
+      // 设置新的 token 和用户信息
+      localStorage.setItem('token', token);
       localStorage.setItem('userInfo', JSON.stringify(user));
+
+      console.log('Token 已保存:', token);
       message.success('登录成功');
-      navigate('/');
+      navigate('/', { replace: true });
     } catch (error) {
       console.error('登录错误:', error);
       message.error(error instanceof Error ? error.message : '登录失败，请检查邮箱和密码');
@@ -71,7 +85,7 @@ const Auth: React.FC = () => {
   };
 
   const handleLogout = () => {
-    Cookies.remove('token');
+    removeToken();
     localStorage.removeItem('userInfo');
     message.success('已退出登录');
     navigate('/auth');

@@ -26,7 +26,6 @@ import { setMessages, markAsRead } from '../../store/messageSlice';
 import { ProfileState } from '../../store/profile/types';
 import './index.css';
 import { useNavigate, Link } from 'react-router-dom';
-import Cookies from 'js-cookie';
 
 const { TabPane } = Tabs;
 
@@ -36,6 +35,7 @@ const Profile: React.FC = () => {
   const [followingMap, setFollowingMap] = useState<Record<string, boolean>>({});
   const [followerFollowingMap, setFollowerFollowingMap] = useState<Record<string, boolean>>({});
   const [userInfo, setUserInfo] = useState<any>(null);
+  const [isLoading, setIsLoading] = useState(true);
 
   const {
     articles,
@@ -49,63 +49,68 @@ const Profile: React.FC = () => {
   useEffect(() => {
     const fetchUserInfo = async () => {
       try {
-        const token = Cookies.get('token');
+        const token = localStorage.getItem('token');
         if (!token) {
-          message.error('请先登录');
           navigate('/auth');
           return;
         }
 
-        // 添加重试机制
         let retryCount = 0;
         const maxRetries = 3;
+        let lastError = null;
 
         while (retryCount < maxRetries) {
           try {
-            const response = await fetch('http://localhost:8000/api/users/me', {
+            const response = await fetch('http://localhost:8000/api/v1/users/me', {
               method: 'GET',
               headers: {
-                'Authorization': `Bearer ${token}`,
+                'Authorization': `Bearer ${token.trim()}`,
                 'Content-Type': 'application/json',
               },
             });
 
             if (response.ok) {
               const data = await response.json();
-              console.log('data', data);
+              console.log('用户信息:', data);
               setUserInfo(data);
-              break; // 成功获取数据，跳出重试循环
+              setIsLoading(false);
+              return; // 成功获取数据，直接返回
             } else if (response.status === 401) {
-              message.error('登录已过期，请重新登录');
+              console.error('Token 验证失败:', token);
               // 清除无效的token和用户信息
-              Cookies.remove('token');
+              localStorage.removeItem('token');
               localStorage.removeItem('userInfo');
               navigate('/auth');
-              break;
+              return; // 401错误直接返回，不进行重试
             } else {
               const errorData = await response.json().catch(() => ({}));
-              console.error('获取用户信息失败:', errorData);
-              message.error(errorData.detail || '获取用户信息失败');
+              lastError = errorData.detail || '获取用户信息失败';
 
               if (retryCount < maxRetries - 1) {
                 retryCount++;
-                await new Promise(resolve => setTimeout(resolve, 1000 * retryCount)); // 延迟重试
+                await new Promise(resolve => setTimeout(resolve, 1000 * retryCount));
                 continue;
               }
             }
           } catch (error) {
-            console.error('请求出错:', error);
+            lastError = '请求出错';
             if (retryCount < maxRetries - 1) {
               retryCount++;
               await new Promise(resolve => setTimeout(resolve, 1000 * retryCount));
               continue;
             }
-            throw error;
           }
         }
+
+        // 所有重试都失败后，显示最后一次错误
+        if (lastError) {
+          message.error(lastError);
+        }
+        setIsLoading(false);
       } catch (error) {
         console.error('获取用户信息出错:', error);
         message.error('获取用户信息失败，请稍后重试');
+        setIsLoading(false);
       }
     };
 

@@ -54,4 +54,4 @@ class Token(BaseModel):
     user: Dict[str, Any]
 
 class TokenData(BaseModel):
-    username: Optional[str] = None 
+    email: Optional[str] = None 

@@ -10,6 +10,7 @@ import Profile from '../pages/Profile';
 import Chat from '../pages/Chat';
 import Editor from '../pages/Editor';
 import AIHelper from '../pages/AIHelper';
+import PrivateRoute from '../components/PrivateRoute';
 
 const router = createBrowserRouter([
   {
@@ -30,11 +31,19 @@ const router = createBrowserRouter([
       },
       {
         path: 'profile',
-        element: <Profile />
+        element: (
+          <PrivateRoute>
+            <Profile />
+          </PrivateRoute>
+        )
       },
       {
         path: 'editor',
-        element: <Editor />
+        element: (
+          <PrivateRoute>
+            <Editor />
+          </PrivateRoute>
+        )
       },
       {
         path: 'ai-helper',
@@ -48,7 +57,11 @@ const router = createBrowserRouter([
   },
   {
     path: '/chat/:userId',
-    element: <Chat />
+    element: (
+      <PrivateRoute>
+        <Chat />
+      </PrivateRoute>
+    )
   },
   {
     path: '*',
