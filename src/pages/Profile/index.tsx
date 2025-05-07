@@ -86,17 +86,20 @@ const Profile: React.FC = () => {
 
             if (response.ok) {
               const data = await response.json();
+              // 构建完整的头像URL
+              if (data.avatar) {
+                data.avatar = `http://localhost:8000${data.avatar}`;
+              }
               console.log('用户信息:', data);
               setUserInfo(data);
               setIsLoading(false);
-              return; // 成功获取数据，直接返回
+              return;
             } else if (response.status === 401) {
               console.error('Token 验证失败:', token);
-              // 清除无效的token和用户信息
               localStorage.removeItem('token');
               localStorage.removeItem('userInfo');
               navigate('/auth');
-              return; // 401错误直接返回，不进行重试
+              return;
             } else {
               const errorData = await response.json().catch(() => ({}));
               lastError = errorData.detail || '获取用户信息失败';
@@ -117,7 +120,6 @@ const Profile: React.FC = () => {
           }
         }
 
-        // 所有重试都失败后，显示最后一次错误
         if (lastError) {
           message.error(lastError);
         }
@@ -270,10 +272,15 @@ const Profile: React.FC = () => {
 
       if (response.ok) {
         const data = await response.json();
-        setUserInfo((prev: UserInfo | null) => prev ? { ...prev, avatar: data.avatar_url } : null);
+        // 构建完整的头像URL
+        if (data.avatar) {
+          data.avatar = `http://localhost:8000${data.avatar}`;
+        }
+        setUserInfo((prev: UserInfo | null) => prev ? { ...prev, avatar: data.avatar } : null);
         message.success('头像上传成功');
       } else {
-        message.error('头像上传失败');
+        const errorData = await response.json();
+        message.error(errorData.detail || '头像上传失败');
       }
     } catch (error) {
       console.error('上传头像出错:', error);

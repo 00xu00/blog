@@ -1,11 +1,13 @@
 from fastapi import FastAPI, HTTPException
 from fastapi.middleware.cors import CORSMiddleware
 from fastapi.responses import RedirectResponse
+from fastapi.staticfiles import StaticFiles
 from app.core.config import settings
 from app.db.base import Base, engine
 from app.api.v1 import api_router
 from app.models import User, Blog  # 导入所有模型
 import logging
+import os
 
 # 配置日志
 logging.basicConfig(level=logging.INFO)
@@ -28,6 +30,11 @@ app.add_middleware(
     allow_methods=["*"],
     allow_headers=["*"],
 )
+
+# 配置静态文件服务
+static_dir = os.path.join(os.path.dirname(os.path.dirname(__file__)), "app", "static")
+os.makedirs(static_dir, exist_ok=True)
+app.mount("/static", StaticFiles(directory=static_dir), name="static")
 
 # 注册路由
 app.include_router(api_router, prefix=settings.API_V1_STR)
