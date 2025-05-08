@@ -1,6 +1,6 @@
 import React from 'react';
 import { Button, Space } from 'antd';
-import { LikeOutlined, StarOutlined, MessageOutlined } from '@ant-design/icons';
+import { LikeOutlined, LikeFilled, StarOutlined, MessageOutlined } from '@ant-design/icons';
 import './index.css';
 
 export interface InteractionButtonsProps {
@@ -29,8 +29,9 @@ const InteractionButtons: React.FC<InteractionButtonsProps> = ({
       <Space size="large">
         <Button
           type={isLiked ? "primary" : "default"}
-          icon={<LikeOutlined />}
+          icon={isLiked ? <LikeFilled className="active" /> : <LikeOutlined />}
           onClick={onLikeClick}
+          className={isLiked ? "liked" : ""}
         >
           {initialLikes}
         </Button>

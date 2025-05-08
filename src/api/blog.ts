@@ -12,7 +12,7 @@ export const likeBlog = (id: number) => {
 
 // 取消点赞博客
 export const unlikeBlog = (id: number) => {
-  return request.delete(`/api/v1/blogs/${id}/like`);
+  return request.post(`/api/v1/blogs/${id}/unlike`);
 };
 
 // 收藏博客
@@ -22,5 +22,5 @@ export const favoriteBlog = (id: number) => {
 
 // 取消收藏博客
 export const unfavoriteBlog = (id: number) => {
-  return request.delete(`/api/v1/blogs/${id}/favorite`);
+  return request.post(`/api/v1/blogs/${id}/unfavorite`);
 };
