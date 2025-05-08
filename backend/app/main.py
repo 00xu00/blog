@@ -54,7 +54,12 @@ async def root():
 # 创建数据库表
 @app.on_event("startup")
 async def startup_event():
-    logger.info("开始创建数据库表...")
-    Base.metadata.drop_all(bind=engine)
-    Base.metadata.create_all(bind=engine)
-    logger.info("数据库表创建完成") 
+    logger.info("检查数据库表...")
+    # 检查数据库文件是否存在
+    db_file = "blog.db"
+    if not os.path.exists(db_file):
+        logger.info("数据库不存在，开始创建数据库表...")
+        Base.metadata.create_all(bind=engine)
+        logger.info("数据库表创建完成")
+    else:
+        logger.info("数据库已存在，跳过创建表") 
