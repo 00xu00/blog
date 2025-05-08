@@ -1,6 +1,7 @@
 from pydantic import BaseModel
 from datetime import datetime
 from typing import Optional, List
+from app.schemas.user import UserInDB
 
 class CommentBase(BaseModel):
     content: str
@@ -24,7 +25,7 @@ class CommentInDB(CommentBase):
         from_attributes = True
 
 class Comment(CommentInDB):
-    author: dict
+    author: UserInDB
     replies: List['Comment'] = []
     is_liked: bool = False
 

@@ -3,6 +3,7 @@ from app.models.comment import Comment
 from app.models.interaction import CommentLike
 from app.schemas.comment import CommentCreate, CommentUpdate
 from typing import List, Optional
+from app.schemas.user import UserInDB
 
 def create_comment(db: Session, comment: CommentCreate, author_id: int) -> Comment:
     db_comment = Comment(

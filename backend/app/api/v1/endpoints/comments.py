@@ -5,6 +5,7 @@ from app.core.deps import get_db, get_current_user
 from app.schemas.comment import Comment, CommentCreate, CommentUpdate
 from app.services import comment as comment_service
 from app.models.user import User
+from app.schemas.user import UserInDB
 
 router = APIRouter()
 
@@ -15,7 +16,10 @@ def create_comment(
     current_user: User = Depends(get_current_user)
 ):
     """创建新评论"""
-    return comment_service.create_comment(db, comment, current_user.id)
+    db_comment = comment_service.create_comment(db, comment, current_user.id)
+    # 手动设置作者信息
+    db_comment.author = current_user
+    return db_comment
 
 @router.get("/blog/{blog_id}", response_model=List[Comment])
 def get_blog_comments(
@@ -26,7 +30,11 @@ def get_blog_comments(
     current_user: User = Depends(get_current_user)
 ):
     """获取博客的所有评论"""
-    return comment_service.get_blog_comments(db, blog_id, skip, limit)
+    comments = comment_service.get_blog_comments(db, blog_id, skip, limit)
+    # 为每个评论设置作者信息
+    for comment in comments:
+        comment.author = comment.author
+    return comments
 
 @router.get("/{comment_id}/replies", response_model=List[Comment])
 def get_comment_replies(
@@ -35,7 +43,11 @@ def get_comment_replies(
     current_user: User = Depends(get_current_user)
 ):
     """获取评论的回复"""
-    return comment_service.get_comment_replies(db, comment_id)
+    replies = comment_service.get_comment_replies(db, comment_id)
+    # 为每个回复设置作者信息
+    for reply in replies:
+        reply.author = reply.author
+    return replies
 
 @router.put("/{comment_id}", response_model=Comment)
 def update_comment(
@@ -48,6 +60,8 @@ def update_comment(
     db_comment = comment_service.update_comment(db, comment_id, comment, current_user.id)
     if not db_comment:
         raise HTTPException(status_code=404, detail="评论不存在或无权修改")
+    # 设置作者信息
+    db_comment.author = current_user
     return db_comment
 
 @router.delete("/{comment_id}")
