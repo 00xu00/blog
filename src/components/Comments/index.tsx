@@ -82,7 +82,7 @@ const Comments: React.FC<CommentsProps> = ({ blogId, onCommentCountChange }) => 
               title={
                 <div>
                   <span className="comment-author">{item.author.username}</span>
-                  <span className="comment-time">{formatDate(item.created_at)}</span>
+                  <span className="comment-time" style={{ marginLeft: '10px' }}>{formatDate(item.created_at)}</span>
                 </div>
               }
               description={item.content}
