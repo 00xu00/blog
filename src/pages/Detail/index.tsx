@@ -4,7 +4,7 @@ import { Col, Row, Breadcrumb, message, Spin } from 'antd';
 import { Link, useLocation } from 'react-router-dom';
 import Author from '../Home/Author/Author';
 import Advert from '../Home/Advert/Advert';
-import { CalendarOutlined, FireOutlined, FolderOpenOutlined } from '@ant-design/icons';
+import { CalendarOutlined, FireOutlined, BarsOutlined } from '@ant-design/icons';
 import ReactMarkdown from 'react-markdown';
 import remarkGfm from 'remark-gfm';
 import rehypeHighlight from 'rehype-highlight';
@@ -161,9 +161,9 @@ const Detail = () => {
             <div className='list-icons center'>
               <span className='list-icon'><CalendarOutlined /> {formatDate(blog.created_at)} </span>
               {blog.tags && blog.tags.length > 0 && (
-                <span className='list-icon'><FolderOpenOutlined /> {blog.tags.join(', ')} </span>
+                <span className='list-icon'><BarsOutlined /> {blog.tags.join(', ')} </span>
               )}
-              <span className='list-icon'><FireOutlined /> {blog.views_count || 0} 阅读 </span>
+              <span className='list-icon'><FireOutlined /> {blog.views_count || 0} </span>
             </div>
             <div className='detail-content'>
               <ReactMarkdown

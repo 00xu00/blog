@@ -1,7 +1,7 @@
 import React from 'react';
 import { List } from 'antd';
 import { Link } from 'react-router-dom';
-import { CalendarOutlined, FireOutlined, FolderOpenOutlined } from '@ant-design/icons';
+import { CalendarOutlined, FireOutlined, BarsOutlined } from '@ant-design/icons';
 import "./index.css"
 
 const LatestArticles = () => {
@@ -42,7 +42,7 @@ const LatestArticles = () => {
                 <div className="latest-title">{item.title}</div>
                 <div className="latest-info">
                   <span className="latest-icon"><CalendarOutlined /> {item.date}</span>
-                  <span className="latest-icon"><FolderOpenOutlined /> {item.category}</span>
+                  <span className="latest-icon"><BarsOutlined /> {item.category}</span>
                   <span className="latest-icon"><FireOutlined /> {item.views}</span>
                 </div>
               </div>

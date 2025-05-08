@@ -1,6 +1,6 @@
 import React from 'react';
 import { Col, List, Row, Breadcrumb } from 'antd';
-import { CalendarOutlined, FireOutlined, FolderOpenOutlined } from '@ant-design/icons';
+import { CalendarOutlined, FireOutlined, BarsOutlined } from '@ant-design/icons';
 import { Link, useLocation } from 'react-router-dom';
 
 const Page = () => {
@@ -55,7 +55,7 @@ const Page = () => {
                                     <div className='list-title'>{item.title}</div>
                                     <div className='list-icons'>
                                         <span className='list-icon'><CalendarOutlined /> 2024-10-22 </span>
-                                        <span className='list-icon'><FolderOpenOutlined /> 视频教学 </span>
+                                        <span className='list-icon'><BarsOutlined /> 视频教学 </span>
                                         <span className='list-icon'><FireOutlined /> 1234人 </span>
                                     </div>
                                     <div className='list-context'>{item.context}</div>

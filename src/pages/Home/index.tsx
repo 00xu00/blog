@@ -1,6 +1,6 @@
 import React from 'react';
 import { Col, List, Row } from 'antd';
-import { CalendarOutlined, FireOutlined, FolderOpenOutlined } from '@ant-design/icons';
+import { CalendarOutlined, FireOutlined, BarsOutlined } from '@ant-design/icons';
 import { Link } from 'react-router-dom';
 import Advert from './Advert/Advert';
 import LatestArticles from './LatestArticles';
@@ -37,8 +37,8 @@ const Home = () => {
                   <div className='list-title'>{item.title}</div>
                   <div className='list-icons'>
                     <span className='list-icon'><CalendarOutlined /> {item.date} </span>
-                    <span className='list-icon'><FolderOpenOutlined /> {item.category} </span>
-                    <span className='list-icon'><FireOutlined /> {item.views}人 </span>
+                    <span className='list-icon'><BarsOutlined /> {item.category} </span>
+                    <span className='list-icon'><FireOutlined /> {item.views} </span>
                   </div>
                   <div className='list-context'>{item.context}</div>
                 </Link>
