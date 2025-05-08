@@ -51,7 +51,7 @@ const Editor: React.FC = () => {
     const token = localStorage.getItem('token');
     if (!token) {
       message.warning('请先登录');
-      navigate('/login');
+      navigate('/auth');
       return;
     }
   }, [navigate]);
@@ -91,7 +91,7 @@ const Editor: React.FC = () => {
       const token = localStorage.getItem('token');
       if (!token) {
         message.warning('请先登录');
-        navigate('/login');
+        navigate('/auth');
         return;
       }
 
@@ -121,7 +121,7 @@ const Editor: React.FC = () => {
       console.error('保存失败:', error);
       if (error.response?.status === 401) {
         message.error('登录已过期，请重新登录');
-        navigate('/login');
+        navigate('/auth');
       } else {
         message.error('保存失败，请重试');
       }

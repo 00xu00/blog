@@ -31,7 +31,7 @@ request.interceptors.response.use(
         case 401:
           message.error("请先登录");
           localStorage.removeItem("token");
-          window.location.href = "/login";
+          window.location.href = "/auth";
           break;
         case 403:
           message.error("没有权限");
