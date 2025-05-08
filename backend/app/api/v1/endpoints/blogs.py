@@ -9,9 +9,14 @@ from app.models.interaction import BlogLike, BlogFavorite
 from app.schemas.blog import BlogCreate, BlogUpdate, BlogInDB
 from app.services import blog as blog_service
 import logging
+from datetime import datetime, timedelta
+from sqlalchemy import text
 
 logger = logging.getLogger(__name__)
 router = APIRouter()
+
+# 用于存储最近访问记录的字典
+recent_views = {}
 
 @router.post("/", response_model=BlogInDB)
 async def create_blog(
@@ -64,7 +69,6 @@ async def get_blog(
 ):
     """获取博客详情"""
     logger.info(f"收到获取博客详情请求: blog_id={blog_id}, user_id={current_user.id}")
-    logger.info(f"请求头: {dict(request.headers)}")
     
     blog = db.query(Blog).filter(Blog.id == blog_id).first()
     if not blog:
@@ -72,6 +76,33 @@ async def get_blog(
             status_code=status.HTTP_404_NOT_FOUND,
             detail="博客不存在"
         )
+    
+    # 获取客户端IP
+    client_ip = request.client.host
+    
+    # 生成访问记录的唯一键
+    view_key = f"{blog_id}_{client_ip}"
+    
+    # 检查是否在1秒内已经访问过
+    current_time = datetime.utcnow()
+    if view_key in recent_views:
+        last_view_time = recent_views[view_key]
+        if current_time - last_view_time < timedelta(seconds=1):
+            logger.info(f"忽略重复访问: blog_id={blog_id}, user_id={current_user.id}")
+        else:
+            # 更新访问时间并增加浏览量
+            recent_views[view_key] = current_time
+            blog.views_count += 1
+            db.commit()
+            db.refresh(blog)
+            logger.info(f"增加浏览量: blog_id={blog_id}, views_count={blog.views_count}")
+    else:
+        # 首次访问，记录时间并增加浏览量
+        recent_views[view_key] = current_time
+        blog.views_count += 1
+        db.commit()
+        db.refresh(blog)
+        logger.info(f"增加浏览量: blog_id={blog_id}, views_count={blog.views_count}")
     
     # 检查当前用户是否点赞
     like = db.query(BlogLike).filter(

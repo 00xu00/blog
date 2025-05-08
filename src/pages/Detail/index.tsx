@@ -65,7 +65,7 @@ const Detail = () => {
     try {
       setLoading(true);
       const response = await getBlogDetail(Number(id));
-      console.log('detail data', response.data);
+      // console.log('detail data', response.data);
 
       setBlog(response.data);
       setLikes(response.data.likes_count);

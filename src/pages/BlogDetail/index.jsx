@@ -15,8 +15,15 @@ const BlogDetail = () => {
   const [blog, setBlog] = useState(null);
   const [loading, setLoading] = useState(true);
 
+  // 使用useRef来跟踪是否已经发送过请求
+  const requestSent = React.useRef(false);
+
   useEffect(() => {
-    fetchBlog();
+    // 确保只发送一次请求
+    if (!requestSent.current) {
+      requestSent.current = true;
+      fetchBlog();
+    }
   }, [id]);
 
   const fetchBlog = async () => {
