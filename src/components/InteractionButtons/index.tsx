@@ -29,7 +29,7 @@ const InteractionButtons: React.FC<InteractionButtonsProps> = ({
       <Space size="large">
         <Button
           type={isLiked ? "primary" : "default"}
-          icon={isLiked ? <LikeFilled className="active" /> : <LikeOutlined />}
+          icon={<LikeOutlined />}
           onClick={onLikeClick}
           className={isLiked ? "liked" : ""}
         >
@@ -37,6 +37,7 @@ const InteractionButtons: React.FC<InteractionButtonsProps> = ({
         </Button>
         <Button
           type={isFavorited ? "primary" : "default"}
+          className={isFavorited ? "liked" : ""}
           icon={<StarOutlined />}
           onClick={onStarClick}
         >

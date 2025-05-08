@@ -1,4 +1,4 @@
-from sqlalchemy import Column, Integer, String, Text, DateTime, ForeignKey, JSON
+from sqlalchemy import Column, Integer, String, Text, DateTime, ForeignKey, JSON, Boolean
 from sqlalchemy.orm import relationship
 from datetime import datetime
 from app.db.base import Base
@@ -23,4 +23,8 @@ class Blog(Base):
     author = relationship("User", back_populates="blogs")
     comments = relationship("Comment", back_populates="blog", cascade="all, delete-orphan")
     likes = relationship("BlogLike", back_populates="blog", cascade="all, delete-orphan")
-    favorites = relationship("BlogFavorite", back_populates="blog", cascade="all, delete-orphan") 
+    favorites = relationship("BlogFavorite", back_populates="blog", cascade="all, delete-orphan")
+    
+    # 非数据库字段
+    is_liked = Column(Boolean, default=False)
+    is_favorited = Column(Boolean, default=False) 

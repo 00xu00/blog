@@ -32,4 +32,4 @@ class BlogInDB(BlogBase):
     author: UserInDB
 
     class Config:
-        from_attributes = True 
+        orm_mode = True 

@@ -5,7 +5,7 @@ from app.core.deps import get_current_user
 from app.db.base import get_db
 from app.models.user import User
 from app.models.blog import Blog
-from app.models.interaction import BlogLike
+from app.models.interaction import BlogLike, BlogFavorite
 from app.schemas.blog import BlogCreate, BlogUpdate, BlogInDB
 from app.services import blog as blog_service
 import logging
@@ -63,26 +63,32 @@ async def get_blog(
     current_user: User = Depends(get_current_user)
 ):
     """获取博客详情"""
-    logger.info(f"收到获取博客请求: blog_id={blog_id}")
+    logger.info(f"收到获取博客详情请求: blog_id={blog_id}, user_id={current_user.id}")
     logger.info(f"请求头: {dict(request.headers)}")
-    db_blog = blog_service.get_blog(db, blog_id)
-    if not db_blog:
-        logger.error(f"博客不存在: blog_id={blog_id}")
+    
+    blog = db.query(Blog).filter(Blog.id == blog_id).first()
+    if not blog:
         raise HTTPException(
             status_code=status.HTTP_404_NOT_FOUND,
             detail="博客不存在"
         )
     
     # 检查当前用户是否点赞
-    is_liked = db.query(BlogLike).filter(
+    like = db.query(BlogLike).filter(
         BlogLike.blog_id == blog_id,
         BlogLike.user_id == current_user.id
-    ).first() is not None
+    ).first()
+    blog.is_liked = like is not None
     
-    db_blog.is_liked = is_liked
+    # 检查当前用户是否收藏
+    favorite = db.query(BlogFavorite).filter(
+        BlogFavorite.blog_id == blog_id,
+        BlogFavorite.user_id == current_user.id
+    ).first()
+    blog.is_favorited = favorite is not None
     
-    logger.info(f"成功获取博客: id={db_blog.id}")
-    return db_blog
+    logger.info(f"获取博客详情成功: blog_id={blog_id}, user_id={current_user.id}")
+    return blog
 
 @router.get("/user/me", response_model=List[BlogInDB])
 async def get_user_blogs(
@@ -209,4 +215,97 @@ async def unlike_blog(
     blog.is_liked = False
     
     logger.info(f"取消点赞成功: blog_id={blog_id}, user_id={current_user.id}")
+    return blog
+
+@router.post("/{blog_id}/favorite", response_model=BlogInDB)
+async def favorite_blog(
+    request: Request,
+    blog_id: int,
+    db: Session = Depends(get_db),
+    current_user: User = Depends(get_current_user)
+):
+    """收藏博客"""
+    logger.info(f"收到收藏请求: blog_id={blog_id}, user_id={current_user.id}")
+    logger.info(f"请求头: {dict(request.headers)}")
+    
+    # 检查博客是否存在
+    blog = db.query(Blog).filter(Blog.id == blog_id).first()
+    if not blog:
+        raise HTTPException(
+            status_code=status.HTTP_404_NOT_FOUND,
+            detail="博客不存在"
+        )
+    
+    # 检查是否已经收藏
+    existing_favorite = db.query(BlogFavorite).filter(
+        BlogFavorite.blog_id == blog_id,
+        BlogFavorite.user_id == current_user.id
+    ).first()
+    
+    if existing_favorite:
+        raise HTTPException(
+            status_code=status.HTTP_400_BAD_REQUEST,
+            detail="已经收藏过了"
+        )
+    
+    # 创建收藏记录
+    favorite = BlogFavorite(user_id=current_user.id, blog_id=blog_id)
+    db.add(favorite)
+    
+    # 更新博客收藏数
+    blog.favorites_count += 1
+    
+    db.commit()
+    db.refresh(blog)
+    
+    # 设置当前用户是否收藏
+    blog.is_favorited = True
+    
+    logger.info(f"收藏成功: blog_id={blog_id}, user_id={current_user.id}")
+    return blog
+
+@router.post("/{blog_id}/unfavorite", response_model=BlogInDB)
+async def unfavorite_blog(
+    request: Request,
+    blog_id: int,
+    db: Session = Depends(get_db),
+    current_user: User = Depends(get_current_user)
+):
+    """取消收藏博客"""
+    logger.info(f"收到取消收藏请求: blog_id={blog_id}, user_id={current_user.id}")
+    logger.info(f"请求头: {dict(request.headers)}")
+    
+    # 检查博客是否存在
+    blog = db.query(Blog).filter(Blog.id == blog_id).first()
+    if not blog:
+        raise HTTPException(
+            status_code=status.HTTP_404_NOT_FOUND,
+            detail="博客不存在"
+        )
+    
+    # 检查是否已经收藏
+    existing_favorite = db.query(BlogFavorite).filter(
+        BlogFavorite.blog_id == blog_id,
+        BlogFavorite.user_id == current_user.id
+    ).first()
+    
+    if not existing_favorite:
+        raise HTTPException(
+            status_code=status.HTTP_400_BAD_REQUEST,
+            detail="还没有收藏"
+        )
+    
+    # 删除收藏记录
+    db.delete(existing_favorite)
+    
+    # 更新博客收藏数
+    blog.favorites_count -= 1
+    
+    db.commit()
+    db.refresh(blog)
+    
+    # 设置当前用户是否收藏
+    blog.is_favorited = False
+    
+    logger.info(f"取消收藏成功: blog_id={blog_id}, user_id={current_user.id}")
     return blog 
