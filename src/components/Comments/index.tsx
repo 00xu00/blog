@@ -1,5 +1,6 @@
 import React, { useState, useEffect } from 'react';
 import { Form, Button, List, Input, message, Avatar } from 'antd';
+import { UserOutlined } from '@ant-design/icons';
 import { getBlogComments, createComment } from '../../api/comment';
 import { formatDate } from '../../utils/date';
 import './index.css';
@@ -8,9 +9,10 @@ const { TextArea } = Input;
 
 interface CommentsProps {
   blogId: number;
+  onCommentCountChange?: (count: number) => void;
 }
 
-const Comments: React.FC<CommentsProps> = ({ blogId }) => {
+const Comments: React.FC<CommentsProps> = ({ blogId, onCommentCountChange }) => {
   const [comments, setComments] = useState<any[]>([]);
   const [submitting, setSubmitting] = useState(false);
   const [form] = Form.useForm();
@@ -23,6 +25,9 @@ const Comments: React.FC<CommentsProps> = ({ blogId }) => {
     try {
       const response = await getBlogComments(blogId);
       setComments(response.data);
+      if (onCommentCountChange) {
+        onCommentCountChange(response.data.length);
+      }
     } catch (error) {
       message.error('获取评论失败');
     }
@@ -66,7 +71,14 @@ const Comments: React.FC<CommentsProps> = ({ blogId }) => {
         renderItem={item => (
           <List.Item>
             <List.Item.Meta
-              avatar={<Avatar src={item.author.avatar} alt={item.author.username} />}
+              avatar={
+                <Avatar
+                  src={item.author.avatar}
+                  icon={!item.author.avatar && <UserOutlined />}
+                  alt={item.author.username}
+                  className="comment-avatar"
+                />
+              }
               title={
                 <div>
                   <span className="comment-author">{item.author.username}</span>

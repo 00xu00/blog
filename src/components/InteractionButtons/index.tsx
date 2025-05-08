@@ -6,9 +6,9 @@ import './index.css';
 export interface InteractionButtonsProps {
   initialLikes: number;
   initialStars: number;
-  initialComments: number;
   isLiked?: boolean;
   isFavorited?: boolean;
+  isCommented?: boolean;
   onLikeClick?: () => void;
   onStarClick?: () => void;
   onCommentClick?: () => void;
@@ -17,9 +17,9 @@ export interface InteractionButtonsProps {
 const InteractionButtons: React.FC<InteractionButtonsProps> = ({
   initialLikes,
   initialStars,
-  initialComments,
   isLiked = false,
   isFavorited = false,
+  isCommented = false,
   onLikeClick,
   onStarClick,
   onCommentClick
@@ -44,10 +44,11 @@ const InteractionButtons: React.FC<InteractionButtonsProps> = ({
           {initialStars}
         </Button>
         <Button
+          type={isCommented ? "primary" : "default"}
+          className={isCommented ? "liked" : ""}
           icon={<MessageOutlined />}
           onClick={onCommentClick}
         >
-          {initialComments}
         </Button>
       </Space>
     </div>

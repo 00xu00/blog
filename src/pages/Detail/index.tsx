@@ -54,6 +54,7 @@ const Detail = () => {
   const [blog, setBlog] = useState<Blog | null>(null);
   const [likes, setLikes] = useState(0);
   const [favorites, setFavorites] = useState(0);
+  const [comments, setComments] = useState(0);
   const [isLiked, setIsLiked] = useState(false);
   const [isFavorited, setIsFavorited] = useState(false);
 
@@ -70,6 +71,7 @@ const Detail = () => {
       setBlog(response.data);
       setLikes(response.data.likes_count);
       setFavorites(response.data.favorites_count);
+      setComments(response.data.comments_count);
       setIsLiked(response.data.is_liked);
       setIsFavorited(response.data.is_favorited);
     } catch (error) {
@@ -108,6 +110,10 @@ const Detail = () => {
     } catch (error) {
       message.error('操作失败');
     }
+  };
+
+  const handleCommentCountChange = (count: number) => {
+    setComments(count);
   };
 
   const breadList = [
@@ -182,14 +188,14 @@ const Detail = () => {
             <InteractionButtons
               initialLikes={likes}
               initialStars={favorites}
-              initialComments={blog.comments_count || 0}
               isLiked={isLiked}
               isFavorited={isFavorited}
+              isCommented={showComments}
               onLikeClick={handleLike}
               onStarClick={handleFavorite}
               onCommentClick={() => setShowComments(!showComments)}
             />
-            {showComments && <Comments blogId={Number(id)} />}
+            {showComments && <Comments blogId={Number(id)} onCommentCountChange={handleCommentCountChange} />}
           </div>
         </Col>
         <Col className='comm-right' xs={0} sm={0} md={7} lg={5} xl={4}>
