@@ -57,6 +57,7 @@ interface Blog {
   is_liked?: boolean;
   is_favorited?: boolean;
   tags?: string[];
+  subtitle?: string;
 }
 
 interface User {
@@ -584,6 +585,9 @@ const Profile: React.FC = () => {
                         }
                         description={
                           <div className="article-meta">
+                            {item.subtitle && (
+                              <div className="article-subtitle">{item.subtitle}</div>
+                            )}
                             <div className="article-description">{item.description}</div>
                             <div className="list-icons">
                               <span className="list-icon">
@@ -627,6 +631,9 @@ const Profile: React.FC = () => {
                         }
                         description={
                           <div className="article-meta">
+                            {item.subtitle && (
+                              <div className="article-subtitle">{item.subtitle}</div>
+                            )}
                             <div className="article-description">{item.description}</div>
                             <div className="list-icons">
                               <span className="list-icon">
@@ -672,6 +679,9 @@ const Profile: React.FC = () => {
                     }
                     description={
                       <div className="article-meta">
+                        {item.subtitle && (
+                          <div className="article-subtitle">{item.subtitle}</div>
+                        )}
                         <div className="article-description">{item.description}</div>
                         <div className="list-icons">
                           <span className="list-icon">
