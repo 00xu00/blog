@@ -177,7 +177,15 @@ const Comments: React.FC<CommentsProps> = ({ blogId, onCommentCountChange }) => 
               <Space className="comment-actions">
                 <Button
                   type="text"
-                  icon={comment.is_liked ? <LikeFilled style={{ color: '#1890ff' }} /> : <LikeOutlined />}
+                  icon={
+                    <span style={{ fontSize: '16px', display: 'inline-flex', alignItems: 'center' }}>
+                      {comment.is_liked ? (
+                        <LikeFilled style={{ color: '#1890ff' }} />
+                      ) : (
+                        <LikeOutlined />
+                      )}
+                    </span>
+                  }
                   onClick={() => handleLike(comment.id)}
                 >
                   {comment.likes_count > 0 && comment.likes_count}
