@@ -27,7 +27,8 @@ import { setMessages, markAsRead } from '../../store/messageSlice';
 import { ProfileState } from '../../store/profile/types';
 import './index.css';
 import { useNavigate, Link, useLocation } from 'react-router-dom';
-import { followUser, unfollowUser } from '../../api/user';
+import { getUserInfo, getUserFollowing, getUserFollowers, followUser, unfollowUser } from '../../api/user';
+import { getUserBlogs, getUserLikedBlogs, getUserFavoriteBlogs, likeBlog, unlikeBlog, favoriteBlog, unfavoriteBlog } from '../../api/blog';
 
 const { TabPane } = Tabs;
 
@@ -40,6 +41,25 @@ interface UserInfo {
   followers_count: number;
   following_count: number;
   articles_count: number;
+}
+
+interface Blog {
+  id: number;
+  title: string;
+  description: string;
+  createTime: string;
+  views: number;
+  likes: number;
+  comments: number;
+  is_liked?: boolean;
+  is_favorited?: boolean;
+}
+
+interface User {
+  id: string;
+  name: string;
+  avatar: string | null;
+  bio: string | null;
 }
 
 const Profile: React.FC = () => {
@@ -55,16 +75,20 @@ const Profile: React.FC = () => {
   const [isEditingBio, setIsEditingBio] = useState(false);
   const [newBio, setNewBio] = useState('');
   const [isUploading, setIsUploading] = useState(false);
+  const [activeTab, setActiveTab] = useState('articles');
+  const [blogs, setBlogs] = useState<Blog[]>([]);
+  const [following, setFollowing] = useState<User[]>([]);
+  const [followers, setFollowers] = useState<User[]>([]);
 
   const {
     articles,
-    following,
-    followers,
-    activeTab
+    following: reduxFollowing,
+    followers: reduxFollowers,
+    activeTab: reduxActiveTab
   } = useSelector((state: RootState) => state.profile);
   const { messages, unreadCount } = useSelector((state: RootState) => state.message);
 
-  // 获取用户真实数据
+  // 获取用户信息
   useEffect(() => {
     const fetchUserInfo = async () => {
       try {
@@ -74,62 +98,12 @@ const Profile: React.FC = () => {
           return;
         }
 
-        let retryCount = 0;
-        const maxRetries = 3;
-        let lastError = null;
-
-        while (retryCount < maxRetries) {
-          try {
-            const url = isOtherUser
-              ? `http://localhost:8000/api/v1/users/${otherUserId}`
-              : 'http://localhost:8000/api/v1/users/me';
-
-            const response = await fetch(url, {
-              method: 'GET',
-              headers: {
-                'Authorization': `Bearer ${token.trim()}`,
-                'Content-Type': 'application/json',
-              },
-            });
-
-            if (response.ok) {
-              const data = await response.json();
-              setUserInfo(data);
-              setIsLoading(false);
-              return;
-            } else if (response.status === 401) {
-              console.error('Token 验证失败:', token);
-              localStorage.removeItem('token');
-              localStorage.removeItem('userInfo');
-              navigate('/auth');
-              return;
-            } else {
-              const errorData = await response.json().catch(() => ({}));
-              lastError = errorData.detail || '获取用户信息失败';
-
-              if (retryCount < maxRetries - 1) {
-                retryCount++;
-                await new Promise(resolve => setTimeout(resolve, 1000 * retryCount));
-                continue;
-              }
-            }
-          } catch (error) {
-            lastError = '请求出错';
-            if (retryCount < maxRetries - 1) {
-              retryCount++;
-              await new Promise(resolve => setTimeout(resolve, 1000 * retryCount));
-              continue;
-            }
-          }
-        }
-
-        if (lastError) {
-          message.error(lastError);
-        }
+        const data = await getUserInfo(isOtherUser ? Number(otherUserId) : undefined);
+        setUserInfo(data);
         setIsLoading(false);
-      } catch (error) {
+      } catch (error: any) {
         console.error('获取用户信息出错:', error);
-        message.error('获取用户信息失败，请稍后重试');
+        message.error(error.response?.data?.detail || '获取用户信息失败，请稍后重试');
         setIsLoading(false);
       }
     };
@@ -137,88 +111,73 @@ const Profile: React.FC = () => {
     fetchUserInfo();
   }, [navigate, isOtherUser, otherUserId]);
 
-  // 获取其他mock数据
+  // 获取博客列表
   useEffect(() => {
-    const fetchMockData = async () => {
-      const mockData = {
-        messages: [
-          {
-            id: '1',
-            sender: {
-              id: '2',
-              name: '用户A',
-              avatar: ''
-            },
-            content: '你好，请问这篇文章的代码可以分享一下吗？',
-            createTime: '2024-01-01 12:00',
-            isRead: false
-          },
-          {
-            id: '2',
-            sender: {
-              id: '3',
-              name: '用户B',
-              avatar: ''
-            },
-            content: '感谢你的分享，对我帮助很大！',
-            createTime: '2024-01-01 10:00',
-            isRead: false
-          }
-        ],
-        articles: [
-          {
-            id: '1',
-            title: '示例文章标题',
-            description: '这是文章的简要描述...',
-            createTime: '2024-01-01',
-            views: 100,
-            likes: 10,
-            comments: 5
-          }
-        ],
-        following: [
-          {
-            id: '1',
-            name: '关注用户1',
-            avatar: '',
-            bio: '个人简介1'
-          }
-        ],
-        followers: [
-          {
-            id: '1',
-            name: '粉丝1',
-            avatar: '',
-            bio: '个人简介1'
-          }
-        ]
-      };
-
-      dispatch(setMessages(mockData.messages));
-      dispatch(setArticles(mockData.articles));
-      dispatch(setFollowing(mockData.following));
-      dispatch(setFollowers(mockData.followers));
+    const fetchBlogs = async () => {
+      try {
+        let data;
+        switch (activeTab) {
+          case 'articles':
+            data = await getUserBlogs();
+            break;
+          case 'likes':
+            data = await getUserLikedBlogs();
+            break;
+          case 'favorites':
+            data = await getUserFavoriteBlogs();
+            break;
+          default:
+            data = [];
+        }
+        setBlogs(data);
+      } catch (error: any) {
+        console.error('获取博客列表出错:', error);
+        message.error(error.response?.data?.detail || '获取博客列表失败，请稍后重试');
+      }
     };
 
-    fetchMockData();
-  }, [dispatch]);
+    if (userInfo) {
+      fetchBlogs();
+    }
+  }, [activeTab, userInfo]);
 
+  // 获取关注和粉丝列表
   useEffect(() => {
-    // 初始化关注状态
-    const initialFollowingMap = following.reduce((acc, user) => {
-      acc[user.id] = true;
-      return acc;
-    }, {} as Record<string, boolean>);
-    setFollowingMap(initialFollowingMap);
+    const fetchFollowingAndFollowers = async () => {
+      if (!userInfo) return;
 
-    // 初始化粉丝关注状态
-    const initialFollowerFollowingMap = followers.reduce((acc, user) => {
-      // 这里应该从后端获取实际的关注状态
-      acc[user.id] = false; // 默认未关注
-      return acc;
-    }, {} as Record<string, boolean>);
-    setFollowerFollowingMap(initialFollowerFollowingMap);
-  }, [following, followers]);
+      try {
+        const [followingData, followersData] = await Promise.all([
+          getUserFollowing(Number(userInfo.id)),
+          getUserFollowers(Number(userInfo.id))
+        ]);
+
+        setFollowing(followingData);
+        setFollowers(followersData);
+
+        // 初始化关注状态
+        const initialFollowingMap = followingData.reduce((acc: Record<string, boolean>, user: User) => {
+          acc[user.id] = true;
+          return acc;
+        }, {} as Record<string, boolean>);
+        setFollowingMap(initialFollowingMap);
+
+        // 初始化粉丝关注状态
+        const initialFollowerFollowingMap = followersData.reduce((acc: Record<string, boolean>, user: User) => {
+          acc[user.id] = false;
+          return acc;
+        }, {} as Record<string, boolean>);
+        setFollowerFollowingMap(initialFollowerFollowingMap);
+      } catch (error: any) {
+        console.error('获取关注和粉丝列表出错:', error);
+        message.error(error.response?.data?.detail || '获取关注和粉丝列表失败，请稍后重试');
+      }
+    };
+
+    if (userInfo) {
+      fetchFollowingAndFollowers();
+    }
+  }, [userInfo]);
 
   const handleMessage = (userId: string) => {
     if (!userInfo) return;
@@ -279,6 +238,48 @@ const Profile: React.FC = () => {
     }
   };
 
+  const handleLike = async (blogId: number) => {
+    try {
+      const blog = blogs.find(b => b.id === blogId);
+      if (!blog) return;
+
+      if (blog.is_liked) {
+        await unlikeBlog(blogId);
+        blog.likes--;
+        blog.is_liked = false;
+      } else {
+        await likeBlog(blogId);
+        blog.likes++;
+        blog.is_liked = true;
+      }
+
+      setBlogs([...blogs]);
+      message.success(blog.is_liked ? '点赞成功' : '取消点赞成功');
+    } catch (error: any) {
+      message.error(error.response?.data?.detail || '操作失败');
+    }
+  };
+
+  const handleFavorite = async (blogId: number) => {
+    try {
+      const blog = blogs.find(b => b.id === blogId);
+      if (!blog) return;
+
+      if (blog.is_favorited) {
+        await unfavoriteBlog(blogId);
+        blog.is_favorited = false;
+      } else {
+        await favoriteBlog(blogId);
+        blog.is_favorited = true;
+      }
+
+      setBlogs([...blogs]);
+      message.success(blog.is_favorited ? '收藏成功' : '取消收藏成功');
+    } catch (error: any) {
+      message.error(error.response?.data?.detail || '操作失败');
+    }
+  };
+
   // 处理头像上传
   const handleAvatarUpload = async (file: File) => {
     try {
@@ -297,7 +298,6 @@ const Profile: React.FC = () => {
 
       if (response.ok) {
         const data = await response.json();
-        // 直接使用返回的BASE64数据
         setUserInfo((prev: UserInfo | null) => prev ? { ...prev, avatar: data.avatar } : null);
         message.success('头像上传成功');
       } else {
@@ -452,80 +452,9 @@ const Profile: React.FC = () => {
     <div className="profile-container">
       <Card className="profile-card">
         {renderUserInfo()}
-        <Tabs activeKey={activeTab} onChange={(key) => dispatch(setActiveTab(key))}>
+        <Tabs activeKey={activeTab} onChange={setActiveTab}>
           {!isOtherUser && (
             <>
-              <TabPane
-                tab={
-                  <span>
-                    <MailOutlined />
-                    <Badge count={unreadCount} offset={[5, 0]}>
-                      私信
-                    </Badge>
-                  </span>
-                }
-                key="messages"
-              >
-                <List
-                  itemLayout="horizontal"
-                  dataSource={messages}
-                  renderItem={message => (
-                    <List.Item
-                      className={`message-item ${!message.isRead ? 'unread' : ''}`}
-                      onClick={() => handleMessage(message.sender.id)}
-                    >
-                      <List.Item.Meta
-                        avatar={<Avatar src={message.sender.avatar} icon={<UserOutlined />} />}
-                        title={
-                          <Space>
-                            <span>{message.sender.name}</span>
-                            {!message.isRead && <Badge status="processing" />}
-                          </Space>
-                        }
-                        description={
-                          <div className="message-content">
-                            <p>{message.content}</p>
-                            <span className="message-time">{message.createTime}</span>
-                          </div>
-                        }
-                      />
-                    </List.Item>
-                  )}
-                />
-              </TabPane>
-              <TabPane
-                tab={
-                  <span>
-                    <HistoryOutlined />
-                    历史记录
-                  </span>
-                }
-                key="history"
-              >
-                <List
-                  itemLayout="vertical"
-                  dataSource={articles}
-                  renderItem={item => (
-                    <List.Item
-                      actions={[
-                        <Space>
-                          <span><EyeOutlined /> {item.views}</span>
-                          <span><LikeOutlined /> {item.likes}</span>
-                          <span><MessageOutlined /> {item.comments}</span>
-                        </Space>
-                      ]}
-                    >
-                      <List.Item.Meta
-                        title={<Link to={`/detail/${item.id}`}>{item.title}</Link>}
-                        description={item.description}
-                      />
-                      <div className="article-meta">
-                        <Tag>{item.createTime}</Tag>
-                      </div>
-                    </List.Item>
-                  )}
-                />
-              </TabPane>
               <TabPane
                 tab={
                   <span>
@@ -537,13 +466,28 @@ const Profile: React.FC = () => {
               >
                 <List
                   itemLayout="vertical"
-                  dataSource={articles}
+                  dataSource={blogs}
                   renderItem={item => (
                     <List.Item
                       actions={[
                         <Space>
+                          <Button
+                            type={item.is_liked ? 'primary' : 'default'}
+                            icon={<LikeOutlined />}
+                            onClick={() => handleLike(item.id)}
+                          >
+                            {item.likes}
+                          </Button>
+                          <Button
+                            type={item.is_favorited ? 'primary' : 'default'}
+                            icon={<StarOutlined />}
+                            onClick={() => handleFavorite(item.id)}
+                          >
+                            收藏
+                          </Button>
+                        </Space>,
+                        <Space>
                           <span><EyeOutlined /> {item.views}</span>
-                          <span><LikeOutlined /> {item.likes}</span>
                           <span><MessageOutlined /> {item.comments}</span>
                         </Space>
                       ]}
@@ -570,13 +514,28 @@ const Profile: React.FC = () => {
               >
                 <List
                   itemLayout="vertical"
-                  dataSource={articles}
+                  dataSource={blogs}
                   renderItem={item => (
                     <List.Item
                       actions={[
                         <Space>
+                          <Button
+                            type={item.is_liked ? 'primary' : 'default'}
+                            icon={<LikeOutlined />}
+                            onClick={() => handleLike(item.id)}
+                          >
+                            {item.likes}
+                          </Button>
+                          <Button
+                            type={item.is_favorited ? 'primary' : 'default'}
+                            icon={<StarOutlined />}
+                            onClick={() => handleFavorite(item.id)}
+                          >
+                            收藏
+                          </Button>
+                        </Space>,
+                        <Space>
                           <span><EyeOutlined /> {item.views}</span>
-                          <span><LikeOutlined /> {item.likes}</span>
                           <span><MessageOutlined /> {item.comments}</span>
                         </Space>
                       ]}
@@ -605,17 +564,28 @@ const Profile: React.FC = () => {
           >
             <List
               itemLayout="vertical"
-              dataSource={articles}
+              dataSource={blogs}
               renderItem={item => (
                 <List.Item
                   actions={[
                     <Space>
-                      <Button type="primary" size="small">编辑</Button>
-                      <Button danger size="small">删除</Button>
+                      <Button
+                        type={item.is_liked ? 'primary' : 'default'}
+                        icon={<LikeOutlined />}
+                        onClick={() => handleLike(item.id)}
+                      >
+                        {item.likes}
+                      </Button>
+                      <Button
+                        type={item.is_favorited ? 'primary' : 'default'}
+                        icon={<StarOutlined />}
+                        onClick={() => handleFavorite(item.id)}
+                      >
+                        收藏
+                      </Button>
                     </Space>,
                     <Space>
                       <span><EyeOutlined /> {item.views}</span>
-                      <span><LikeOutlined /> {item.likes}</span>
                       <span><MessageOutlined /> {item.comments}</span>
                     </Space>
                   ]}

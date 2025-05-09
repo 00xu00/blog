@@ -339,4 +339,72 @@ async def unfavorite_blog(
     blog.is_favorited = False
     
     logger.info(f"取消收藏成功: blog_id={blog_id}, user_id={current_user.id}")
-    return blog 
+    return blog
+
+@router.get("/user/me/likes", response_model=List[BlogInDB])
+async def get_user_liked_blogs(
+    request: Request,
+    skip: int = 0,
+    limit: int = 100,
+    db: Session = Depends(get_db),
+    current_user: User = Depends(get_current_user)
+):
+    """获取当前用户点赞的博客列表"""
+    logger.info(f"收到获取用户点赞博客列表请求: user_id={current_user.id}")
+    
+    # 获取用户点赞的博客ID列表
+    liked_blog_ids = db.query(BlogLike.blog_id).filter(
+        BlogLike.user_id == current_user.id
+    ).all()
+    liked_blog_ids = [id[0] for id in liked_blog_ids]
+    
+    # 获取博客详情
+    blogs = db.query(Blog).filter(
+        Blog.id.in_(liked_blog_ids)
+    ).offset(skip).limit(limit).all()
+    
+    # 设置点赞和收藏状态
+    for blog in blogs:
+        blog.is_liked = True
+        favorite = db.query(BlogFavorite).filter(
+            BlogFavorite.blog_id == blog.id,
+            BlogFavorite.user_id == current_user.id
+        ).first()
+        blog.is_favorited = favorite is not None
+    
+    logger.info(f"成功获取用户点赞博客列表: count={len(blogs)}")
+    return blogs
+
+@router.get("/user/me/favorites", response_model=List[BlogInDB])
+async def get_user_favorite_blogs(
+    request: Request,
+    skip: int = 0,
+    limit: int = 100,
+    db: Session = Depends(get_db),
+    current_user: User = Depends(get_current_user)
+):
+    """获取当前用户收藏的博客列表"""
+    logger.info(f"收到获取用户收藏博客列表请求: user_id={current_user.id}")
+    
+    # 获取用户收藏的博客ID列表
+    favorite_blog_ids = db.query(BlogFavorite.blog_id).filter(
+        BlogFavorite.user_id == current_user.id
+    ).all()
+    favorite_blog_ids = [id[0] for id in favorite_blog_ids]
+    
+    # 获取博客详情
+    blogs = db.query(Blog).filter(
+        Blog.id.in_(favorite_blog_ids)
+    ).offset(skip).limit(limit).all()
+    
+    # 设置点赞和收藏状态
+    for blog in blogs:
+        like = db.query(BlogLike).filter(
+            BlogLike.blog_id == blog.id,
+            BlogLike.user_id == current_user.id
+        ).first()
+        blog.is_liked = like is not None
+        blog.is_favorited = True
+    
+    logger.info(f"成功获取用户收藏博客列表: count={len(blogs)}")
+    return blogs 

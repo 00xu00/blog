@@ -8,7 +8,7 @@ from app.services.user import get_user_by_id, update_user
 import os
 import shutil
 from datetime import datetime
-from typing import Optional
+from typing import Optional, List
 import base64
 from sqlalchemy import select
 
@@ -184,6 +184,7 @@ def check_following_status(
     current_user: User = Depends(get_current_user),
     db: Session = Depends(get_db)
 ):
+    """检查当前用户是否关注了指定用户"""
     if user_id == current_user.id:
         return {"is_following": False}
     
@@ -192,4 +193,38 @@ def check_following_status(
         user_following.c.followed_id == user_id
     )
     result = db.execute(stmt).first()
-    return {"is_following": bool(result)} 
+    return {"is_following": result is not None}
+
+@router.get("/{user_id}/following", response_model=List[UserInDB])
+def get_user_following(
+    user_id: int,
+    db: Session = Depends(get_db),
+    current_user: User = Depends(get_current_user)
+):
+    """获取用户的关注列表"""
+    user = get_user_by_id(db, user_id)
+    if not user:
+        raise HTTPException(
+            status_code=status.HTTP_404_NOT_FOUND,
+            detail="用户不存在"
+        )
+    
+    following = user.following
+    return following
+
+@router.get("/{user_id}/followers", response_model=List[UserInDB])
+def get_user_followers(
+    user_id: int,
+    db: Session = Depends(get_db),
+    current_user: User = Depends(get_current_user)
+):
+    """获取用户的粉丝列表"""
+    user = get_user_by_id(db, user_id)
+    if not user:
+        raise HTTPException(
+            status_code=status.HTTP_404_NOT_FOUND,
+            detail="用户不存在"
+        )
+    
+    followers = user.followers
+    return followers 
