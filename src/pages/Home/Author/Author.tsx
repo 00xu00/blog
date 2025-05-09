@@ -18,15 +18,17 @@ interface AuthorProps {
         };
     };
     onAuthorClick?: (author: AuthorProps['author']) => void;
+    isCurrentUser?: boolean;
 }
 
-const Author: React.FC<AuthorProps> = ({ author, onAuthorClick }) => {
+const Author: React.FC<AuthorProps> = ({ author, onAuthorClick, isCurrentUser = false }) => {
     const navigate = useNavigate();
     const [isFollowing, setIsFollowing] = useState(false);
     const [isLoading, setIsLoading] = useState(false);
 
     useEffect(() => {
         const checkStatus = async () => {
+            if (isCurrentUser) return;
             try {
                 const response = await checkFollowingStatus(author.id);
                 setIsFollowing(response.data.is_following);
@@ -35,7 +37,7 @@ const Author: React.FC<AuthorProps> = ({ author, onAuthorClick }) => {
             }
         };
         checkStatus();
-    }, [author.id]);
+    }, [author.id, isCurrentUser]);
 
     const handleAvatarClick = () => {
         if (onAuthorClick) {
@@ -83,17 +85,19 @@ const Author: React.FC<AuthorProps> = ({ author, onAuthorClick }) => {
                         </a>
                     ) : null}
                 </div>
-                <div style={{ marginTop: '16px', textAlign: 'center' }}>
-                    <Button
-                        type={isFollowing ? 'default' : 'primary'}
-                        icon={isFollowing ? <CheckOutlined /> : <UserAddOutlined />}
-                        onClick={handleFollow}
-                        loading={isLoading}
-                        block
-                    >
-                        {isFollowing ? '已关注' : '关注'}
-                    </Button>
-                </div>
+                {!isCurrentUser && (
+                    <div style={{ marginTop: '16px', textAlign: 'center' }}>
+                        <Button
+                            type={isFollowing ? 'default' : 'primary'}
+                            icon={isFollowing ? <CheckOutlined /> : <UserAddOutlined />}
+                            onClick={handleFollow}
+                            loading={isLoading}
+                            block
+                        >
+                            {isFollowing ? '已关注' : '关注'}
+                        </Button>
+                    </div>
+                )}
             </div>
         </div>
     );

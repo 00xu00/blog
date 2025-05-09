@@ -420,7 +420,7 @@ const Profile: React.FC = () => {
             </p>
           )}
           <div className="profile-actions">
-            {!isOtherUser && (
+            {isOtherUser && (
               <>
                 <Button type="primary" onClick={handleFollow(userInfo.id)}>
                   <UserAddOutlined /> 关注

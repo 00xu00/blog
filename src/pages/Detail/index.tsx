@@ -57,9 +57,16 @@ const Detail = () => {
   const [comments, setComments] = useState(0);
   const [isLiked, setIsLiked] = useState(false);
   const [isFavorited, setIsFavorited] = useState(false);
+  const [currentUserId, setCurrentUserId] = useState<number | null>(null);
 
   useEffect(() => {
     fetchBlogDetail();
+    // 获取当前用户ID
+    const userInfo = localStorage.getItem('userInfo');
+    if (userInfo) {
+      const { id } = JSON.parse(userInfo);
+      setCurrentUserId(id);
+    }
   }, [id]);
 
   const fetchBlogDetail = async () => {
@@ -214,6 +221,7 @@ const Detail = () => {
                 social_links: blog.author.social_links
               }}
               onAuthorClick={handleAuthorClick}
+              isCurrentUser={currentUserId === blog.author.id}
             />
           )}
           <div className="toc-container">
