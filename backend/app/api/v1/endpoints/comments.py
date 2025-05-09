@@ -30,7 +30,7 @@ def get_blog_comments(
     current_user: User = Depends(get_current_user)
 ):
     """获取博客的所有评论"""
-    comments = comment_service.get_blog_comments(db, blog_id, skip, limit)
+    comments = comment_service.get_blog_comments(db, blog_id, skip, limit, current_user.id)
     # 为每个评论设置作者信息
     for comment in comments:
         comment.author = comment.author
@@ -43,7 +43,7 @@ def get_comment_replies(
     current_user: User = Depends(get_current_user)
 ):
     """获取评论的回复"""
-    replies = comment_service.get_comment_replies(db, comment_id)
+    replies = comment_service.get_comment_replies(db, comment_id, current_user.id)
     # 为每个回复设置作者信息
     for reply in replies:
         reply.author = reply.author
@@ -94,5 +94,5 @@ def unlike_comment(
 ):
     """取消点赞评论"""
     if not comment_service.unlike_comment(db, comment_id, current_user.id):
-        raise HTTPException(status_code=400, detail="未点赞该评论")
+        raise HTTPException(status_code=400, detail="还没有点赞该评论")
     return {"message": "取消点赞成功"} 

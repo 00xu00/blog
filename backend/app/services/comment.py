@@ -20,15 +20,46 @@ def create_comment(db: Session, comment: CommentCreate, author_id: int) -> Comme
 def get_comment(db: Session, comment_id: int) -> Optional[Comment]:
     return db.query(Comment).filter(Comment.id == comment_id).first()
 
-def get_blog_comments(db: Session, blog_id: int, skip: int = 0, limit: int = 100) -> List[Comment]:
-    return db.query(Comment)\
+def get_blog_comments(db: Session, blog_id: int, skip: int = 0, limit: int = 100, current_user_id: Optional[int] = None) -> List[Comment]:
+    comments = db.query(Comment)\
         .filter(Comment.blog_id == blog_id, Comment.parent_id == None)\
         .offset(skip)\
         .limit(limit)\
         .all()
+    
+    # 设置评论的点赞状态
+    if current_user_id:
+        for comment in comments:
+            # 检查主评论的点赞状态
+            like = db.query(CommentLike).filter(
+                CommentLike.comment_id == comment.id,
+                CommentLike.user_id == current_user_id
+            ).first()
+            comment.is_liked = like is not None
+            
+            # 检查回复的点赞状态
+            for reply in comment.replies:
+                reply_like = db.query(CommentLike).filter(
+                    CommentLike.comment_id == reply.id,
+                    CommentLike.user_id == current_user_id
+                ).first()
+                reply.is_liked = reply_like is not None
+    
+    return comments
 
-def get_comment_replies(db: Session, comment_id: int) -> List[Comment]:
-    return db.query(Comment).filter(Comment.parent_id == comment_id).all()
+def get_comment_replies(db: Session, comment_id: int, current_user_id: Optional[int] = None) -> List[Comment]:
+    replies = db.query(Comment).filter(Comment.parent_id == comment_id).all()
+    
+    # 设置回复的点赞状态
+    if current_user_id:
+        for reply in replies:
+            like = db.query(CommentLike).filter(
+                CommentLike.comment_id == reply.id,
+                CommentLike.user_id == current_user_id
+            ).first()
+            reply.is_liked = like is not None
+    
+    return replies
 
 def update_comment(db: Session, comment_id: int, comment: CommentUpdate, author_id: int) -> Optional[Comment]:
     db_comment = db.query(Comment).filter(Comment.id == comment_id, Comment.author_id == author_id).first()
