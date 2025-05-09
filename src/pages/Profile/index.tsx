@@ -179,9 +179,10 @@ const Profile: React.FC = () => {
         }, {} as Record<string, boolean>);
         setFollowingMap(initialFollowingMap);
 
-        // 初始化粉丝关注状态
+        // 初始化粉丝关注状态 - 修改这部分逻辑
         const initialFollowerFollowingMap = followersData.reduce((acc: Record<string, boolean>, user: User) => {
-          acc[user.id] = false;
+          // 检查该粉丝是否在关注列表中
+          acc[user.id] = followingData.some((following: User) => following.id === user.id);
           return acc;
         }, {} as Record<string, boolean>);
         setFollowerFollowingMap(initialFollowerFollowingMap);
