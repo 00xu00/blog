@@ -1,8 +1,9 @@
-import React from 'react';
-import { Avatar, Divider } from 'antd';
+import React, { useState, useEffect } from 'react';
+import { Avatar, Divider, Button, message } from 'antd';
 import './index.css';
-import { GithubOutlined } from "@ant-design/icons";
+import { GithubOutlined, UserAddOutlined, CheckOutlined } from "@ant-design/icons";
 import { useNavigate } from 'react-router-dom';
+import { followUser, unfollowUser, checkFollowingStatus } from '../../../api/user';
 
 interface AuthorProps {
     author: {
@@ -21,10 +22,42 @@ interface AuthorProps {
 
 const Author: React.FC<AuthorProps> = ({ author, onAuthorClick }) => {
     const navigate = useNavigate();
+    const [isFollowing, setIsFollowing] = useState(false);
+    const [isLoading, setIsLoading] = useState(false);
+
+    useEffect(() => {
+        const checkStatus = async () => {
+            try {
+                const response = await checkFollowingStatus(author.id);
+                setIsFollowing(response.data.is_following);
+            } catch (error) {
+                console.error('检查关注状态失败:', error);
+            }
+        };
+        checkStatus();
+    }, [author.id]);
 
     const handleAvatarClick = () => {
         if (onAuthorClick) {
             onAuthorClick(author);
+        }
+    };
+
+    const handleFollow = async () => {
+        try {
+            setIsLoading(true);
+            if (isFollowing) {
+                await unfollowUser(author.id);
+                message.success('取消关注成功');
+            } else {
+                await followUser(author.id);
+                message.success('关注成功');
+            }
+            setIsFollowing(!isFollowing);
+        } catch (error: any) {
+            message.error(error.response?.data?.detail || '操作失败');
+        } finally {
+            setIsLoading(false);
         }
     };
 
@@ -49,6 +82,17 @@ const Author: React.FC<AuthorProps> = ({ author, onAuthorClick }) => {
                             <Avatar size={28} icon={<GithubOutlined />} className="account" />
                         </a>
                     ) : null}
+                </div>
+                <div style={{ marginTop: '16px', textAlign: 'center' }}>
+                    <Button
+                        type={isFollowing ? 'default' : 'primary'}
+                        icon={isFollowing ? <CheckOutlined /> : <UserAddOutlined />}
+                        onClick={handleFollow}
+                        loading={isLoading}
+                        block
+                    >
+                        {isFollowing ? '已关注' : '关注'}
+                    </Button>
                 </div>
             </div>
         </div>

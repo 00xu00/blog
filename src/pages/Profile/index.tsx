@@ -27,6 +27,7 @@ import { setMessages, markAsRead } from '../../store/messageSlice';
 import { ProfileState } from '../../store/profile/types';
 import './index.css';
 import { useNavigate, Link, useLocation } from 'react-router-dom';
+import { followUser, unfollowUser } from '../../api/user';
 
 const { TabPane } = Tabs;
 
@@ -228,32 +229,54 @@ const Profile: React.FC = () => {
     navigate(`/chat/${userId}`);
   };
 
-  const handleFollow = (userId: string) => (e: React.MouseEvent) => {
+  const handleFollow = (userId: string) => async (e: React.MouseEvent) => {
     e.preventDefault();
-    if (!userInfo) return;
-    if (userId === userInfo.id) {
-      message.warning('不能关注自己');
-      return;
+    try {
+      if (userId === userInfo?.id) {
+        message.warning('不能关注自己');
+        return;
+      }
+
+      if (followingMap[userId]) {
+        await unfollowUser(Number(userId));
+        message.success('已取消关注');
+      } else {
+        await followUser(Number(userId));
+        message.success('关注成功');
+      }
+
+      setFollowingMap(prev => ({
+        ...prev,
+        [userId]: !prev[userId]
+      }));
+    } catch (error: any) {
+      message.error(error.response?.data?.detail || '操作失败');
     }
-    setFollowingMap(prev => ({
-      ...prev,
-      [userId]: !prev[userId]
-    }));
-    message.success(followingMap[userId] ? '已取消关注' : '关注成功');
   };
 
-  const handleFollowerFollow = (userId: string) => (e: React.MouseEvent) => {
+  const handleFollowerFollow = (userId: string) => async (e: React.MouseEvent) => {
     e.preventDefault();
-    if (!userInfo) return;
-    if (userId === userInfo.id) {
-      message.warning('不能关注自己');
-      return;
+    try {
+      if (userId === userInfo?.id) {
+        message.warning('不能关注自己');
+        return;
+      }
+
+      if (followerFollowingMap[userId]) {
+        await unfollowUser(Number(userId));
+        message.success('已取消关注');
+      } else {
+        await followUser(Number(userId));
+        message.success('关注成功');
+      }
+
+      setFollowerFollowingMap(prev => ({
+        ...prev,
+        [userId]: !prev[userId]
+      }));
+    } catch (error: any) {
+      message.error(error.response?.data?.detail || '操作失败');
     }
-    setFollowerFollowingMap(prev => ({
-      ...prev,
-      [userId]: !prev[userId]
-    }));
-    message.success(followerFollowingMap[userId] ? '已取消关注' : '关注成功');
   };
 
   // 处理头像上传
