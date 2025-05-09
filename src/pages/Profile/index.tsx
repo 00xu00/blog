@@ -545,6 +545,10 @@ const Profile: React.FC = () => {
                   <div className="empty-state">
                     <MailOutlined />
                     <div className="empty-state-text">暂无私信</div>
+                    <div className="empty-state-subtext">关注感兴趣的用户，开始交流吧</div>
+                    <Button type="primary" onClick={() => navigate('/')}>
+                      去关注用户
+                    </Button>
                   </div>
                 )}
               </TabPane>
@@ -574,6 +578,10 @@ const Profile: React.FC = () => {
                   <div className="empty-state">
                     <HistoryOutlined />
                     <div className="empty-state-text">暂无浏览记录</div>
+                    <div className="empty-state-subtext">开始阅读文章，记录你的足迹</div>
+                    <Button type="primary" onClick={() => navigate('/')}>
+                      浏览文章
+                    </Button>
                   </div>
                 )}
               </TabPane>
@@ -586,42 +594,53 @@ const Profile: React.FC = () => {
                 }
                 key="likes"
               >
-                <List
-                  itemLayout="vertical"
-                  dataSource={blogs}
-                  renderItem={item => (
-                    <List.Item>
-                      <List.Item.Meta
-                        title={
-                          <Link to={`/detail/${item.id}`} className="article-title">
-                            {item.title}
-                          </Link>
-                        }
-                        description={
-                          <div className="article-meta">
-                            {item.subtitle && (
-                              <div className="article-subtitle">{item.subtitle}</div>
-                            )}
-                            <div className="article-description">{item.description}</div>
-                            <div className="list-icons">
-                              <span className="list-icon">
-                                <CalendarOutlined /> {formatDate(item.created_at)}
-                              </span>
-                              {item.tags && item.tags.length > 0 && (
-                                <span className="list-icon">
-                                  <BarsOutlined /> {item.tags.join(', ')}
-                                </span>
+                {blogs.length > 0 ? (
+                  <List
+                    itemLayout="vertical"
+                    dataSource={blogs}
+                    renderItem={item => (
+                      <List.Item>
+                        <List.Item.Meta
+                          title={
+                            <Link to={`/detail/${item.id}`} className="article-title">
+                              {item.title}
+                            </Link>
+                          }
+                          description={
+                            <div className="article-meta">
+                              {item.subtitle && (
+                                <div className="article-subtitle">{item.subtitle}</div>
                               )}
-                              <span className="list-icon">
-                                <FireOutlined /> {item.views_count}
-                              </span>
+                              <div className="article-description">{item.description}</div>
+                              <div className="list-icons">
+                                <span className="list-icon">
+                                  <CalendarOutlined /> {formatDate(item.created_at)}
+                                </span>
+                                {item.tags && item.tags.length > 0 && (
+                                  <span className="list-icon">
+                                    <BarsOutlined /> {item.tags.join(', ')}
+                                  </span>
+                                )}
+                                <span className="list-icon">
+                                  <FireOutlined /> {item.views_count}
+                                </span>
+                              </div>
                             </div>
-                          </div>
-                        }
-                      />
-                    </List.Item>
-                  )}
-                />
+                          }
+                        />
+                      </List.Item>
+                    )}
+                  />
+                ) : (
+                  <div className="empty-state">
+                    <LikeOutlined />
+                    <div className="empty-state-text">暂无点赞文章</div>
+                    <div className="empty-state-subtext">发现好文章，别忘了点赞支持</div>
+                    <Button type="primary" onClick={() => navigate('/')}>
+                      浏览文章
+                    </Button>
+                  </div>
+                )}
               </TabPane>
               <TabPane
                 tab={
@@ -632,42 +651,53 @@ const Profile: React.FC = () => {
                 }
                 key="favorites"
               >
-                <List
-                  itemLayout="vertical"
-                  dataSource={blogs}
-                  renderItem={item => (
-                    <List.Item>
-                      <List.Item.Meta
-                        title={
-                          <Link to={`/detail/${item.id}`} className="article-title">
-                            {item.title}
-                          </Link>
-                        }
-                        description={
-                          <div className="article-meta">
-                            {item.subtitle && (
-                              <div className="article-subtitle">{item.subtitle}</div>
-                            )}
-                            <div className="article-description">{item.description}</div>
-                            <div className="list-icons">
-                              <span className="list-icon">
-                                <CalendarOutlined /> {formatDate(item.created_at)}
-                              </span>
-                              {item.tags && item.tags.length > 0 && (
-                                <span className="list-icon">
-                                  <BarsOutlined /> {item.tags.join(', ')}
-                                </span>
+                {blogs.length > 0 ? (
+                  <List
+                    itemLayout="vertical"
+                    dataSource={blogs}
+                    renderItem={item => (
+                      <List.Item>
+                        <List.Item.Meta
+                          title={
+                            <Link to={`/detail/${item.id}`} className="article-title">
+                              {item.title}
+                            </Link>
+                          }
+                          description={
+                            <div className="article-meta">
+                              {item.subtitle && (
+                                <div className="article-subtitle">{item.subtitle}</div>
                               )}
-                              <span className="list-icon">
-                                <FireOutlined /> {item.views_count}
-                              </span>
+                              <div className="article-description">{item.description}</div>
+                              <div className="list-icons">
+                                <span className="list-icon">
+                                  <CalendarOutlined /> {formatDate(item.created_at)}
+                                </span>
+                                {item.tags && item.tags.length > 0 && (
+                                  <span className="list-icon">
+                                    <BarsOutlined /> {item.tags.join(', ')}
+                                  </span>
+                                )}
+                                <span className="list-icon">
+                                  <FireOutlined /> {item.views_count}
+                                </span>
+                              </div>
                             </div>
-                          </div>
-                        }
-                      />
-                    </List.Item>
-                  )}
-                />
+                          }
+                        />
+                      </List.Item>
+                    )}
+                  />
+                ) : (
+                  <div className="empty-state">
+                    <StarOutlined />
+                    <div className="empty-state-text">暂无收藏文章</div>
+                    <div className="empty-state-subtext">收藏喜欢的文章，方便随时查看</div>
+                    <Button type="primary" onClick={() => navigate('/')}>
+                      浏览文章
+                    </Button>
+                  </div>
+                )}
               </TabPane>
             </>
           )}
@@ -680,42 +710,57 @@ const Profile: React.FC = () => {
             }
             key="articles"
           >
-            <List
-              itemLayout="vertical"
-              dataSource={blogs}
-              renderItem={item => (
-                <List.Item>
-                  <List.Item.Meta
-                    title={
-                      <Link to={`/detail/${item.id}`} className="article-title">
-                        {item.title}
-                      </Link>
-                    }
-                    description={
-                      <div className="article-meta">
-                        {item.subtitle && (
-                          <div className="article-subtitle">{item.subtitle}</div>
-                        )}
-                        <div className="article-description">{item.description}</div>
-                        <div className="list-icons">
-                          <span className="list-icon">
-                            <CalendarOutlined /> {formatDate(item.created_at)}
-                          </span>
-                          {item.tags && item.tags.length > 0 && (
-                            <span className="list-icon">
-                              <BarsOutlined /> {item.tags.join(', ')}
-                            </span>
+            {blogs.length > 0 ? (
+              <List
+                itemLayout="vertical"
+                dataSource={blogs}
+                renderItem={item => (
+                  <List.Item>
+                    <List.Item.Meta
+                      title={
+                        <Link to={`/detail/${item.id}`} className="article-title">
+                          {item.title}
+                        </Link>
+                      }
+                      description={
+                        <div className="article-meta">
+                          {item.subtitle && (
+                            <div className="article-subtitle">{item.subtitle}</div>
                           )}
-                          <span className="list-icon">
-                            <FireOutlined /> {item.views_count}
-                          </span>
+                          <div className="article-description">{item.description}</div>
+                          <div className="list-icons">
+                            <span className="list-icon">
+                              <CalendarOutlined /> {formatDate(item.created_at)}
+                            </span>
+                            {item.tags && item.tags.length > 0 && (
+                              <span className="list-icon">
+                                <BarsOutlined /> {item.tags.join(', ')}
+                              </span>
+                            )}
+                            <span className="list-icon">
+                              <FireOutlined /> {item.views_count}
+                            </span>
+                          </div>
                         </div>
-                      </div>
-                    }
-                  />
-                </List.Item>
-              )}
-            />
+                      }
+                    />
+                  </List.Item>
+                )}
+              />
+            ) : (
+              <div className="empty-state">
+                <EditOutlined />
+                <div className="empty-state-text">暂无{isOtherUser ? '文章' : '我的文章'}</div>
+                <div className="empty-state-subtext">
+                  {isOtherUser ? '这个用户还没有发布过文章' : '开始创作你的第一篇文章吧'}
+                </div>
+                {!isOtherUser && (
+                  <Button type="primary" onClick={() => navigate('/editor')}>
+                    写文章
+                  </Button>
+                )}
+              </div>
+            )}
           </TabPane>
           {!isOtherUser && (
             <>
@@ -728,32 +773,43 @@ const Profile: React.FC = () => {
                 }
                 key="following"
               >
-                <List
-                  grid={{ gutter: 16, column: 4 }}
-                  dataSource={following}
-                  renderItem={user => (
-                    <List.Item>
-                      <Card>
-                        <div className="user-card">
-                          <Avatar size={64} src={user.avatar} icon={<UserOutlined />} />
-                          <h3>{user.name}</h3>
-                          <p>{user.bio}</p>
-                          <Space>
-                            <Button
-                              type={followingMap[user.id] ? 'default' : 'primary'}
-                              block
-                              onClick={handleFollow(user.id)}
-                              icon={followingMap[user.id] ? <CheckOutlined /> : <UserAddOutlined />}
-                            >
-                              {followingMap[user.id] ? '已关注' : '关注'}
-                            </Button>
-                            <Button block onClick={() => handleMessage(user.id)}>私信</Button>
-                          </Space>
-                        </div>
-                      </Card>
-                    </List.Item>
-                  )}
-                />
+                {following.length > 0 ? (
+                  <List
+                    grid={{ gutter: 16, column: 4 }}
+                    dataSource={following}
+                    renderItem={user => (
+                      <List.Item>
+                        <Card>
+                          <div className="user-card">
+                            <Avatar size={64} src={user.avatar} icon={<UserOutlined />} />
+                            <h3>{user.name}</h3>
+                            <p>{user.bio}</p>
+                            <Space>
+                              <Button
+                                type={followingMap[user.id] ? 'default' : 'primary'}
+                                block
+                                onClick={handleFollow(user.id)}
+                                icon={followingMap[user.id] ? <CheckOutlined /> : <UserAddOutlined />}
+                              >
+                                {followingMap[user.id] ? '已关注' : '关注'}
+                              </Button>
+                              <Button block onClick={() => handleMessage(user.id)}>私信</Button>
+                            </Space>
+                          </div>
+                        </Card>
+                      </List.Item>
+                    )}
+                  />
+                ) : (
+                  <div className="empty-state">
+                    <UserOutlined />
+                    <div className="empty-state-text">暂无关注</div>
+                    <div className="empty-state-subtext">关注感兴趣的用户，获取更多精彩内容</div>
+                    <Button type="primary" onClick={() => navigate('/')}>
+                      浏览文章
+                    </Button>
+                  </div>
+                )}
               </TabPane>
               <TabPane
                 tab={
@@ -764,32 +820,43 @@ const Profile: React.FC = () => {
                 }
                 key="followers"
               >
-                <List
-                  grid={{ gutter: 16, column: 4 }}
-                  dataSource={followers}
-                  renderItem={user => (
-                    <List.Item>
-                      <Card>
-                        <div className="user-card">
-                          <Avatar size={64} src={user.avatar} icon={<UserOutlined />} />
-                          <h3>{user.name}</h3>
-                          <p>{user.bio}</p>
-                          <Space>
-                            <Button
-                              type={followerFollowingMap[user.id] ? 'default' : 'primary'}
-                              block
-                              onClick={handleFollowerFollow(user.id)}
-                              icon={followerFollowingMap[user.id] ? <CheckOutlined /> : <UserAddOutlined />}
-                            >
-                              {followerFollowingMap[user.id] ? '已关注' : '关注'}
-                            </Button>
-                            <Button block onClick={() => handleMessage(user.id)}>私信</Button>
-                          </Space>
-                        </div>
-                      </Card>
-                    </List.Item>
-                  )}
-                />
+                {followers.length > 0 ? (
+                  <List
+                    grid={{ gutter: 16, column: 4 }}
+                    dataSource={followers}
+                    renderItem={user => (
+                      <List.Item>
+                        <Card>
+                          <div className="user-card">
+                            <Avatar size={64} src={user.avatar} icon={<UserOutlined />} />
+                            <h3>{user.name}</h3>
+                            <p>{user.bio}</p>
+                            <Space>
+                              <Button
+                                type={followerFollowingMap[user.id] ? 'default' : 'primary'}
+                                block
+                                onClick={handleFollowerFollow(user.id)}
+                                icon={followerFollowingMap[user.id] ? <CheckOutlined /> : <UserAddOutlined />}
+                              >
+                                {followerFollowingMap[user.id] ? '已关注' : '关注'}
+                              </Button>
+                              <Button block onClick={() => handleMessage(user.id)}>私信</Button>
+                            </Space>
+                          </div>
+                        </Card>
+                      </List.Item>
+                    )}
+                  />
+                ) : (
+                  <div className="empty-state">
+                    <HeartOutlined />
+                    <div className="empty-state-text">暂无粉丝</div>
+                    <div className="empty-state-subtext">分享你的文章，让更多人认识你</div>
+                    <Button type="primary" onClick={() => navigate('/editor')}>
+                      写文章
+                    </Button>
+                  </div>
+                )}
               </TabPane>
             </>
           )}

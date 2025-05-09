@@ -28,7 +28,7 @@ const MarkdownToc: React.FC<MarkdownTocProps> = ({ content }) => {
   // 找到当前应该激活的标题
   const findActiveHeading = useCallback(() => {
     const headings = document.querySelectorAll('.detail-content h1, .detail-content h2, .detail-content h3, .detail-content h4');
-    const scrollPosition = window.scrollY + headerHeight + 20; // 添加一个小的偏移量
+    const scrollPosition = window.scrollY + headerHeight + -5; // 添加一个小的偏移量
 
     // 找到第一个位置大于滚动位置的标题的前一个标题
     for (let i = 0; i < headings.length; i++) {

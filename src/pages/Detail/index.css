@@ -13,6 +13,10 @@
   transform: scale(1.02);
 }
 
+.detail-subtitle {
+  margin-left: 15px;
+}
+
 .list-icons.center {
   text-align: start;
 }

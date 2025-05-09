@@ -354,7 +354,7 @@
   color: rgba(0, 0, 0, 0.45);
 }
 
-.ant-list-item {
+.profile-container .ant-list-item {
   padding: 20px 24px;
   margin-bottom: 20px;
   border: 2px solid #e8e8e8;
@@ -364,23 +364,23 @@
   box-shadow: 0 2px 8px rgba(0, 0, 0, 0.06);
 }
 
-.ant-list-item:hover {
+.profile-container .ant-list-item:hover {
   background-color: #fafafa;
   box-shadow: 0 8px 24px rgba(0, 0, 0, 0.12);
   transform: translateY(-3px);
   border-color: #d9d9d9;
 }
 
-.ant-list-item:last-child {
+.profile-container .ant-list-item:last-child {
   margin-bottom: 0;
 }
 
-.article-meta {
+.profile-container .article-meta {
   margin-top: 8px;
   padding-left: 24px;
 }
 
-.article-title {
+.profile-container .article-title {
   font-size: 18px;
   font-weight: 500;
   color: #1a1a1a;
@@ -389,7 +389,7 @@
   padding-left: 24px;
 }
 
-.article-subtitle {
+.profile-container .article-subtitle {
   color: #666;
   font-size: 15px;
   margin-bottom: 6px;
@@ -398,62 +398,60 @@
   margin-left: 8px;
 }
 
-.article-description {
+.profile-container .article-description {
   color: #666;
   font-size: 14px;
-  /* margin-bottom: 8px;
-  line-height: 1.6; */
 }
 
-.article-info {
+.profile-container .article-info {
   display: flex;
   align-items: center;
   color: #999;
   font-size: 13px;
 }
 
-.article-time {
+.profile-container .article-time {
   display: flex;
   align-items: center;
   gap: 4px;
 }
 
-.article-time .anticon {
+.profile-container .article-time .anticon {
   font-size: 14px;
 }
 
-.ant-list-item-meta {
+.profile-container .ant-list-item-meta {
   margin-bottom: 0 !important;
 }
 
-.ant-list-item-actions {
+.profile-container .ant-list-item-actions {
   margin-top: 12px;
 }
 
-.ant-list-item-actions .ant-space {
+.profile-container .ant-list-item-actions .ant-space {
   gap: 16px !important;
 }
 
-.ant-list-item-actions .ant-btn {
+.profile-container .ant-list-item-actions .ant-btn {
   padding: 4px 12px;
 }
 
-.ant-list-item-actions .anticon {
+.profile-container .ant-list-item-actions .anticon {
   margin-right: 4px;
 }
 
-.ant-tag {
+.profile-container .ant-tag {
   margin-right: 8px;
   padding: 2px 8px;
   font-size: 12px;
   border-radius: 2px;
 }
 
-.ant-list-item-meta-title {
+.profile-container .ant-list-item-meta-title {
   margin-bottom: 0 !important;
 }
 
-.list-icons {
+.profile-container .list-icons {
   display: flex;
   align-items: center;
   gap: 16px;
@@ -463,27 +461,27 @@
   padding-left: 0;
 }
 
-.list-icon {
+.profile-container .list-icon {
   display: flex;
   align-items: center;
   gap: 4px;
   margin-left: 0;
 }
 
-.list-icon:nth-child(1) {
+.profile-container .list-icon:nth-child(1) {
   padding-left: 0;
 }
 
-.list-icon .anticon {
+.profile-container .list-icon .anticon {
   font-size: 14px;
   margin-right: 0;
 }
 
-.center {
+.profile-container .center {
   justify-content: center;
 }
 
-.user-card {
+.profile-container .user-card {
   display: flex;
   align-items: center;
   padding: 8px 12px;
@@ -491,27 +489,27 @@
   border-bottom: 1px solid #f0f0f0;
 }
 
-.user-card:last-child {
+.profile-container .user-card:last-child {
   border-bottom: none;
 }
 
-.user-card:hover {
+.profile-container .user-card:hover {
   background: #fafafa;
 }
 
-.user-card .ant-avatar {
+.profile-container .user-card .ant-avatar {
   width: 40px !important;
   height: 40px !important;
   margin-right: 10px;
   border: 1px solid #f0f0f0;
 }
 
-.user-info {
+.profile-container .user-info {
   flex: 1;
   min-width: 0;
 }
 
-.user-card h3 {
+.profile-container .user-card h3 {
   margin: 0 0 2px 0;
   font-size: 14px;
   font-weight: 500;
@@ -521,7 +519,7 @@
   text-overflow: ellipsis;
 }
 
-.user-card p {
+.profile-container .user-card p {
   margin: 0;
   color: #8c8c8c;
   font-size: 12px;
@@ -531,87 +529,118 @@
   text-overflow: ellipsis;
 }
 
-.user-card .ant-space {
+.profile-container .user-card .ant-space {
   margin-left: 10px;
   flex-shrink: 0;
 }
 
-.user-card .ant-btn {
+.profile-container .user-card .ant-btn {
   height: 24px;
   padding: 0 10px;
   font-size: 12px;
   border-radius: 4px;
 }
 
-.ant-list-item .ant-card {
+.profile-container .ant-list-item .ant-card {
   border: none;
   box-shadow: none;
   background: transparent;
 }
 
-.ant-list-item .ant-card-body {
+.profile-container .ant-list-item .ant-card-body {
   padding: 0;
 }
 
-.ant-list-item .ant-card:hover {
+.profile-container .ant-list-item .ant-card:hover {
   box-shadow: none;
   transform: none;
 }
 
-.empty-state {
+.profile-container .empty-state {
   display: flex;
   flex-direction: column;
   align-items: center;
   justify-content: center;
-  padding: 24px 0;
+  padding: 32px 0;
   color: #8c8c8c;
   text-align: center;
+  background: #fafafa;
+  border-radius: 8px;
+  margin: 16px;
+  transition: all 0.3s ease;
 }
 
-.empty-state .anticon {
-  font-size: 36px;
-  margin-bottom: 12px;
-  color: #d9d9d9;
+.profile-container .empty-state:hover {
+  background: #f5f5f5;
+  transform: translateY(-2px);
 }
 
-.empty-state-text {
-  font-size: 14px;
+.profile-container .empty-state .anticon {
+  font-size: 48px;
+  margin-bottom: 16px;
+  color: #bfbfbf;
+  transition: all 0.3s ease;
+}
+
+.profile-container .empty-state:hover .anticon {
+  transform: scale(1.1);
+  color: #8c8c8c;
+}
+
+.profile-container .empty-state-text {
+  font-size: 15px;
+  line-height: 1.5;
+  color: #8c8c8c;
+  margin-bottom: 8px;
+}
+
+.profile-container .empty-state-subtext {
+  font-size: 13px;
+  color: #bfbfbf;
   line-height: 1.5;
 }
 
-.ant-list-empty {
+.profile-container .empty-state .ant-btn {
+  margin-top: 16px;
+  height: 32px;
+  padding: 0 16px;
+  font-size: 14px;
+  border-radius: 6px;
+}
+
+.profile-container .ant-list-empty {
   padding: 0 !important;
 }
 
-.ant-list-empty-text {
+.profile-container .ant-list-empty-text {
   padding: 0 !important;
 }
 
-.ant-tabs-content {
+.profile-container .ant-tabs-content {
   min-height: auto;
 }
 
-.ant-tabs-tabpane {
+.profile-container .ant-tabs-tabpane {
   padding: 0 !important;
 }
 
-.ant-list {
+.profile-container .ant-list {
   margin: 0 !important;
 }
 
-.ant-list-item {
+.profile-container .ant-list-item {
   padding: 8px 0;
   margin: 0 !important;
 }
 
-.ant-list-item-meta {
+.profile-container .ant-list-item-meta {
   margin-bottom: 0 !important;
 }
 
-.ant-list-item-meta-title {
+.profile-container .ant-list-item-meta-title {
   margin-bottom: 0 !important;
 }
 
-.ant-list-item-meta-description {
+.profile-container .ant-list-item-meta-description {
   margin-top: 4px !important;
 }

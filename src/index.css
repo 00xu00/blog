@@ -160,7 +160,7 @@ body {
 }
 
 .ant-list-item:last-child {
-  border-block-end: none !important;
+  /* border-block-end: none !important; */
   margin-bottom: 0;
   padding-bottom: 0;
 }

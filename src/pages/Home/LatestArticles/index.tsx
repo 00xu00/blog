@@ -36,7 +36,7 @@ const LatestArticles = () => {
         itemLayout="horizontal"
         dataSource={latestList}
         renderItem={(item) => (
-          <List.Item>
+          <List.Item style={{ marginBottom: '10px' }}>
             <Link to={`/detail/${item.id}`}>
               <div className="latest-item">
                 <div className="latest-title">{item.title}</div>
