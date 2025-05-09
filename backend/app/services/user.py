@@ -1,9 +1,11 @@
 from sqlalchemy.orm import Session
 from app.models.user import User
+from app.models.blog import Blog
 from app.schemas.user import UserCreate, UserUpdate
 from app.core.security import get_password_hash, verify_password
 from typing import Optional
 import logging
+from sqlalchemy import func
 
 logger = logging.getLogger(__name__)
 
@@ -67,4 +69,27 @@ def authenticate_user(db: Session, username: str, password: str) -> Optional[Use
         return None
     if not verify_password(password, user.hashed_password):
         return None
+    return user
+
+def update_user_articles_count(db: Session, user_id: int) -> Optional[User]:
+    """更新用户的文章数量"""
+    # 直接查询用户，避免递归调用
+    user = db.query(User).filter(User.id == user_id).first()
+    if not user:
+        return None
+    
+    # 计算用户的文章数量
+    articles_count = db.query(func.count(Blog.id)).filter(Blog.author_id == user_id).scalar()
+    user.articles_count = articles_count
+    
+    db.commit()
+    db.refresh(user)
+    return user
+
+def get_user_with_articles_count(db: Session, user_id: int) -> Optional[User]:
+    """获取用户信息并更新文章数量"""
+    user = get_user_by_id(db, user_id)
+    if user:
+        update_user_articles_count(db, user_id)
+        db.refresh(user)
     return user 
