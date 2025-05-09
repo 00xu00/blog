@@ -21,11 +21,34 @@ def get_comment(db: Session, comment_id: int) -> Optional[Comment]:
     return db.query(Comment).filter(Comment.id == comment_id).first()
 
 def get_blog_comments(db: Session, blog_id: int, skip: int = 0, limit: int = 100, current_user_id: Optional[int] = None) -> List[Comment]:
+    # 获取所有主评论
     comments = db.query(Comment)\
         .filter(Comment.blog_id == blog_id, Comment.parent_id == None)\
         .offset(skip)\
         .limit(limit)\
         .all()
+    
+    # 获取所有回复（包括多级回复）
+    all_replies = db.query(Comment)\
+        .filter(Comment.blog_id == blog_id, Comment.parent_id != None)\
+        .all()
+    
+    # 构建回复映射
+    reply_map = {}
+    for reply in all_replies:
+        if reply.parent_id not in reply_map:
+            reply_map[reply.parent_id] = []
+        reply_map[reply.parent_id].append(reply)
+    
+    # 递归设置回复
+    def set_replies(comment):
+        comment.replies = reply_map.get(comment.id, [])
+        for reply in comment.replies:
+            set_replies(reply)
+    
+    # 设置每个主评论的回复
+    for comment in comments:
+        set_replies(comment)
     
     # 设置评论的点赞状态
     if current_user_id:
@@ -37,29 +60,65 @@ def get_blog_comments(db: Session, blog_id: int, skip: int = 0, limit: int = 100
             ).first()
             comment.is_liked = like is not None
             
-            # 检查回复的点赞状态
-            for reply in comment.replies:
-                reply_like = db.query(CommentLike).filter(
-                    CommentLike.comment_id == reply.id,
-                    CommentLike.user_id == current_user_id
-                ).first()
-                reply.is_liked = reply_like is not None
+            # 递归设置所有回复的点赞状态
+            def set_like_status(comment):
+                for reply in comment.replies:
+                    reply_like = db.query(CommentLike).filter(
+                        CommentLike.comment_id == reply.id,
+                        CommentLike.user_id == current_user_id
+                    ).first()
+                    reply.is_liked = reply_like is not None
+                    set_like_status(reply)
+            
+            set_like_status(comment)
     
     return comments
 
 def get_comment_replies(db: Session, comment_id: int, current_user_id: Optional[int] = None) -> List[Comment]:
-    replies = db.query(Comment).filter(Comment.parent_id == comment_id).all()
+    # 获取所有回复（包括多级回复）
+    all_replies = db.query(Comment)\
+        .filter(Comment.parent_id == comment_id)\
+        .all()
     
-    # 设置回复的点赞状态
+    # 构建回复映射
+    reply_map = {}
+    for reply in all_replies:
+        if reply.parent_id not in reply_map:
+            reply_map[reply.parent_id] = []
+        reply_map[reply.parent_id].append(reply)
+    
+    # 递归设置回复
+    def set_replies(comment):
+        comment.replies = reply_map.get(comment.id, [])
+        for reply in comment.replies:
+            set_replies(reply)
+    
+    # 设置每个回复的回复
+    for reply in all_replies:
+        set_replies(reply)
+    
+    # 设置点赞状态
     if current_user_id:
-        for reply in replies:
+        for reply in all_replies:
             like = db.query(CommentLike).filter(
                 CommentLike.comment_id == reply.id,
                 CommentLike.user_id == current_user_id
             ).first()
             reply.is_liked = like is not None
+            
+            # 递归设置所有子回复的点赞状态
+            def set_like_status(comment):
+                for reply in comment.replies:
+                    reply_like = db.query(CommentLike).filter(
+                        CommentLike.comment_id == reply.id,
+                        CommentLike.user_id == current_user_id
+                    ).first()
+                    reply.is_liked = reply_like is not None
+                    set_like_status(reply)
+            
+            set_like_status(reply)
     
-    return replies
+    return all_replies
 
 def update_comment(db: Session, comment_id: int, comment: CommentUpdate, author_id: int) -> Optional[Comment]:
     db_comment = db.query(Comment).filter(Comment.id == comment_id, Comment.author_id == author_id).first()

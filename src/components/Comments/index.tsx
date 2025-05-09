@@ -25,12 +25,13 @@ interface Comment {
   is_liked: boolean;
   replies: Comment[];
   parent_id?: number;
+  parent?: Comment;
 }
 
 const Comments: React.FC<CommentsProps> = ({ blogId, onCommentCountChange }) => {
   const [comments, setComments] = useState<Comment[]>([]);
   const [submitting, setSubmitting] = useState(false);
-  const [replyingTo, setReplyingTo] = useState<number | null>(null);
+  const [replyingTo, setReplyingTo] = useState<{ id: number; username: string } | null>(null);
   const [form] = Form.useForm();
   const [replyForm] = Form.useForm();
 
@@ -56,7 +57,7 @@ const Comments: React.FC<CommentsProps> = ({ blogId, onCommentCountChange }) => 
       await createComment({
         blog_id: blogId,
         content: values.content,
-        parent_id: replyingTo || undefined
+        parent_id: replyingTo?.id
       });
       message.success('评论成功');
       form.resetFields();
@@ -91,73 +92,119 @@ const Comments: React.FC<CommentsProps> = ({ blogId, onCommentCountChange }) => 
     }
   };
 
-  const renderComment = (comment: Comment, isReply: boolean = false) => (
-    <List.Item>
-      <List.Item.Meta
-        avatar={
-          <Avatar
-            src={comment.author.avatar}
-            icon={!comment.author.avatar && <UserOutlined />}
-            alt={comment.author.username}
-            className="comment-avatar"
-          />
+  // 递归获取所有回复
+  const getAllReplies = (comment: Comment): Comment[] => {
+    let allReplies: Comment[] = [];
+    if (comment.replies && comment.replies.length > 0) {
+      allReplies = [...comment.replies];
+      comment.replies.forEach(reply => {
+        allReplies = [...allReplies, ...getAllReplies(reply)];
+      });
+    }
+    return allReplies;
+  };
+
+  // 查找评论的父评论
+  const findParentComment = (commentId: number): Comment | undefined => {
+    for (const comment of comments) {
+      if (comment.id === commentId) {
+        return comment;
+      }
+      const findInReplies = (replies: Comment[]): Comment | undefined => {
+        for (const reply of replies) {
+          if (reply.id === commentId) {
+            return reply;
+          }
+          if (reply.replies && reply.replies.length > 0) {
+            const found = findInReplies(reply.replies);
+            if (found) return found;
+          }
         }
-        title={
-          <div>
-            <span className="comment-author">{comment.author.username}</span>
-            <span className="comment-time" style={{ marginLeft: '10px' }}>
-              {formatDate(comment.created_at)}
-            </span>
-          </div>
-        }
-        description={
-          <div>
-            <div className="comment-content">{comment.content}</div>
-            <Space className="comment-actions">
-              <Button
-                type="text"
-                icon={comment.is_liked ? <LikeFilled style={{ color: '#1890ff' }} /> : <LikeOutlined />}
-                onClick={() => handleLike(comment.id)}
-              >
-                {comment.likes_count > 0 && comment.likes_count}
-              </Button>
-              {!isReply && (
+        return undefined;
+      };
+      if (comment.replies && comment.replies.length > 0) {
+        const found = findInReplies(comment.replies);
+        if (found) return found;
+      }
+    }
+    return undefined;
+  };
+
+  const renderComment = (comment: Comment, isReply: boolean = false) => {
+    const parentComment = findParentComment(comment.parent_id || 0);
+    const replyToUsername = parentComment?.author.username;
+
+    return (
+      <List.Item>
+        <List.Item.Meta
+          avatar={
+            <Avatar
+              src={comment.author.avatar}
+              icon={!comment.author.avatar && <UserOutlined />}
+              alt={comment.author.username}
+              className="comment-avatar"
+            />
+          }
+          title={
+            <div>
+              <span className="comment-author">{comment.author.username}</span>
+              <span className="comment-time" style={{ marginLeft: '10px' }}>
+                {formatDate(comment.created_at)}
+              </span>
+              {isReply && replyToUsername && (
+                <span className="reply-to" style={{ marginLeft: '10px', color: '#8c8c8c' }}>
+                  回复 {replyToUsername}
+                </span>
+              )}
+            </div>
+          }
+          description={
+            <div>
+              <div className="comment-content">{comment.content}</div>
+              <Space className="comment-actions">
                 <Button
                   type="text"
-                  onClick={() => setReplyingTo(comment.id)}
+                  icon={comment.is_liked ? <LikeFilled style={{ color: '#1890ff' }} /> : <LikeOutlined />}
+                  onClick={() => handleLike(comment.id)}
+                >
+                  {comment.likes_count > 0 && comment.likes_count}
+                </Button>
+                <Button
+                  type="text"
+                  onClick={() => setReplyingTo({ id: comment.id, username: comment.author.username })}
                 >
                   回复
                 </Button>
+              </Space>
+              {replyingTo?.id === comment.id && (
+                <Form form={replyForm} onFinish={handleSubmit} style={{ marginTop: '10px' }}>
+                  <Form.Item name="content" rules={[{ required: true, message: '请输入回复内容' }]}>
+                    <TextArea
+                      rows={2}
+                      placeholder={`回复 ${comment.author.username}...`}
+                    />
+                  </Form.Item>
+                  <Form.Item>
+                    <Space>
+                      <Button type="primary" htmlType="submit" loading={submitting}>
+                        发表回复
+                      </Button>
+                      <Button onClick={() => {
+                        setReplyingTo(null);
+                        replyForm.resetFields();
+                      }}>
+                        取消
+                      </Button>
+                    </Space>
+                  </Form.Item>
+                </Form>
               )}
-            </Space>
-            {replyingTo === comment.id && (
-              <Form form={replyForm} onFinish={handleSubmit} style={{ marginTop: '10px' }}>
-                <Form.Item name="content" rules={[{ required: true, message: '请输入回复内容' }]}>
-                  <TextArea
-                    rows={2}
-                    placeholder={`回复 ${comment.author.username}...`}
-                  />
-                </Form.Item>
-                <Form.Item>
-                  <Space>
-                    <Button type="primary" htmlType="submit" loading={submitting}>
-                      发表回复
-                    </Button>
-                    <Button onClick={() => {
-                      setReplyingTo(null);
-                      replyForm.resetFields();
-                    }}>
-                      取消
-                    </Button>
-                  </Space>
-                </Form.Item>
-              </Form>
-            )}
-          </div>
-        }
-      />
-    </List.Item>
-  );
+            </div>
+          }
+        />
+      </List.Item>
+    );
+  };
 
   return (
     <div className="comments-container">
@@ -183,7 +230,7 @@ const Comments: React.FC<CommentsProps> = ({ blogId, onCommentCountChange }) => 
             {comment.replies && comment.replies.length > 0 && (
               <List
                 className="reply-list"
-                dataSource={comment.replies}
+                dataSource={getAllReplies(comment)}
                 renderItem={reply => renderComment(reply, true)}
               />
             )}
