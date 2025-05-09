@@ -13,7 +13,10 @@ import {
   MessageOutlined,
   UserAddOutlined,
   CheckOutlined,
-  UploadOutlined
+  UploadOutlined,
+  CalendarOutlined,
+  BarsOutlined,
+  FireOutlined
 } from '@ant-design/icons';
 import { RootState } from '../../store';
 import {
@@ -29,7 +32,7 @@ import './index.css';
 import { useNavigate, Link, useLocation } from 'react-router-dom';
 import { getUserInfo, getUserFollowing, getUserFollowers, followUser, unfollowUser } from '../../api/user';
 import { getUserBlogs, getUserLikedBlogs, getUserFavoriteBlogs, likeBlog, unlikeBlog, favoriteBlog, unfavoriteBlog } from '../../api/blog';
-
+import { formatDate } from '../../utils/date';
 const { TabPane } = Tabs;
 
 interface UserInfo {
@@ -47,19 +50,32 @@ interface Blog {
   id: number;
   title: string;
   description: string;
-  createTime: string;
-  views: number;
+  created_at: string;
+  views_count: number;
   likes: number;
   comments: number;
   is_liked?: boolean;
   is_favorited?: boolean;
+  tags?: string[];
 }
 
 interface User {
   id: string;
+  username: string;
   name: string;
-  avatar: string | null;
+  avatar: string;
   bio: string | null;
+  followers_count: number;
+  following_count: number;
+  articles_count: number;
+}
+
+interface Message {
+  id: string;
+  sender: User;
+  content: string;
+  isRead: boolean;
+  createdAt: string;
 }
 
 const Profile: React.FC = () => {
@@ -179,14 +195,53 @@ const Profile: React.FC = () => {
     }
   }, [userInfo]);
 
+  // 处理私信
   const handleMessage = (userId: string) => {
-    if (!userInfo) return;
-    if (userId === userInfo.id) {
-      message.warning('不能给自己发送私信');
-      return;
-    }
     navigate(`/chat/${userId}`);
   };
+
+  // 标记消息为已读
+  const handleMarkAsRead = (messageId: string) => {
+    dispatch(markAsRead(messageId));
+  };
+
+  // 加载私信列表
+  const loadMessages = async () => {
+    try {
+      const response = await fetch('/api/messages', {
+        headers: {
+          'Authorization': `Bearer ${localStorage.getItem('token')}`
+        }
+      });
+      const data = await response.json();
+      dispatch(setMessages(data));
+    } catch (error) {
+      message.error('加载私信失败');
+    }
+  };
+
+  // 加载历史记录
+  const loadHistory = async () => {
+    try {
+      const response = await fetch('/api/history', {
+        headers: {
+          'Authorization': `Bearer ${localStorage.getItem('token')}`
+        }
+      });
+      const data = await response.json();
+      dispatch(setArticles(data));
+    } catch (error) {
+      message.error('加载历史记录失败');
+    }
+  };
+
+  useEffect(() => {
+    if (activeTab === 'messages') {
+      loadMessages();
+    } else if (activeTab === 'history') {
+      loadHistory();
+    }
+  }, [activeTab]);
 
   const handleFollow = (userId: string) => async (e: React.MouseEvent) => {
     e.preventDefault();
@@ -458,6 +513,58 @@ const Profile: React.FC = () => {
               <TabPane
                 tab={
                   <span>
+                    <MailOutlined />
+                    私信
+                    {unreadCount > 0 && <Badge count={unreadCount} />}
+                  </span>
+                }
+                key="messages"
+              >
+                <List
+                  itemLayout="horizontal"
+                  dataSource={messages}
+                  renderItem={item => (
+                    <List.Item
+                      actions={[
+                        <Button type="link" onClick={() => handleMessage(item.sender.id)}>
+                          回复
+                        </Button>
+                      ]}
+                    >
+                      <List.Item.Meta
+                        avatar={<Avatar src={item.sender.avatar} />}
+                        title={item.sender.name}
+                        description={item.content}
+                      />
+                    </List.Item>
+                  )}
+                />
+              </TabPane>
+              <TabPane
+                tab={
+                  <span>
+                    <HistoryOutlined />
+                    历史记录
+                  </span>
+                }
+                key="history"
+              >
+                <List
+                  itemLayout="horizontal"
+                  dataSource={articles}
+                  renderItem={item => (
+                    <List.Item>
+                      <List.Item.Meta
+                        title={<Link to={`/detail/${item.id}`}>{item.title}</Link>}
+                        description={item.description}
+                      />
+                    </List.Item>
+                  )}
+                />
+              </TabPane>
+              <TabPane
+                tab={
+                  <span>
                     <LikeOutlined />
                     点赞
                   </span>
@@ -468,37 +575,32 @@ const Profile: React.FC = () => {
                   itemLayout="vertical"
                   dataSource={blogs}
                   renderItem={item => (
-                    <List.Item
-                      actions={[
-                        <Space>
-                          <Button
-                            type={item.is_liked ? 'primary' : 'default'}
-                            icon={<LikeOutlined />}
-                            onClick={() => handleLike(item.id)}
-                          >
-                            {item.likes}
-                          </Button>
-                          <Button
-                            type={item.is_favorited ? 'primary' : 'default'}
-                            icon={<StarOutlined />}
-                            onClick={() => handleFavorite(item.id)}
-                          >
-                            收藏
-                          </Button>
-                        </Space>,
-                        <Space>
-                          <span><EyeOutlined /> {item.views}</span>
-                          <span><MessageOutlined /> {item.comments}</span>
-                        </Space>
-                      ]}
-                    >
+                    <List.Item>
                       <List.Item.Meta
-                        title={<Link to={`/detail/${item.id}`}>{item.title}</Link>}
-                        description={item.description}
+                        title={
+                          <Link to={`/detail/${item.id}`} className="article-title">
+                            {item.title}
+                          </Link>
+                        }
+                        description={
+                          <div className="article-meta">
+                            <div className="article-description">{item.description}</div>
+                            <div className="list-icons">
+                              <span className="list-icon">
+                                <CalendarOutlined /> {formatDate(item.created_at)}
+                              </span>
+                              {item.tags && item.tags.length > 0 && (
+                                <span className="list-icon">
+                                  <BarsOutlined /> {item.tags.join(', ')}
+                                </span>
+                              )}
+                              <span className="list-icon">
+                                <FireOutlined /> {item.views_count}
+                              </span>
+                            </div>
+                          </div>
+                        }
                       />
-                      <div className="article-meta">
-                        <Tag>{item.createTime}</Tag>
-                      </div>
                     </List.Item>
                   )}
                 />
@@ -516,37 +618,32 @@ const Profile: React.FC = () => {
                   itemLayout="vertical"
                   dataSource={blogs}
                   renderItem={item => (
-                    <List.Item
-                      actions={[
-                        <Space>
-                          <Button
-                            type={item.is_liked ? 'primary' : 'default'}
-                            icon={<LikeOutlined />}
-                            onClick={() => handleLike(item.id)}
-                          >
-                            {item.likes}
-                          </Button>
-                          <Button
-                            type={item.is_favorited ? 'primary' : 'default'}
-                            icon={<StarOutlined />}
-                            onClick={() => handleFavorite(item.id)}
-                          >
-                            收藏
-                          </Button>
-                        </Space>,
-                        <Space>
-                          <span><EyeOutlined /> {item.views}</span>
-                          <span><MessageOutlined /> {item.comments}</span>
-                        </Space>
-                      ]}
-                    >
+                    <List.Item>
                       <List.Item.Meta
-                        title={<Link to={`/detail/${item.id}`}>{item.title}</Link>}
-                        description={item.description}
+                        title={
+                          <Link to={`/detail/${item.id}`} className="article-title">
+                            {item.title}
+                          </Link>
+                        }
+                        description={
+                          <div className="article-meta">
+                            <div className="article-description">{item.description}</div>
+                            <div className="list-icons">
+                              <span className="list-icon">
+                                <CalendarOutlined /> {formatDate(item.created_at)}
+                              </span>
+                              {item.tags && item.tags.length > 0 && (
+                                <span className="list-icon">
+                                  <BarsOutlined /> {item.tags.join(', ')}
+                                </span>
+                              )}
+                              <span className="list-icon">
+                                <FireOutlined /> {item.views_count}
+                              </span>
+                            </div>
+                          </div>
+                        }
                       />
-                      <div className="article-meta">
-                        <Tag>{item.createTime}</Tag>
-                      </div>
                     </List.Item>
                   )}
                 />
@@ -566,37 +663,32 @@ const Profile: React.FC = () => {
               itemLayout="vertical"
               dataSource={blogs}
               renderItem={item => (
-                <List.Item
-                  actions={[
-                    <Space>
-                      <Button
-                        type={item.is_liked ? 'primary' : 'default'}
-                        icon={<LikeOutlined />}
-                        onClick={() => handleLike(item.id)}
-                      >
-                        {item.likes}
-                      </Button>
-                      <Button
-                        type={item.is_favorited ? 'primary' : 'default'}
-                        icon={<StarOutlined />}
-                        onClick={() => handleFavorite(item.id)}
-                      >
-                        收藏
-                      </Button>
-                    </Space>,
-                    <Space>
-                      <span><EyeOutlined /> {item.views}</span>
-                      <span><MessageOutlined /> {item.comments}</span>
-                    </Space>
-                  ]}
-                >
+                <List.Item>
                   <List.Item.Meta
-                    title={<Link to={`/detail/${item.id}`}>{item.title}</Link>}
-                    description={item.description}
+                    title={
+                      <Link to={`/detail/${item.id}`} className="article-title">
+                        {item.title}
+                      </Link>
+                    }
+                    description={
+                      <div className="article-meta">
+                        <div className="article-description">{item.description}</div>
+                        <div className="list-icons">
+                          <span className="list-icon">
+                            <CalendarOutlined /> {formatDate(item.created_at)}
+                          </span>
+                          {item.tags && item.tags.length > 0 && (
+                            <span className="list-icon">
+                              <BarsOutlined /> {item.tags.join(', ')}
+                            </span>
+                          )}
+                          <span className="list-icon">
+                            <FireOutlined /> {item.views_count}
+                          </span>
+                        </div>
+                      </div>
+                    }
                   />
-                  <div className="article-meta">
-                    <Tag>{item.createTime}</Tag>
-                  </div>
                 </List.Item>
               )}
             />
