@@ -35,6 +35,17 @@ const Comments: React.FC<CommentsProps> = ({ blogId, onCommentCountChange }) => 
   const [form] = Form.useForm();
   const [replyForm] = Form.useForm();
 
+  // 计算总评论数（包括所有回复）
+  const calculateTotalComments = (comments: Comment[]): number => {
+    let total = comments.length;
+    comments.forEach(comment => {
+      if (comment.replies && comment.replies.length > 0) {
+        total += calculateTotalComments(comment.replies);
+      }
+    });
+    return total;
+  };
+
   useEffect(() => {
     fetchComments();
   }, [blogId]);
@@ -44,7 +55,7 @@ const Comments: React.FC<CommentsProps> = ({ blogId, onCommentCountChange }) => 
       const response = await getBlogComments(blogId);
       setComments(response.data);
       if (onCommentCountChange) {
-        onCommentCountChange(response.data.length);
+        onCommentCountChange(calculateTotalComments(response.data));
       }
     } catch (error) {
       message.error('获取评论失败');
@@ -242,7 +253,7 @@ const Comments: React.FC<CommentsProps> = ({ blogId, onCommentCountChange }) => 
 
       <List
         className="comment-list"
-        header={`${comments.length} 条评论`}
+        header={`${calculateTotalComments(comments)} 条评论`}
         itemLayout="horizontal"
         dataSource={comments}
         renderItem={comment => (
