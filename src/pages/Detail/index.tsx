@@ -116,6 +116,10 @@ const Detail = () => {
     setComments(count);
   };
 
+  const handleAuthorClick = (author: { id: number; username: string; avatar?: string; bio?: string; introduction?: string; social_links?: { github?: string;[key: string]: string | undefined; }; }) => {
+    navigate('/profile', { state: { authorId: author.id, isOtherUser: true } });
+  };
+
   const breadList = [
     {
       title: "首页",
@@ -202,12 +206,14 @@ const Detail = () => {
           {blog.author && (
             <Author
               author={{
+                id: blog.author.id,
                 username: blog.author.username,
                 avatar: blog.author.avatar,
                 bio: blog.author.bio,
                 introduction: blog.author.introduction,
                 social_links: blog.author.social_links
               }}
+              onAuthorClick={handleAuthorClick}
             />
           )}
           <div className="toc-container">

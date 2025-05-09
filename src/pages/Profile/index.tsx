@@ -26,7 +26,7 @@ import {
 import { setMessages, markAsRead } from '../../store/messageSlice';
 import { ProfileState } from '../../store/profile/types';
 import './index.css';
-import { useNavigate, Link } from 'react-router-dom';
+import { useNavigate, Link, useLocation } from 'react-router-dom';
 
 const { TabPane } = Tabs;
 
@@ -44,6 +44,9 @@ interface UserInfo {
 const Profile: React.FC = () => {
   const dispatch = useDispatch();
   const navigate = useNavigate();
+  const location = useLocation();
+  const isOtherUser = location.state?.isOtherUser;
+  const otherUserId = location.state?.authorId;
   const [followingMap, setFollowingMap] = useState<Record<string, boolean>>({});
   const [followerFollowingMap, setFollowerFollowingMap] = useState<Record<string, boolean>>({});
   const [userInfo, setUserInfo] = useState<UserInfo | null>(null);
@@ -76,7 +79,11 @@ const Profile: React.FC = () => {
 
         while (retryCount < maxRetries) {
           try {
-            const response = await fetch('http://localhost:8000/api/v1/users/me', {
+            const url = isOtherUser
+              ? `http://localhost:8000/api/v1/users/${otherUserId}`
+              : 'http://localhost:8000/api/v1/users/me';
+
+            const response = await fetch(url, {
               method: 'GET',
               headers: {
                 'Authorization': `Bearer ${token.trim()}`,
@@ -86,8 +93,6 @@ const Profile: React.FC = () => {
 
             if (response.ok) {
               const data = await response.json();
-              // 不再需要构建完整的头像URL，因为已经是BASE64格式
-              console.log('用户信息:', data);
               setUserInfo(data);
               setIsLoading(false);
               return;
@@ -129,7 +134,7 @@ const Profile: React.FC = () => {
     };
 
     fetchUserInfo();
-  }, [navigate]);
+  }, [navigate, isOtherUser, otherUserId]);
 
   // 获取其他mock数据
   useEffect(() => {
@@ -326,15 +331,31 @@ const Profile: React.FC = () => {
     return (
       <div className="profile-header">
         <div className="avatar-container">
-          <Upload
-            name="avatar"
-            showUploadList={false}
-            beforeUpload={(file) => {
-              handleAvatarUpload(file);
-              return false;
-            }}
-            accept="image/*"
-          >
+          {!isOtherUser && (
+            <Upload
+              name="avatar"
+              showUploadList={false}
+              beforeUpload={(file) => {
+                handleAvatarUpload(file);
+                return false;
+              }}
+              accept="image/*"
+            >
+              <div className="avatar-wrapper">
+                <Avatar
+                  size={100}
+                  src={userInfo.avatar}
+                  icon={<UserOutlined />}
+                  className="avatar"
+                />
+                <div className="avatar-overlay">
+                  <UploadOutlined />
+                  <span>更换头像</span>
+                </div>
+              </div>
+            </Upload>
+          )}
+          {isOtherUser && (
             <div className="avatar-wrapper">
               <Avatar
                 size={100}
@@ -342,12 +363,8 @@ const Profile: React.FC = () => {
                 icon={<UserOutlined />}
                 className="avatar"
               />
-              <div className="avatar-overlay">
-                <UploadOutlined />
-                <span>更换头像</span>
-              </div>
             </div>
-          </Upload>
+          )}
         </div>
         <div className="profile-info">
           <h2>{userInfo.username}</h2>
@@ -370,18 +387,24 @@ const Profile: React.FC = () => {
             </div>
           ) : (
             <p onClick={() => {
-              setNewBio(userInfo.bio || '');
-              setIsEditingBio(true);
-            }}>
+              if (!isOtherUser) {
+                setNewBio(userInfo.bio || '');
+                setIsEditingBio(true);
+              }
+            }} style={{ cursor: isOtherUser ? 'default' : 'pointer' }}>
               {userInfo.bio || '这个人很懒，什么都没写~'}
-              <EditOutlined />
+              {!isOtherUser && <EditOutlined />}
             </p>
           )}
           <div className="profile-actions">
-            <Button type="primary" onClick={handleFollow(userInfo.id)}>
-              <UserAddOutlined /> 关注
-            </Button>
-            <Button onClick={() => handleMessage(userInfo.id)}>私信</Button>
+            {!isOtherUser && (
+              <>
+                <Button type="primary" onClick={handleFollow(userInfo.id)}>
+                  <UserAddOutlined /> 关注
+                </Button>
+                <Button onClick={() => handleMessage(userInfo.id)}>私信</Button>
+              </>
+            )}
           </div>
           <div className="profile-stats">
             <div className="stat-item">
@@ -407,148 +430,152 @@ const Profile: React.FC = () => {
       <Card className="profile-card">
         {renderUserInfo()}
         <Tabs activeKey={activeTab} onChange={(key) => dispatch(setActiveTab(key))}>
-          <TabPane
-            tab={
-              <span>
-                <MailOutlined />
-                <Badge count={unreadCount} offset={[5, 0]}>
-                  私信
-                </Badge>
-              </span>
-            }
-            key="messages"
-          >
-            <List
-              itemLayout="horizontal"
-              dataSource={messages}
-              renderItem={message => (
-                <List.Item
-                  className={`message-item ${!message.isRead ? 'unread' : ''}`}
-                  onClick={() => handleMessage(message.sender.id)}
-                >
-                  <List.Item.Meta
-                    avatar={<Avatar src={message.sender.avatar} icon={<UserOutlined />} />}
-                    title={
-                      <Space>
-                        <span>{message.sender.name}</span>
-                        {!message.isRead && <Badge status="processing" />}
-                      </Space>
-                    }
-                    description={
-                      <div className="message-content">
-                        <p>{message.content}</p>
-                        <span className="message-time">{message.createTime}</span>
+          {!isOtherUser && (
+            <>
+              <TabPane
+                tab={
+                  <span>
+                    <MailOutlined />
+                    <Badge count={unreadCount} offset={[5, 0]}>
+                      私信
+                    </Badge>
+                  </span>
+                }
+                key="messages"
+              >
+                <List
+                  itemLayout="horizontal"
+                  dataSource={messages}
+                  renderItem={message => (
+                    <List.Item
+                      className={`message-item ${!message.isRead ? 'unread' : ''}`}
+                      onClick={() => handleMessage(message.sender.id)}
+                    >
+                      <List.Item.Meta
+                        avatar={<Avatar src={message.sender.avatar} icon={<UserOutlined />} />}
+                        title={
+                          <Space>
+                            <span>{message.sender.name}</span>
+                            {!message.isRead && <Badge status="processing" />}
+                          </Space>
+                        }
+                        description={
+                          <div className="message-content">
+                            <p>{message.content}</p>
+                            <span className="message-time">{message.createTime}</span>
+                          </div>
+                        }
+                      />
+                    </List.Item>
+                  )}
+                />
+              </TabPane>
+              <TabPane
+                tab={
+                  <span>
+                    <HistoryOutlined />
+                    历史记录
+                  </span>
+                }
+                key="history"
+              >
+                <List
+                  itemLayout="vertical"
+                  dataSource={articles}
+                  renderItem={item => (
+                    <List.Item
+                      actions={[
+                        <Space>
+                          <span><EyeOutlined /> {item.views}</span>
+                          <span><LikeOutlined /> {item.likes}</span>
+                          <span><MessageOutlined /> {item.comments}</span>
+                        </Space>
+                      ]}
+                    >
+                      <List.Item.Meta
+                        title={<Link to={`/detail/${item.id}`}>{item.title}</Link>}
+                        description={item.description}
+                      />
+                      <div className="article-meta">
+                        <Tag>{item.createTime}</Tag>
                       </div>
-                    }
-                  />
-                </List.Item>
-              )}
-            />
-          </TabPane>
-          <TabPane
-            tab={
-              <span>
-                <HistoryOutlined />
-                历史记录
-              </span>
-            }
-            key="history"
-          >
-            <List
-              itemLayout="vertical"
-              dataSource={articles}
-              renderItem={item => (
-                <List.Item
-                  actions={[
-                    <Space>
-                      <span><EyeOutlined /> {item.views}</span>
-                      <span><LikeOutlined /> {item.likes}</span>
-                      <span><MessageOutlined /> {item.comments}</span>
-                    </Space>
-                  ]}
-                >
-                  <List.Item.Meta
-                    title={<Link to={`/detail/${item.id}`}>{item.title}</Link>}
-                    description={item.description}
-                  />
-                  <div className="article-meta">
-                    <Tag>{item.createTime}</Tag>
-                  </div>
-                </List.Item>
-              )}
-            />
-          </TabPane>
-          <TabPane
-            tab={
-              <span>
-                <LikeOutlined />
-                点赞
-              </span>
-            }
-            key="likes"
-          >
-            <List
-              itemLayout="vertical"
-              dataSource={articles}
-              renderItem={item => (
-                <List.Item
-                  actions={[
-                    <Space>
-                      <span><EyeOutlined /> {item.views}</span>
-                      <span><LikeOutlined /> {item.likes}</span>
-                      <span><MessageOutlined /> {item.comments}</span>
-                    </Space>
-                  ]}
-                >
-                  <List.Item.Meta
-                    title={<Link to={`/detail/${item.id}`}>{item.title}</Link>}
-                    description={item.description}
-                  />
-                  <div className="article-meta">
-                    <Tag>{item.createTime}</Tag>
-                  </div>
-                </List.Item>
-              )}
-            />
-          </TabPane>
-          <TabPane
-            tab={
-              <span>
-                <StarOutlined />
-                收藏
-              </span>
-            }
-            key="favorites"
-          >
-            <List
-              itemLayout="vertical"
-              dataSource={articles}
-              renderItem={item => (
-                <List.Item
-                  actions={[
-                    <Space>
-                      <span><EyeOutlined /> {item.views}</span>
-                      <span><LikeOutlined /> {item.likes}</span>
-                      <span><MessageOutlined /> {item.comments}</span>
-                    </Space>
-                  ]}
-                >
-                  <List.Item.Meta
-                    title={<Link to={`/detail/${item.id}`}>{item.title}</Link>}
-                    description={item.description}
-                  />
-                  <div className="article-meta">
-                    <Tag>{item.createTime}</Tag>
-                  </div>
-                </List.Item>
-              )}
-            />
-          </TabPane>
+                    </List.Item>
+                  )}
+                />
+              </TabPane>
+              <TabPane
+                tab={
+                  <span>
+                    <LikeOutlined />
+                    点赞
+                  </span>
+                }
+                key="likes"
+              >
+                <List
+                  itemLayout="vertical"
+                  dataSource={articles}
+                  renderItem={item => (
+                    <List.Item
+                      actions={[
+                        <Space>
+                          <span><EyeOutlined /> {item.views}</span>
+                          <span><LikeOutlined /> {item.likes}</span>
+                          <span><MessageOutlined /> {item.comments}</span>
+                        </Space>
+                      ]}
+                    >
+                      <List.Item.Meta
+                        title={<Link to={`/detail/${item.id}`}>{item.title}</Link>}
+                        description={item.description}
+                      />
+                      <div className="article-meta">
+                        <Tag>{item.createTime}</Tag>
+                      </div>
+                    </List.Item>
+                  )}
+                />
+              </TabPane>
+              <TabPane
+                tab={
+                  <span>
+                    <StarOutlined />
+                    收藏
+                  </span>
+                }
+                key="favorites"
+              >
+                <List
+                  itemLayout="vertical"
+                  dataSource={articles}
+                  renderItem={item => (
+                    <List.Item
+                      actions={[
+                        <Space>
+                          <span><EyeOutlined /> {item.views}</span>
+                          <span><LikeOutlined /> {item.likes}</span>
+                          <span><MessageOutlined /> {item.comments}</span>
+                        </Space>
+                      ]}
+                    >
+                      <List.Item.Meta
+                        title={<Link to={`/detail/${item.id}`}>{item.title}</Link>}
+                        description={item.description}
+                      />
+                      <div className="article-meta">
+                        <Tag>{item.createTime}</Tag>
+                      </div>
+                    </List.Item>
+                  )}
+                />
+              </TabPane>
+            </>
+          )}
           <TabPane
             tab={
               <span>
                 <EditOutlined />
-                我的文章
+                {isOtherUser ? '文章' : '我的文章'}
               </span>
             }
             key="articles"
@@ -581,78 +608,82 @@ const Profile: React.FC = () => {
               )}
             />
           </TabPane>
-          <TabPane
-            tab={
-              <span>
-                <UserOutlined />
-                关注
-              </span>
-            }
-            key="following"
-          >
-            <List
-              grid={{ gutter: 16, column: 4 }}
-              dataSource={following}
-              renderItem={user => (
-                <List.Item>
-                  <Card>
-                    <div className="user-card">
-                      <Avatar size={64} src={user.avatar} icon={<UserOutlined />} />
-                      <h3>{user.name}</h3>
-                      <p>{user.bio}</p>
-                      <Space>
-                        <Button
-                          type={followingMap[user.id] ? 'default' : 'primary'}
-                          block
-                          onClick={handleFollow(user.id)}
-                          icon={followingMap[user.id] ? <CheckOutlined /> : <UserAddOutlined />}
-                        >
-                          {followingMap[user.id] ? '已关注' : '关注'}
-                        </Button>
-                        <Button block onClick={() => handleMessage(user.id)}>私信</Button>
-                      </Space>
-                    </div>
-                  </Card>
-                </List.Item>
-              )}
-            />
-          </TabPane>
-          <TabPane
-            tab={
-              <span>
-                <HeartOutlined />
-                粉丝
-              </span>
-            }
-            key="followers"
-          >
-            <List
-              grid={{ gutter: 16, column: 4 }}
-              dataSource={followers}
-              renderItem={user => (
-                <List.Item>
-                  <Card>
-                    <div className="user-card">
-                      <Avatar size={64} src={user.avatar} icon={<UserOutlined />} />
-                      <h3>{user.name}</h3>
-                      <p>{user.bio}</p>
-                      <Space>
-                        <Button
-                          type={followerFollowingMap[user.id] ? 'default' : 'primary'}
-                          block
-                          onClick={handleFollowerFollow(user.id)}
-                          icon={followerFollowingMap[user.id] ? <CheckOutlined /> : <UserAddOutlined />}
-                        >
-                          {followerFollowingMap[user.id] ? '已关注' : '关注'}
-                        </Button>
-                        <Button block onClick={() => handleMessage(user.id)}>私信</Button>
-                      </Space>
-                    </div>
-                  </Card>
-                </List.Item>
-              )}
-            />
-          </TabPane>
+          {!isOtherUser && (
+            <>
+              <TabPane
+                tab={
+                  <span>
+                    <UserOutlined />
+                    关注
+                  </span>
+                }
+                key="following"
+              >
+                <List
+                  grid={{ gutter: 16, column: 4 }}
+                  dataSource={following}
+                  renderItem={user => (
+                    <List.Item>
+                      <Card>
+                        <div className="user-card">
+                          <Avatar size={64} src={user.avatar} icon={<UserOutlined />} />
+                          <h3>{user.name}</h3>
+                          <p>{user.bio}</p>
+                          <Space>
+                            <Button
+                              type={followingMap[user.id] ? 'default' : 'primary'}
+                              block
+                              onClick={handleFollow(user.id)}
+                              icon={followingMap[user.id] ? <CheckOutlined /> : <UserAddOutlined />}
+                            >
+                              {followingMap[user.id] ? '已关注' : '关注'}
+                            </Button>
+                            <Button block onClick={() => handleMessage(user.id)}>私信</Button>
+                          </Space>
+                        </div>
+                      </Card>
+                    </List.Item>
+                  )}
+                />
+              </TabPane>
+              <TabPane
+                tab={
+                  <span>
+                    <HeartOutlined />
+                    粉丝
+                  </span>
+                }
+                key="followers"
+              >
+                <List
+                  grid={{ gutter: 16, column: 4 }}
+                  dataSource={followers}
+                  renderItem={user => (
+                    <List.Item>
+                      <Card>
+                        <div className="user-card">
+                          <Avatar size={64} src={user.avatar} icon={<UserOutlined />} />
+                          <h3>{user.name}</h3>
+                          <p>{user.bio}</p>
+                          <Space>
+                            <Button
+                              type={followerFollowingMap[user.id] ? 'default' : 'primary'}
+                              block
+                              onClick={handleFollowerFollow(user.id)}
+                              icon={followerFollowingMap[user.id] ? <CheckOutlined /> : <UserAddOutlined />}
+                            >
+                              {followerFollowingMap[user.id] ? '已关注' : '关注'}
+                            </Button>
+                            <Button block onClick={() => handleMessage(user.id)}>私信</Button>
+                          </Space>
+                        </div>
+                      </Card>
+                    </List.Item>
+                  )}
+                />
+              </TabPane>
+            </>
+          )}
         </Tabs>
       </Card>
     </div>

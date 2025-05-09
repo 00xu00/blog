@@ -2,9 +2,11 @@ import React from 'react';
 import { Avatar, Divider } from 'antd';
 import './index.css';
 import { GithubOutlined } from "@ant-design/icons";
+import { useNavigate } from 'react-router-dom';
 
 interface AuthorProps {
     author: {
+        id: number;
         username: string;
         avatar?: string;
         bio?: string;
@@ -14,13 +16,22 @@ interface AuthorProps {
             [key: string]: string | undefined;
         };
     };
+    onAuthorClick?: (author: AuthorProps['author']) => void;
 }
 
-const Author: React.FC<AuthorProps> = ({ author }) => {
+const Author: React.FC<AuthorProps> = ({ author, onAuthorClick }) => {
+    const navigate = useNavigate();
+
+    const handleAvatarClick = () => {
+        if (onAuthorClick) {
+            onAuthorClick(author);
+        }
+    };
+
     return (
         <div className="author-div comm-box">
             <div style={{ display: 'flex', justifyContent: 'center' }}>
-                <div className="avatar-container">
+                <div className="avatar-container" onClick={handleAvatarClick} style={{ cursor: 'pointer' }}>
                     <Avatar
                         className="avatar"
                         size={100}

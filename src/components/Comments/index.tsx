@@ -73,8 +73,21 @@ const Comments: React.FC<CommentsProps> = ({ blogId, onCommentCountChange }) => 
 
   const handleLike = async (commentId: number) => {
     try {
-      const comment = comments.find(c => c.id === commentId) ||
-        comments.flatMap(c => c.replies).find(r => r.id === commentId);
+      // 递归查找评论
+      const findComment = (comments: Comment[], id: number): Comment | undefined => {
+        for (const comment of comments) {
+          if (comment.id === id) {
+            return comment;
+          }
+          if (comment.replies && comment.replies.length > 0) {
+            const found = findComment(comment.replies, id);
+            if (found) return found;
+          }
+        }
+        return undefined;
+      };
+
+      const comment = findComment(comments, commentId);
       if (!comment) return;
 
       if (comment.is_liked) {
