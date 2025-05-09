@@ -521,25 +521,32 @@ const Profile: React.FC = () => {
                 }
                 key="messages"
               >
-                <List
-                  itemLayout="horizontal"
-                  dataSource={messages}
-                  renderItem={item => (
-                    <List.Item
-                      actions={[
-                        <Button type="link" onClick={() => handleMessage(item.sender.id)}>
-                          回复
-                        </Button>
-                      ]}
-                    >
-                      <List.Item.Meta
-                        avatar={<Avatar src={item.sender.avatar} />}
-                        title={item.sender.name}
-                        description={item.content}
-                      />
-                    </List.Item>
-                  )}
-                />
+                {messages.length > 0 ? (
+                  <List
+                    itemLayout="horizontal"
+                    dataSource={messages}
+                    renderItem={item => (
+                      <List.Item
+                        actions={[
+                          <Button type="link" onClick={() => handleMessage(item.sender.id)}>
+                            回复
+                          </Button>
+                        ]}
+                      >
+                        <List.Item.Meta
+                          avatar={<Avatar src={item.sender.avatar} />}
+                          title={item.sender.name}
+                          description={item.content}
+                        />
+                      </List.Item>
+                    )}
+                  />
+                ) : (
+                  <div className="empty-state">
+                    <MailOutlined />
+                    <div className="empty-state-text">暂无私信</div>
+                  </div>
+                )}
               </TabPane>
               <TabPane
                 tab={
@@ -550,18 +557,25 @@ const Profile: React.FC = () => {
                 }
                 key="history"
               >
-                <List
-                  itemLayout="horizontal"
-                  dataSource={articles}
-                  renderItem={item => (
-                    <List.Item>
-                      <List.Item.Meta
-                        title={<Link to={`/detail/${item.id}`}>{item.title}</Link>}
-                        description={item.description}
-                      />
-                    </List.Item>
-                  )}
-                />
+                {articles.length > 0 ? (
+                  <List
+                    itemLayout="horizontal"
+                    dataSource={articles}
+                    renderItem={item => (
+                      <List.Item>
+                        <List.Item.Meta
+                          title={<Link to={`/detail/${item.id}`}>{item.title}</Link>}
+                          description={item.description}
+                        />
+                      </List.Item>
+                    )}
+                  />
+                ) : (
+                  <div className="empty-state">
+                    <HistoryOutlined />
+                    <div className="empty-state-text">暂无浏览记录</div>
+                  </div>
+                )}
               </TabPane>
               <TabPane
                 tab={
