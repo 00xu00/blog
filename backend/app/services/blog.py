@@ -119,6 +119,7 @@ def get_recommended_blogs(db: Session, user_id: int, limit: int = 10) -> List[Bl
             Blog.created_at.desc()
         ).limit(limit).all()
     else:
+        # 修改推荐逻辑：如果排除后的博客数量不足，则补充最新的博客
         recommended_blogs = db.query(Blog).filter(
             Blog.id.notin_(excluded_ids),
             Blog.is_published == 1
@@ -127,6 +128,17 @@ def get_recommended_blogs(db: Session, user_id: int, limit: int = 10) -> List[Bl
             Blog.favorites_count.desc(),
             Blog.views_count.desc()
         ).limit(limit).all()
+        
+        # 如果推荐博客数量不足，补充最新的博客
+        if len(recommended_blogs) < limit:
+            remaining_limit = limit - len(recommended_blogs)
+            additional_blogs = db.query(Blog).filter(
+                Blog.id.notin_([b.id for b in recommended_blogs]),
+                Blog.is_published == 1
+            ).order_by(
+                Blog.created_at.desc()
+            ).limit(remaining_limit).all()
+            recommended_blogs.extend(additional_blogs)
     
     logger.info(f"成功获取推荐博客: count={len(recommended_blogs)}")
     return recommended_blogs
@@ -139,6 +151,7 @@ def get_latest_blogs(db: Session, limit: int = 3) -> List[Blog]:
     total_blogs = db.query(Blog).filter(Blog.is_published == 1).count()
     logger.info(f"数据库中已发布的博客总数: {total_blogs}")
     
+    # 修改查询逻辑，确保返回最新的已发布博客
     latest_blogs = db.query(Blog).filter(
         Blog.is_published == 1
     ).order_by(
@@ -147,6 +160,6 @@ def get_latest_blogs(db: Session, limit: int = 3) -> List[Blog]:
     
     logger.info(f"成功获取最新博客: count={len(latest_blogs)}")
     for blog in latest_blogs:
-        logger.info(f"博客ID: {blog.id}, 标题: {blog.title}, 创建时间: {blog.created_at}")
+        logger.info(f"博客ID: {blog.id}, 标题: {blog.title}, 创建时间: {blog.created_at}, 发布状态: {blog.is_published}")
     
     return latest_blogs 

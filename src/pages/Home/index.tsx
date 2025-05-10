@@ -57,12 +57,12 @@ const Home = () => {
               return <List.Item key={item.id} className="blog-list-item">
                 <Link to={`/detail/${item.id}`}>
                   <div className='list-title'>{item.title}</div>
+                  <div className='list-context'>{item.subtitle}</div>
                   <div className='list-icons'>
                     <span className='list-icon'><CalendarOutlined /> {new Date(item.created_at).toLocaleDateString()} </span>
                     <span className='list-icon'><BarsOutlined /> {item.tags?.join(', ') || '无标签'} </span>
-                    <span className='list-icon'><FireOutlined /> {item.views_count} 阅读</span>
+                    <span className='list-icon'><FireOutlined /> {item.views_count}</span>
                   </div>
-                  <div className='list-context'>{item.subtitle}</div>
                 </Link>
               </List.Item>
             }} />
