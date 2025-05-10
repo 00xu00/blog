@@ -16,36 +16,41 @@ interface AnchorItem {
   children: AnchorItem[];
 }
 
-const MarkdownToc: React.FC = () => {
+interface MarkdownTocProps {
+  content: string;
+}
+
+const MarkdownToc: React.FC<MarkdownTocProps> = ({ content }) => {
   const [tocItems, setTocItems] = useState<TocItem[]>([]);
   const [activeId, setActiveId] = useState<string>('');
-
-  // 计算元素到视口顶部的距离
-  const getElementTop = (element: Element): number => {
-    const rect = element.getBoundingClientRect();
-    return rect.top;
-  };
+  const headerHeight = 70; // header的高度
 
   // 找到当前应该激活的标题
   const findActiveHeading = useCallback(() => {
     const headings = document.querySelectorAll('.detail-content h1, .detail-content h2, .detail-content h3, .detail-content h4');
-    let activeHeading: Element | null = null;
-    const offset = 50;
+    const scrollPosition = window.scrollY + headerHeight + -5; // 添加一个小的偏移量
 
-    Array.from(headings).some(heading => {
-      const top = getElementTop(heading);
-      if (top > -offset) {
-        activeHeading = heading;
-        return true;
+    // 找到第一个位置大于滚动位置的标题的前一个标题
+    for (let i = 0; i < headings.length; i++) {
+      const heading = headings[i];
+      const nextHeading = headings[i + 1];
+      const headingTop = heading.getBoundingClientRect().top + window.scrollY;
+
+      if (nextHeading) {
+        const nextHeadingTop = nextHeading.getBoundingClientRect().top + window.scrollY;
+        if (scrollPosition >= headingTop && scrollPosition < nextHeadingTop) {
+          return heading.id;
+        }
+      } else {
+        // 如果是最后一个标题
+        if (scrollPosition >= headingTop) {
+          return heading.id;
+        }
       }
-      return false;
-    });
-
-    if (!activeHeading && headings.length > 0) {
-      activeHeading = headings[headings.length - 1];
     }
 
-    return activeHeading?.id || '';
+    // 如果滚动位置在第一个标题之前，返回第一个标题
+    return headings[0]?.id || '';
   }, []);
 
   // 处理滚动事件
@@ -100,7 +105,7 @@ const MarkdownToc: React.FC = () => {
     return () => {
       window.removeEventListener('scroll', handleScroll);
     };
-  }, [handleScroll]);
+  }, [handleScroll, content]);
 
   const convertToAnchorItems = (items: TocItem[]): AnchorItem[] => {
     return items.map(item => ({
@@ -112,15 +117,15 @@ const MarkdownToc: React.FC = () => {
   };
 
   return (
-    <Affix offsetTop={70}>
+    <Affix offsetTop={headerHeight}>
       <div className="markdown-toc">
         <div className="toc-title">目录</div>
         <Anchor
           items={convertToAnchorItems(tocItems)}
           affix={false}
+          offsetTop={headerHeight}
+          targetOffset={headerHeight}
           getCurrentAnchor={() => `#${activeId}`}
-          targetOffset={100}
-          getContainer={() => document.querySelector('.detail-content') as HTMLElement}
         />
       </div>
     </Affix>

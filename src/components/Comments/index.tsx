@@ -1,344 +1,272 @@
-import React, { useState } from 'react';
-import { Avatar, Button, Input, List, Space, Tooltip, message } from 'antd';
-import { UserOutlined, LikeOutlined, DislikeOutlined, CloseOutlined } from '@ant-design/icons';
+import React, { useState, useEffect } from 'react';
+import { Form, Button, List, Input, message, Avatar, Space } from 'antd';
+import { UserOutlined, LikeOutlined, LikeFilled } from '@ant-design/icons';
+import { getBlogComments, createComment, likeComment, unlikeComment } from '../../api/comment';
+import { formatDate } from '../../utils/date';
 import './index.css';
+
+const { TextArea } = Input;
+
+interface CommentsProps {
+  blogId: number;
+  onCommentCountChange?: (count: number) => void;
+}
 
 interface Comment {
   id: number;
-  user: {
-    name: string;
+  content: string;
+  author: {
+    id: number;
+    username: string;
     avatar: string;
   };
-  content: string;
-  time: string;
-  likes: number;
-  dislikes: number;
-  isLiked: boolean;
-  isDisliked: boolean;
-  replies?: Comment[];
+  created_at: string;
+  likes_count: number;
+  is_liked: boolean;
+  replies: Comment[];
+  parent_id?: number;
+  parent?: Comment;
 }
 
-interface ReplyState {
-  commentId: number;
-  replyTo?: string;
-  replyId?: number;
-  isReplyToReply?: boolean;
-  content: string;
-}
+const Comments: React.FC<CommentsProps> = ({ blogId, onCommentCountChange }) => {
+  const [comments, setComments] = useState<Comment[]>([]);
+  const [submitting, setSubmitting] = useState(false);
+  const [replyingTo, setReplyingTo] = useState<{ id: number; username: string } | null>(null);
+  const [form] = Form.useForm();
+  const [replyForm] = Form.useForm();
 
-const Comments: React.FC = () => {
-  const [comment, setComment] = useState('');
-  const [replyState, setReplyState] = useState<ReplyState | null>(null);
-  const [comments, setComments] = useState<Comment[]>([
-    {
-      id: 1,
-      user: {
-        name: '用户1',
-        avatar: '',
-      },
-      content: '这是一条评论',
-      time: '2024-04-28 12:00',
-      likes: 10,
-      dislikes: 0,
-      isLiked: false,
-      isDisliked: false,
-      replies: [
-        {
-          id: 2,
-          user: {
-            name: '用户2',
-            avatar: '',
-          },
-          content: '这是一条回复',
-          time: '2024-04-28 12:01',
-          likes: 5,
-          dislikes: 0,
-          isLiked: false,
-          isDisliked: false,
-        },
-      ],
-    },
-  ]);
-
-  const handleComment = () => {
-    if (!comment.trim()) {
-      message.warning('请输入评论内容');
-      return;
-    }
-
-    const newComment: Comment = {
-      id: Date.now(),
-      user: {
-        name: '当前用户',
-        avatar: '',
-      },
-      content: comment,
-      time: new Date().toLocaleString(),
-      likes: 0,
-      dislikes: 0,
-      isLiked: false,
-      isDisliked: false,
-    };
-
-    setComments([...comments, newComment]);
-    setComment('');
-    message.success('评论成功');
-  };
-
-  const handleReply = () => {
-    if (!replyState?.content.trim()) {
-      message.warning('请输入回复内容');
-      return;
-    }
-
-    const newReply: Comment = {
-      id: Date.now(),
-      user: {
-        name: '当前用户',
-        avatar: '',
-      },
-      content: replyState.content,
-      time: new Date().toLocaleString(),
-      likes: 0,
-      dislikes: 0,
-      isLiked: false,
-      isDisliked: false,
-    };
-
-    setComments(comments.map(comment => {
-      if (comment.id === replyState.commentId) {
-        return {
-          ...comment,
-          replies: [...(comment.replies || []), newReply],
-        };
+  // 计算总评论数（包括所有回复）
+  const calculateTotalComments = (comments: Comment[]): number => {
+    let total = comments.length;
+    comments.forEach(comment => {
+      if (comment.replies && comment.replies.length > 0) {
+        total += calculateTotalComments(comment.replies);
       }
-      return comment;
-    }));
-
-    setReplyState(null);
-    message.success('回复成功');
-  };
-
-  const handleLike = (commentId: number) => {
-    setComments(comments.map(comment => {
-      if (comment.id === commentId) {
-        return {
-          ...comment,
-          likes: comment.isLiked ? comment.likes - 1 : comment.likes + 1,
-          isLiked: !comment.isLiked,
-          dislikes: comment.isDisliked ? comment.dislikes - 1 : comment.dislikes,
-          isDisliked: false
-        };
-      }
-      if (comment.replies) {
-        return {
-          ...comment,
-          replies: comment.replies.map(reply => {
-            if (reply.id === commentId) {
-              return {
-                ...reply,
-                likes: reply.isLiked ? reply.likes - 1 : reply.likes + 1,
-                isLiked: !reply.isLiked,
-                dislikes: reply.isDisliked ? reply.dislikes - 1 : reply.dislikes,
-                isDisliked: false
-              };
-            }
-            return reply;
-          }),
-        };
-      }
-      return comment;
-    }));
-  };
-
-  const handleDislike = (commentId: number) => {
-    setComments(comments.map(comment => {
-      if (comment.id === commentId) {
-        return {
-          ...comment,
-          dislikes: comment.isDisliked ? comment.dislikes - 1 : comment.dislikes + 1,
-          isDisliked: !comment.isDisliked,
-          likes: comment.isLiked ? comment.likes - 1 : comment.likes,
-          isLiked: false
-        };
-      }
-      if (comment.replies) {
-        return {
-          ...comment,
-          replies: comment.replies.map(reply => {
-            if (reply.id === commentId) {
-              return {
-                ...reply,
-                dislikes: reply.isDisliked ? reply.dislikes - 1 : reply.dislikes + 1,
-                isDisliked: !reply.isDisliked,
-                likes: reply.isLiked ? reply.likes - 1 : reply.likes,
-                isLiked: false
-              };
-            }
-            return reply;
-          }),
-        };
-      }
-      return comment;
-    }));
-  };
-
-  const startReply = (commentId: number, replyTo?: string, replyId?: number, isReplyToReply: boolean = false) => {
-    setReplyState({
-      commentId,
-      replyTo,
-      replyId,
-      isReplyToReply,
-      content: '',
     });
+    return total;
   };
 
-  const cancelReply = () => {
-    setReplyState(null);
+  useEffect(() => {
+    fetchComments();
+  }, [blogId]);
+
+  const fetchComments = async () => {
+    try {
+      const response = await getBlogComments(blogId);
+      setComments(response.data);
+      if (onCommentCountChange) {
+        onCommentCountChange(calculateTotalComments(response.data));
+      }
+    } catch (error) {
+      message.error('获取评论失败');
+    }
+  };
+
+  const handleSubmit = async (values: any) => {
+    try {
+      setSubmitting(true);
+      await createComment({
+        blog_id: blogId,
+        content: values.content,
+        parent_id: replyingTo?.id
+      });
+      message.success('评论成功');
+      form.resetFields();
+      replyForm.resetFields();
+      setReplyingTo(null);
+      fetchComments();
+    } catch (error) {
+      message.error('评论失败');
+    } finally {
+      setSubmitting(false);
+    }
+  };
+
+  const handleLike = async (commentId: number) => {
+    try {
+      // 递归查找评论
+      const findComment = (comments: Comment[], id: number): Comment | undefined => {
+        for (const comment of comments) {
+          if (comment.id === id) {
+            return comment;
+          }
+          if (comment.replies && comment.replies.length > 0) {
+            const found = findComment(comment.replies, id);
+            if (found) return found;
+          }
+        }
+        return undefined;
+      };
+
+      const comment = findComment(comments, commentId);
+      if (!comment) return;
+
+      if (comment.is_liked) {
+        await unlikeComment(commentId);
+        comment.likes_count--;
+        comment.is_liked = false;
+      } else {
+        await likeComment(commentId);
+        comment.likes_count++;
+        comment.is_liked = true;
+      }
+      setComments([...comments]);
+    } catch (error) {
+      message.error('操作失败');
+    }
+  };
+
+  // 递归获取所有回复
+  const getAllReplies = (comment: Comment): Comment[] => {
+    let allReplies: Comment[] = [];
+    if (comment.replies && comment.replies.length > 0) {
+      allReplies = [...comment.replies];
+      comment.replies.forEach(reply => {
+        allReplies = [...allReplies, ...getAllReplies(reply)];
+      });
+    }
+    return allReplies;
+  };
+
+  // 查找评论的父评论
+  const findParentComment = (commentId: number): Comment | undefined => {
+    for (const comment of comments) {
+      if (comment.id === commentId) {
+        return comment;
+      }
+      const findInReplies = (replies: Comment[]): Comment | undefined => {
+        for (const reply of replies) {
+          if (reply.id === commentId) {
+            return reply;
+          }
+          if (reply.replies && reply.replies.length > 0) {
+            const found = findInReplies(reply.replies);
+            if (found) return found;
+          }
+        }
+        return undefined;
+      };
+      if (comment.replies && comment.replies.length > 0) {
+        const found = findInReplies(comment.replies);
+        if (found) return found;
+      }
+    }
+    return undefined;
+  };
+
+  const renderComment = (comment: Comment, isReply: boolean = false) => {
+    const parentComment = findParentComment(comment.parent_id || 0);
+    const replyToUsername = parentComment?.author.username;
+
+    return (
+      <List.Item>
+        <List.Item.Meta
+          avatar={
+            <Avatar
+              src={comment.author.avatar}
+              icon={!comment.author.avatar && <UserOutlined />}
+              alt={comment.author.username}
+              className="comment-avatar"
+            />
+          }
+          title={
+            <div>
+              <span className="comment-author">{comment.author.username}</span>
+              <span className="comment-time" style={{ marginLeft: '10px' }}>
+                {formatDate(comment.created_at)}
+              </span>
+              {isReply && replyToUsername && (
+                <span className="reply-to" style={{ marginLeft: '10px', color: '#8c8c8c' }}>
+                  回复 {replyToUsername}
+                </span>
+              )}
+            </div>
+          }
+          description={
+            <div>
+              <div className="comment-content">{comment.content}</div>
+              <Space className="comment-actions">
+                <Button
+                  type="text"
+                  icon={
+                    <span style={{ fontSize: '16px', display: 'inline-flex', alignItems: 'center' }}>
+                      {comment.is_liked ? (
+                        <LikeFilled style={{ color: '#1890ff' }} />
+                      ) : (
+                        <LikeOutlined />
+                      )}
+                    </span>
+                  }
+                  onClick={() => handleLike(comment.id)}
+                >
+                  {comment.likes_count > 0 && comment.likes_count}
+                </Button>
+                <Button
+                  type="text"
+                  onClick={() => setReplyingTo({ id: comment.id, username: comment.author.username })}
+                >
+                  回复
+                </Button>
+              </Space>
+              {replyingTo?.id === comment.id && (
+                <Form form={replyForm} onFinish={handleSubmit} style={{ marginTop: '10px' }}>
+                  <Form.Item name="content" rules={[{ required: true, message: '请输入回复内容' }]}>
+                    <TextArea
+                      rows={2}
+                      placeholder={`回复 ${comment.author.username}...`}
+                    />
+                  </Form.Item>
+                  <Form.Item>
+                    <Space>
+                      <Button type="primary" htmlType="submit" loading={submitting}>
+                        发表回复
+                      </Button>
+                      <Button onClick={() => {
+                        setReplyingTo(null);
+                        replyForm.resetFields();
+                      }}>
+                        取消
+                      </Button>
+                    </Space>
+                  </Form.Item>
+                </Form>
+              )}
+            </div>
+          }
+        />
+      </List.Item>
+    );
   };
 
   return (
     <div className="comments-container">
-      <div className="comment-input">
-        <Avatar icon={<UserOutlined />} />
-        <Input.TextArea
-          value={comment}
-          onChange={e => setComment(e.target.value)}
-          placeholder="说点什么..."
-          autoSize={{ minRows: 2, maxRows: 6 }}
-        />
-        <Button type="primary" onClick={handleComment}>
-          评论
-        </Button>
-      </div>
+      <Form form={form} onFinish={handleSubmit}>
+        <Form.Item name="content" rules={[{ required: true, message: '请输入评论内容' }]}>
+          <TextArea rows={4} placeholder="写下你的评论..." />
+        </Form.Item>
+        <Form.Item>
+          <Button htmlType="submit" type="primary" loading={submitting}>
+            发表评论
+          </Button>
+        </Form.Item>
+      </Form>
 
       <List
         className="comment-list"
+        header={`${calculateTotalComments(comments)} 条评论`}
         itemLayout="horizontal"
         dataSource={comments}
-        renderItem={item => (
-          <List.Item>
-            <div className="comment-item">
-              <div className="comment-header">
-                <Avatar icon={<UserOutlined />} />
-                <span className="comment-user">{item.user.name}</span>
-                <span className="comment-time">{item.time}</span>
-              </div>
-              <div className="comment-content">{item.content}</div>
-              <div className="comment-actions">
-                <Space>
-                  <Tooltip title="点赞">
-                    <Button
-                      type="text"
-                      icon={<LikeOutlined className={item.isLiked ? 'active' : ''} />}
-                      onClick={() => handleLike(item.id)}
-                    >
-                      {item.likes}
-                    </Button>
-                  </Tooltip>
-                  <Tooltip title="点踩">
-                    <Button
-                      type="text"
-                      icon={<DislikeOutlined className={item.isDisliked ? 'active' : ''} />}
-                      onClick={() => handleDislike(item.id)}
-                    >
-                      {item.dislikes}
-                    </Button>
-                  </Tooltip>
-                  <Button type="text" onClick={() => startReply(item.id, item.user.name, item.id)}>
-                    回复
-                  </Button>
-                </Space>
-                {replyState?.commentId === item.id && replyState.replyId === item.id && !replyState.isReplyToReply && (
-                  <div className="reply-input">
-                    <div className="reply-input-header">
-                      <span>回复 {replyState.replyTo}</span>
-                      <Button type="text" icon={<CloseOutlined />} onClick={cancelReply} />
-                    </div>
-                    <Input.TextArea
-                      value={replyState.content}
-                      onChange={e => setReplyState({ ...replyState, content: e.target.value })}
-                      placeholder="输入回复内容..."
-                      autoSize={{ minRows: 2, maxRows: 6 }}
-                    />
-                    <div className="reply-input-actions">
-                      <Button type="primary" onClick={handleReply}>
-                        回复
-                      </Button>
-                      <Button onClick={cancelReply}>取消</Button>
-                    </div>
-                  </div>
-                )}
-              </div>
-
-              {item.replies && item.replies.length > 0 && (
-                <div className="comment-replies">
-                  {item.replies.map(reply => (
-                    <div key={reply.id} className="reply-item">
-                      <div className="reply-header">
-                        <div className="reply-user">
-                          <div className="reply-user-avatar">
-                            <Avatar size={32} icon={<UserOutlined />} />
-                          </div>
-                          <span className="reply-user-name">{reply.user.name}</span>
-                          <div className="reply-target">
-                            <span className="reply-target-name">{item.user.name}</span>
-                          </div>
-                        </div>
-                        <span className="reply-time">{reply.time}</span>
-                      </div>
-                      <div className="reply-content">{reply.content}</div>
-                      <div className="reply-actions">
-                        <Space>
-                          <Tooltip title="点赞">
-                            <Button
-                              type="text"
-                              icon={<LikeOutlined className={reply.isLiked ? 'active' : ''} />}
-                              onClick={() => handleLike(reply.id)}
-                            >
-                              {reply.likes}
-                            </Button>
-                          </Tooltip>
-                          <Tooltip title="点踩">
-                            <Button
-                              type="text"
-                              icon={<DislikeOutlined className={reply.isDisliked ? 'active' : ''} />}
-                              onClick={() => handleDislike(reply.id)}
-                            >
-                              {reply.dislikes}
-                            </Button>
-                          </Tooltip>
-                          <Button type="text" onClick={() => startReply(item.id, reply.user.name, reply.id, true)}>
-                            回复
-                          </Button>
-                        </Space>
-                        {replyState?.commentId === item.id && replyState.replyId === reply.id && replyState.isReplyToReply && (
-                          <div className="reply-input">
-                            <div className="reply-input-header">
-                              <span>回复 {replyState.replyTo}</span>
-                              <Button type="text" icon={<CloseOutlined />} onClick={cancelReply} />
-                            </div>
-                            <Input.TextArea
-                              value={replyState.content}
-                              onChange={e => setReplyState({ ...replyState, content: e.target.value })}
-                              placeholder="输入回复内容..."
-                              autoSize={{ minRows: 2, maxRows: 6 }}
-                            />
-                            <div className="reply-input-actions">
-                              <Button type="primary" onClick={handleReply}>
-                                回复
-                              </Button>
-                              <Button onClick={cancelReply}>取消</Button>
-                            </div>
-                          </div>
-                        )}
-                      </div>
-                    </div>
-                  ))}
-                </div>
-              )}
-            </div>
-          </List.Item>
+        renderItem={comment => (
+          <div>
+            {renderComment(comment)}
+            {comment.replies && comment.replies.length > 0 && (
+              <List
+                className="reply-list"
+                dataSource={getAllReplies(comment)}
+                renderItem={reply => renderComment(reply, true)}
+              />
+            )}
+          </div>
         )}
       />
     </div>

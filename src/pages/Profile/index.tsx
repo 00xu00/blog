@@ -1,6 +1,5 @@
 import React, { useEffect, useState } from 'react';
-import { useDispatch, useSelector } from 'react-redux';
-import { Tabs, List, Avatar, Space, Badge, Button, Card, Tag, message } from 'antd';
+import { Tabs, List, Avatar, Space, Badge, Button, Card, Tag, message, Input, Modal, Upload, Empty } from 'antd';
 import {
   MailOutlined,
   HistoryOutlined,
@@ -12,451 +11,1075 @@ import {
   EyeOutlined,
   MessageOutlined,
   UserAddOutlined,
-  CheckOutlined
+  CheckOutlined,
+  UploadOutlined,
+  CalendarOutlined,
+  BarsOutlined,
+  FireOutlined,
+  SendOutlined,
+  ArrowLeftOutlined,
+  CommentOutlined
 } from '@ant-design/icons';
-import { RootState } from '../../store';
-import {
-  setProfile,
-  setArticles,
-  setFollowing,
-  setFollowers,
-  setActiveTab
-} from '../../store/profile/actions';
-import { setMessages, markAsRead } from '../../store/messageSlice';
-import { ProfileState } from '../../store/profile/types';
 import './index.css';
-import { useNavigate, Link } from 'react-router-dom';
+import { useNavigate, Link, useLocation } from 'react-router-dom';
+import { getUserInfo, getUserFollowing, getUserFollowers, followUser, unfollowUser, checkFollowingStatus } from '../../api/user';
+import { getUserBlogs, getUserLikedBlogs, getUserFavoriteBlogs, likeBlog, unlikeBlog, favoriteBlog, unfavoriteBlog, getUserHistoryBlogs } from '../../api/blog';
+import { formatDate } from '../../utils/date';
+import { getMessages, getConversation, createMessage, markMessageAsRead } from '../../api/message';
+import axios from 'axios';
 
+const API_URL = "http://localhost:8000/api/v1";
 const { TabPane } = Tabs;
 
+interface UserInfo {
+  id: string;
+  username: string;
+  email: string;
+  avatar: string | null;
+  bio: string | null;
+  followers_count: number;
+  following_count: number;
+  articles_count: number;
+}
+
+interface Blog {
+  id: number;
+  title: string;
+  description: string;
+  created_at: string;
+  views_count: number;
+  likes: number;
+  comments: number;
+  is_liked?: boolean;
+  is_favorited?: boolean;
+  tags?: string[];
+  subtitle?: string;
+  content?: string;
+  author?: {
+    id: number;
+    username: string;
+    avatar: string | null;
+  };
+}
+
+interface User {
+  id: string;
+  username: string;
+  name: string;
+  avatar: string;
+  bio: string | null;
+  followers_count: number;
+  following_count: number;
+  articles_count: number;
+}
+
+interface Message {
+  id: number;
+  sender_id: number;
+  receiver_id: number;
+  content: string;
+  is_read: boolean;
+  created_at: string;
+  sender: {
+    id: number;
+    username: string;
+    avatar: string | null;
+  };
+  receiver: {
+    id: number;
+    username: string;
+    avatar: string | null;
+  };
+}
+
 const Profile: React.FC = () => {
-  const dispatch = useDispatch();
   const navigate = useNavigate();
+  const location = useLocation();
+  const isOtherUser = location.state?.isOtherUser;
+  const otherUserId = location.state?.authorId;
   const [followingMap, setFollowingMap] = useState<Record<string, boolean>>({});
   const [followerFollowingMap, setFollowerFollowingMap] = useState<Record<string, boolean>>({});
+  const [userInfo, setUserInfo] = useState<UserInfo | null>(null);
+  const [isLoading, setIsLoading] = useState(true);
+  const [isEditingBio, setIsEditingBio] = useState(false);
+  const [newBio, setNewBio] = useState('');
+  const [isUploading, setIsUploading] = useState(false);
+  const [activeTab, setActiveTab] = useState('articles');
+  const [blogs, setBlogs] = useState<Blog[]>([]);
+  const [following, setFollowing] = useState<User[]>([]);
+  const [followers, setFollowers] = useState<User[]>([]);
+  const [messages, setMessages] = useState<Message[]>([]);
+  const [unreadCount, setUnreadCount] = useState(0);
+  const [selectedUser, setSelectedUser] = useState<number | null>(null);
+  const [conversation, setConversation] = useState<Message[]>([]);
+  const [newMessage, setNewMessage] = useState('');
+  const [isFollowing, setIsFollowing] = useState(false);
+  const [currentUserId, setCurrentUserId] = useState<number | null>(null);
+  const [userHistoryBlogs, setUserHistoryBlogs] = useState<Blog[]>([]);
 
-  const {
-    userInfo,
-    articles,
-    following,
-    followers,
-    activeTab
-  } = useSelector((state: RootState) => state.profile);
-  const { messages, unreadCount } = useSelector((state: RootState) => state.message);
-
+  // 获取用户信息
   useEffect(() => {
-    // 模拟获取数据
-    const fetchData = async () => {
-      // 这里应该是实际的API调用
-      const mockData = {
-        userInfo: {
-          id: '1',
-          name: '用户名',
-          avatar: '',
-          bio: '个人简介',
-          stats: {
-            articles: 10,
-            followers: 100,
-            following: 50
-          }
-        },
-        messages: [
-          {
-            id: '1',
-            sender: {
-              id: '2',
-              name: '用户A',
-              avatar: ''
-            },
-            content: '你好，请问这篇文章的代码可以分享一下吗？',
-            createTime: '2024-01-01 12:00',
-            isRead: false
-          },
-          {
-            id: '2',
-            sender: {
-              id: '3',
-              name: '用户B',
-              avatar: ''
-            },
-            content: '感谢你的分享，对我帮助很大！',
-            createTime: '2024-01-01 10:00',
-            isRead: false
-          }
-        ],
-        articles: [
-          {
-            id: '1',
-            title: '示例文章标题',
-            description: '这是文章的简要描述...',
-            createTime: '2024-01-01',
-            views: 100,
-            likes: 10,
-            comments: 5
-          }
-        ],
-        following: [
-          {
-            id: '1',
-            name: '关注用户1',
-            avatar: '',
-            bio: '个人简介1'
-          }
-        ],
-        followers: [
-          {
-            id: '1',
-            name: '粉丝1',
-            avatar: '',
-            bio: '个人简介1'
-          }
-        ]
-      };
+    const fetchUserInfo = async () => {
+      try {
+        const token = localStorage.getItem('token');
+        if (!token) {
+          navigate('/auth');
+          return;
+        }
 
-      dispatch(setProfile(mockData.userInfo));
-      dispatch(setMessages(mockData.messages));
-      dispatch(setArticles(mockData.articles));
-      dispatch(setFollowing(mockData.following));
-      dispatch(setFollowers(mockData.followers));
+        const data = await getUserInfo(isOtherUser ? Number(otherUserId) : undefined);
+        setUserInfo(data);
+
+        // 如果是其他用户的profile，检查关注状态
+        if (isOtherUser && otherUserId) {
+          const followingStatus = await checkFollowingStatus(Number(otherUserId));
+          setIsFollowing(followingStatus.is_following);
+        }
+
+        setIsLoading(false);
+      } catch (error: any) {
+        console.error('获取用户信息出错:', error);
+        message.error(error.response?.data?.detail || '获取用户信息失败，请稍后重试');
+        setIsLoading(false);
+      }
     };
 
-    fetchData();
-  }, [dispatch]);
+    fetchUserInfo();
+  }, [navigate, isOtherUser, otherUserId]);
 
+  // 获取博客列表
   useEffect(() => {
-    // 初始化关注状态
-    const initialFollowingMap = following.reduce((acc, user) => {
-      acc[user.id] = true;
-      return acc;
-    }, {} as Record<string, boolean>);
-    setFollowingMap(initialFollowingMap);
+    const fetchBlogs = async () => {
+      try {
+        let data;
+        if (isOtherUser && otherUserId) {
+          // 获取其他用户的文章
+          const response = await axios.get(`${API_URL}/blogs/user/${otherUserId}`, {
+            headers: {
+              Authorization: `Bearer ${localStorage.getItem('token')}`,
+            },
+          });
+          data = response.data;
+        } else {
+          // 获取当前用户的文章
+          switch (activeTab) {
+            case 'articles':
+              data = await getUserBlogs();
+              break;
+            case 'likes':
+              data = await getUserLikedBlogs();
+              break;
+            case 'favorites':
+              data = await getUserFavoriteBlogs();
+              break;
+            case 'history':
+              data = await getUserHistoryBlogs();
+              break;
+            default:
+              data = [];
+          }
+        }
+        setBlogs(data || []);
+        setUserHistoryBlogs(data || []);
+      } catch (error: any) {
+        console.error('获取博客列表出错:', error);
+        message.error(error.response?.data?.detail || '获取博客列表失败，请稍后重试');
+        setBlogs([]);
+        setUserHistoryBlogs([]);
+      }
+    };
 
-    // 初始化粉丝关注状态
-    const initialFollowerFollowingMap = followers.reduce((acc, user) => {
-      // 这里应该从后端获取实际的关注状态
-      acc[user.id] = false; // 默认未关注
-      return acc;
-    }, {} as Record<string, boolean>);
-    setFollowerFollowingMap(initialFollowerFollowingMap);
-  }, [following, followers]);
-
-  const handleMessage = (userId: string) => {
-    if (userId === userInfo.id) {
-      message.warning('不能给自己发送私信');
-      return;
+    if (userInfo) {
+      fetchBlogs();
     }
-    navigate(`/chat/${userId}`);
+  }, [activeTab, userInfo, isOtherUser, otherUserId]);
+
+  // 获取关注和粉丝列表
+  useEffect(() => {
+    const fetchFollowingAndFollowers = async () => {
+      if (!userInfo) return;
+
+      try {
+        const [followingData, followersData] = await Promise.all([
+          getUserFollowing(Number(userInfo.id)),
+          getUserFollowers(Number(userInfo.id))
+        ]);
+
+        setFollowing(followingData);
+        setFollowers(followersData);
+
+        // 初始化关注状态
+        const initialFollowingMap = followingData.reduce((acc: Record<string, boolean>, user: User) => {
+          acc[user.id] = true;
+          return acc;
+        }, {} as Record<string, boolean>);
+        setFollowingMap(initialFollowingMap);
+
+        // 初始化粉丝关注状态 - 修改这部分逻辑
+        const initialFollowerFollowingMap = followersData.reduce((acc: Record<string, boolean>, user: User) => {
+          // 检查该粉丝是否在关注列表中
+          acc[user.id] = followingData.some((following: User) => following.id === user.id);
+          return acc;
+        }, {} as Record<string, boolean>);
+        setFollowerFollowingMap(initialFollowerFollowingMap);
+      } catch (error: any) {
+        console.error('获取关注和粉丝列表出错:', error);
+        message.error(error.response?.data?.detail || '获取关注和粉丝列表失败，请稍后重试');
+      }
+    };
+
+    if (userInfo) {
+      fetchFollowingAndFollowers();
+    }
+  }, [userInfo]);
+
+  // 加载消息列表
+  const loadMessages = async () => {
+    if (!userInfo) return;
+
+    try {
+      const response = await getMessages();
+      if (!response || !Array.isArray(response)) {
+        console.error('获取消息失败：返回数据格式不正确');
+        setMessages([]);
+        return;
+      }
+
+      // 按用户分组，只保留每个用户的最新消息
+      const userMessages = response.reduce((acc: Record<string, Message>, msg: Message) => {
+        if (!msg || !msg.sender || !msg.receiver) {
+          console.log('跳过无效消息:', msg);
+          return acc;
+        }
+
+        const otherUserId = msg.sender_id === Number(userInfo.id) ? msg.receiver_id : msg.sender_id;
+
+        if (!acc[otherUserId] || new Date((msg as Message).created_at).getTime() > new Date((acc[otherUserId] as Message).created_at).getTime()) {
+          acc[otherUserId] = msg;
+        }
+        return acc;
+      }, {});
+
+      const sortedMessages = Object.values(userMessages).sort((a, b) =>
+        new Date((b as Message).created_at).getTime() - new Date((a as Message).created_at).getTime()
+      ) as Message[];
+
+      setMessages(sortedMessages);
+
+      // 计算未读消息数量
+      const unread = response.filter((msg: Message) =>
+        !msg.is_read && msg.receiver_id === Number(userInfo.id)
+      ).length;
+      setUnreadCount(unread);
+    } catch (error) {
+      console.error('加载私信失败:', error);
+      message.error('加载私信失败');
+      setMessages([]);
+    }
   };
 
-  const handleFollow = (userId: string) => (e: React.MouseEvent) => {
+  // 定期刷新消息
+  useEffect(() => {
+    if (userInfo && activeTab === 'messages') {
+      loadMessages();
+      const timer = setInterval(loadMessages, 30000); // 每30秒刷新一次
+      return () => clearInterval(timer);
+    }
+  }, [userInfo, activeTab]);
+
+  // 加载与特定用户的对话
+  const loadConversation = async (userId: number) => {
+    try {
+      const response = await getConversation(userId);
+      setConversation(response);
+      // 标记未读消息为已读
+      response.forEach((msg: Message) => {
+        if (!msg.is_read && msg.receiver_id === Number(userInfo?.id)) {
+          markMessageAsRead(msg.id);
+        }
+      });
+    } catch (error) {
+      console.error('加载对话失败:', error);
+      message.error('加载对话失败');
+    }
+  };
+
+  // 发送消息
+  const handleSendMessage = async (receiverId: number, content: string) => {
+    if (!content.trim()) {
+      message.warning('请输入消息内容');
+      return;
+    }
+
+    try {
+      const newMessage = await createMessage(receiverId, content);
+      setConversation([...conversation, newMessage]);
+      setNewMessage('');
+      // 重新加载消息列表
+      loadMessages();
+    } catch (error) {
+      console.error('发送消息失败:', error);
+      message.error('发送消息失败');
+    }
+  };
+
+  // 处理消息点击
+  const handleMessageClick = async (userId: number, username: string, avatar: string | null = null) => {
+    // 找到与该用户的最新消息
+    const message = messages.find(msg =>
+      msg.sender_id === userId || msg.receiver_id === userId
+    );
+
+    if (message && !message.is_read && message.receiver_id === Number(userInfo?.id)) {
+      try {
+        await markMessageAsRead(message.id);
+        // 更新消息状态
+        setMessages(prevMessages =>
+          prevMessages.map(msg =>
+            msg.id === message.id ? { ...msg, is_read: true } : msg
+          )
+        );
+        // 更新未读计数
+        setUnreadCount(prev => Math.max(0, prev - 1));
+      } catch (error) {
+        console.error('标记消息已读失败:', error);
+      }
+    }
+
+    // 跳转到聊天页面
+    navigate('/chat', {
+      state: {
+        userId,
+        username,
+        avatar
+      }
+    });
+  };
+
+  // 获取当前登录用户id
+  useEffect(() => {
+    const userInfoStr = localStorage.getItem('userInfo');
+    if (userInfoStr) {
+      try {
+        const user = JSON.parse(userInfoStr);
+        setCurrentUserId(user.id);
+      } catch { }
+    }
+  }, []);
+
+  const handleFollow = (userId: string) => async (e: React.MouseEvent) => {
     e.preventDefault();
-    if (userId === userInfo.id) {
+    if (Number(userId) === currentUserId) {
       message.warning('不能关注自己');
       return;
     }
-    setFollowingMap(prev => ({
-      ...prev,
-      [userId]: !prev[userId]
-    }));
-    message.success(followingMap[userId] ? '已取消关注' : '关注成功');
-  };
-
-  const handleFollowerFollow = (userId: string) => (e: React.MouseEvent) => {
-    e.preventDefault();
-    if (userId === userInfo.id) {
-      message.warning('不能关注自己');
-      return;
+    try {
+      if (isFollowing) {
+        await unfollowUser(Number(userId));
+        message.success('已取消关注');
+        setIsFollowing(false);
+      } else {
+        await followUser(Number(userId));
+        message.success('关注成功');
+        setIsFollowing(true);
+      }
+      if (userInfo) {
+        setUserInfo({
+          ...userInfo,
+          followers_count: isFollowing ? userInfo.followers_count - 1 : userInfo.followers_count + 1
+        });
+      }
+    } catch (error: any) {
+      message.error(error.response?.data?.detail || '操作失败');
     }
-    setFollowerFollowingMap(prev => ({
-      ...prev,
-      [userId]: !prev[userId]
-    }));
-    message.success(followerFollowingMap[userId] ? '已取消关注' : '关注成功');
   };
 
-  const renderUserInfo = () => (
-    <div className="profile-header">
-      <div className="profile-avatar">
-        <Avatar size={100} src={userInfo.avatar} icon={<UserOutlined />} />
-      </div>
-      <div className="profile-info">
-        <h2>{userInfo.name}</h2>
-        <p>{userInfo.bio}</p>
-        <Space>
-          <Button type="primary" onClick={handleFollow(userInfo.id)}>
-            <UserAddOutlined /> 关注
-          </Button>
-          <Button onClick={() => handleMessage(userInfo.id)}>私信</Button>
-        </Space>
-        <div className="profile-stats">
-          <div className="stat-item">
-            <span className="stat-number">{userInfo.stats.followers}</span>
-            <span className="stat-label">关注者</span>
+  const handleFollowerFollow = (userId: string) => async (e: React.MouseEvent) => {
+    e.preventDefault();
+    try {
+      if (userId === userInfo?.id) {
+        message.warning('不能关注自己');
+        return;
+      }
+
+      if (followerFollowingMap[userId]) {
+        await unfollowUser(Number(userId));
+        message.success('已取消关注');
+      } else {
+        await followUser(Number(userId));
+        message.success('关注成功');
+      }
+
+      setFollowerFollowingMap(prev => ({
+        ...prev,
+        [userId]: !prev[userId]
+      }));
+    } catch (error: any) {
+      message.error(error.response?.data?.detail || '操作失败');
+    }
+  };
+
+  const handleLike = async (blogId: number) => {
+    try {
+      const blog = blogs.find(b => b.id === blogId);
+      if (!blog) return;
+
+      if (blog.is_liked) {
+        await unlikeBlog(blogId);
+        blog.likes--;
+        blog.is_liked = false;
+      } else {
+        await likeBlog(blogId);
+        blog.likes++;
+        blog.is_liked = true;
+      }
+
+      setBlogs([...blogs]);
+      message.success(blog.is_liked ? '点赞成功' : '取消点赞成功');
+    } catch (error: any) {
+      message.error(error.response?.data?.detail || '操作失败');
+    }
+  };
+
+  const handleFavorite = async (blogId: number) => {
+    try {
+      const blog = blogs.find(b => b.id === blogId);
+      if (!blog) return;
+
+      if (blog.is_favorited) {
+        await unfavoriteBlog(blogId);
+        blog.is_favorited = false;
+      } else {
+        await favoriteBlog(blogId);
+        blog.is_favorited = true;
+      }
+
+      setBlogs([...blogs]);
+      message.success(blog.is_favorited ? '收藏成功' : '取消收藏成功');
+    } catch (error: any) {
+      message.error(error.response?.data?.detail || '操作失败');
+    }
+  };
+
+  // 处理头像上传
+  const handleAvatarUpload = async (file: File) => {
+    try {
+      setIsUploading(true);
+      const formData = new FormData();
+      formData.append('file', file);
+
+      const token = localStorage.getItem('token');
+      const response = await fetch('http://localhost:8000/api/v1/users/me/avatar', {
+        method: 'POST',
+        headers: {
+          'Authorization': `Bearer ${token}`,
+        },
+        body: formData,
+      });
+
+      if (response.ok) {
+        const data = await response.json();
+        setUserInfo((prev: UserInfo | null) => prev ? { ...prev, avatar: data.avatar } : null);
+        message.success('头像上传成功');
+      } else {
+        const errorData = await response.json();
+        message.error(errorData.detail || '头像上传失败');
+      }
+    } catch (error) {
+      console.error('上传头像出错:', error);
+      message.error('上传头像失败，请稍后重试');
+    } finally {
+      setIsUploading(false);
+    }
+  };
+
+  // 处理简介更新
+  const handleBioUpdate = async () => {
+    try {
+      const token = localStorage.getItem('token');
+      const response = await fetch('http://localhost:8000/api/v1/users/me', {
+        method: 'PUT',
+        headers: {
+          'Authorization': `Bearer ${token}`,
+          'Content-Type': 'application/json',
+        },
+        body: JSON.stringify({ bio: newBio }),
+      });
+
+      if (response.ok) {
+        const data = await response.json();
+        setUserInfo((prev: UserInfo | null) => prev ? { ...prev, bio: data.bio } : null);
+        setIsEditingBio(false);
+        message.success('简介更新成功');
+      } else {
+        message.error('简介更新失败');
+      }
+    } catch (error) {
+      console.error('更新简介出错:', error);
+      message.error('更新简介失败，请稍后重试');
+    }
+  };
+
+  const getAvatar = (avatar: string | null) => {
+    if (!avatar) {
+      return <UserOutlined style={{ fontSize: '24px' }} />;
+    }
+    return <img src={avatar} alt="avatar" />;
+  };
+
+  const renderUserInfo = () => {
+    if (!userInfo) {
+      return <div>加载中...</div>;
+    }
+
+    return (
+      <div className="profile-header">
+        <div className="avatar-container">
+          {!isOtherUser && (
+            <Upload
+              name="avatar"
+              showUploadList={false}
+              beforeUpload={(file) => {
+                handleAvatarUpload(file);
+                return false;
+              }}
+              accept="image/*"
+            >
+              <div className="avatar-wrapper">
+                <Avatar
+                  size={100}
+                  src={userInfo.avatar}
+                  icon={<UserOutlined />}
+                  className="avatar"
+                />
+                <div className="avatar-overlay">
+                  <UploadOutlined />
+                  <span>更换头像</span>
+                </div>
+              </div>
+            </Upload>
+          )}
+          {isOtherUser && (
+            <div className="avatar-wrapper">
+              <Avatar
+                size={100}
+                src={userInfo.avatar}
+                icon={<UserOutlined />}
+                className="avatar"
+              />
+            </div>
+          )}
+        </div>
+        <div className="profile-info">
+          <h2>{userInfo.username}</h2>
+          {isEditingBio ? (
+            <div className="bio-edit">
+              <Input.TextArea
+                value={newBio}
+                onChange={(e) => setNewBio(e.target.value)}
+                placeholder="请输入个人简介"
+                autoSize={{ minRows: 2, maxRows: 4 }}
+              />
+              <Space style={{ marginTop: 8 }}>
+                <Button type="primary" onClick={handleBioUpdate}>
+                  保存
+                </Button>
+                <Button onClick={() => setIsEditingBio(false)}>
+                  取消
+                </Button>
+              </Space>
+            </div>
+          ) : (
+            <p onClick={() => {
+              if (!isOtherUser) {
+                setNewBio(userInfo.bio || '');
+                setIsEditingBio(true);
+              }
+            }} style={{ cursor: isOtherUser ? 'default' : 'pointer' }}>
+              {userInfo.bio || '这个人很懒，什么都没写~'}
+              {!isOtherUser && <EditOutlined />}
+            </p>
+          )}
+          <div className="profile-actions">
+            {isOtherUser && (
+              <>
+                <Button
+                  type={isFollowing ? "default" : "primary"}
+                  onClick={handleFollow(userInfo.id)}
+                  icon={isFollowing ? <CheckOutlined /> : <UserAddOutlined />}
+                >
+                  {isFollowing ? '已关注' : '关注'}
+                </Button>
+                <Button onClick={() => handleMessageClick(Number(userInfo.id), userInfo.username, userInfo.avatar)}>私信</Button>
+              </>
+            )}
           </div>
-          <div className="stat-item">
-            <span className="stat-number">{userInfo.stats.following}</span>
-            <span className="stat-label">关注</span>
-          </div>
-          <div className="stat-item">
-            <span className="stat-number">{userInfo.stats.articles}</span>
-            <span className="stat-label">文章</span>
+          <div className="profile-stats">
+            <div className="stat-item">
+              <span className="stat-number">{userInfo.followers_count}</span>
+              <span className="stat-label">关注者</span>
+            </div>
+            <div className="stat-item">
+              <span className="stat-number">{userInfo.following_count}</span>
+              <span className="stat-label">关注</span>
+            </div>
+            <div className="stat-item">
+              <span className="stat-number">{userInfo.articles_count}</span>
+              <span className="stat-label">文章</span>
+            </div>
           </div>
         </div>
       </div>
-    </div>
-  );
+    );
+  };
+
+  // 在组件加载时检查是否有需要打开的消息对话
+  useEffect(() => {
+    if (location.state?.selectedUser && location.state?.activeTab === 'messages') {
+      setSelectedUser(location.state.selectedUser);
+      setActiveTab('messages');
+    }
+  }, [location.state]);
 
   return (
     <div className="profile-container">
       <Card className="profile-card">
         {renderUserInfo()}
-        <Tabs activeKey={activeTab} onChange={(key) => dispatch(setActiveTab(key))}>
-          <TabPane
-            tab={
-              <span>
-                <MailOutlined />
-                <Badge count={unreadCount} offset={[5, 0]}>
-                  私信
-                </Badge>
-              </span>
-            }
-            key="messages"
-          >
-            <List
-              itemLayout="horizontal"
-              dataSource={messages}
-              renderItem={message => (
-                <List.Item
-                  className={`message-item ${!message.isRead ? 'unread' : ''}`}
-                  onClick={() => handleMessage(message.sender.id)}
-                >
-                  <List.Item.Meta
-                    avatar={<Avatar src={message.sender.avatar} icon={<UserOutlined />} />}
-                    title={
-                      <Space>
-                        <span>{message.sender.name}</span>
-                        {!message.isRead && <Badge status="processing" />}
-                      </Space>
-                    }
-                    description={
-                      <div className="message-content">
-                        <p>{message.content}</p>
-                        <span className="message-time">{message.createTime}</span>
+        <Tabs activeKey={activeTab} onChange={setActiveTab}>
+          {!isOtherUser && (
+            <>
+              <TabPane
+                tab={
+                  <span>
+                    <MailOutlined />
+                    私信
+                    {unreadCount > 0 && <Badge count={unreadCount} />}
+                  </span>
+                }
+                key="messages"
+              >
+                {messages && messages.length > 0 ? (
+                  <div className="message-container">
+                    <div className="message-list">
+                      <List
+                        itemLayout="horizontal"
+                        dataSource={messages}
+                        renderItem={item => {
+                          if (!item || !item.sender || !item.receiver) return null;
+
+                          const otherUserId = item.sender_id === Number(userInfo?.id) ? item.receiver_id : item.sender_id;
+                          const otherUsername = item.sender_id === Number(userInfo?.id) ? item.receiver.username : item.sender.username;
+                          const otherAvatar = item.sender_id === Number(userInfo?.id) ? item.receiver.avatar : item.sender.avatar;
+                          const isUnread = !item.is_read && item.receiver_id === Number(userInfo?.id);
+                          const isSent = item.sender_id === Number(userInfo?.id);
+
+                          return (
+                            <List.Item
+                              className={`message-item ${isUnread ? 'unread' : ''}`}
+                              onClick={() => handleMessageClick(otherUserId, otherUsername, otherAvatar)}
+                            >
+                              <div className="message-item-content">
+                                <Avatar src={otherAvatar} icon={<UserOutlined />} size={48} />
+                                <div className="message-item-info">
+                                  <div className="message-item-header">
+                                    <span className="message-item-username">{otherUsername}</span>
+                                    <span className="message-item-time">{formatDate(item.created_at)}</span>
+                                  </div>
+                                  <div className="message-item-preview">
+                                    {isSent && <span className="message-sent-indicator">你：</span>}
+                                    {item.content.length > 50 ? `${item.content.substring(0, 50)}...` : item.content}
+                                  </div>
+                                </div>
+                                {isUnread && <div className="message-item-unread" />}
+                              </div>
+                            </List.Item>
+                          );
+                        }}
+                      />
+                    </div>
+                    {selectedUser && (
+                      <div className="conversation-container">
+                        <div className="conversation-header">
+                          <Button icon={<ArrowLeftOutlined />} onClick={() => setSelectedUser(null)}>
+                            返回
+                          </Button>
+                          <span>与 {conversation[0]?.sender.username} 的对话</span>
+                        </div>
+                        <div className="conversation-messages">
+                          {conversation.map(msg => (
+                            <div
+                              key={msg.id}
+                              className={`message-bubble ${msg.sender_id === Number(userInfo?.id) ? 'sent' : 'received'}`}
+                            >
+                              <div className="message-content">{msg.content}</div>
+                              <div className="message-time">{formatDate(msg.created_at)}</div>
+                            </div>
+                          ))}
+                        </div>
+                        <div className="message-input">
+                          <Input.TextArea
+                            value={newMessage}
+                            onChange={e => setNewMessage(e.target.value)}
+                            placeholder="输入消息..."
+                            autoSize={{ minRows: 2, maxRows: 6 }}
+                            onPressEnter={e => {
+                              if (!e.shiftKey) {
+                                e.preventDefault();
+                                handleSendMessage(selectedUser, newMessage);
+                              }
+                            }}
+                          />
+                          <Button
+                            type="primary"
+                            icon={<SendOutlined />}
+                            onClick={() => handleSendMessage(selectedUser, newMessage)}
+                            disabled={!newMessage.trim()}
+                          >
+                            发送
+                          </Button>
+                        </div>
                       </div>
-                    }
-                  />
-                </List.Item>
-              )}
-            />
-          </TabPane>
-          <TabPane
-            tab={
-              <span>
-                <HistoryOutlined />
-                历史记录
-              </span>
-            }
-            key="history"
-          >
-            <List
-              itemLayout="vertical"
-              dataSource={articles}
-              renderItem={item => (
-                <List.Item
-                  actions={[
-                    <Space>
-                      <span><EyeOutlined /> {item.views}</span>
-                      <span><LikeOutlined /> {item.likes}</span>
-                      <span><MessageOutlined /> {item.comments}</span>
-                    </Space>
-                  ]}
-                >
-                  <List.Item.Meta
-                    title={<Link to={`/detail/${item.id}`}>{item.title}</Link>}
-                    description={item.description}
-                  />
-                  <div className="article-meta">
-                    <Tag>{item.createTime}</Tag>
+                    )}
                   </div>
-                </List.Item>
-              )}
-            />
-          </TabPane>
-          <TabPane
-            tab={
-              <span>
-                <LikeOutlined />
-                点赞
-              </span>
-            }
-            key="likes"
-          >
-            <List
-              itemLayout="vertical"
-              dataSource={articles}
-              renderItem={item => (
-                <List.Item
-                  actions={[
-                    <Space>
-                      <span><EyeOutlined /> {item.views}</span>
-                      <span><LikeOutlined /> {item.likes}</span>
-                      <span><MessageOutlined /> {item.comments}</span>
-                    </Space>
-                  ]}
-                >
-                  <List.Item.Meta
-                    title={<Link to={`/detail/${item.id}`}>{item.title}</Link>}
-                    description={item.description}
-                  />
-                  <div className="article-meta">
-                    <Tag>{item.createTime}</Tag>
+                ) : (
+                  <div className="empty-state">
+                    <MailOutlined />
+                    <div className="empty-state-text">暂无私信</div>
+                    <div className="empty-state-subtext">关注感兴趣的用户，开始交流吧</div>
+                    <Button type="primary" onClick={() => navigate('/')}>
+                      去关注用户
+                    </Button>
                   </div>
-                </List.Item>
-              )}
-            />
-          </TabPane>
-          <TabPane
-            tab={
-              <span>
-                <StarOutlined />
-                收藏
-              </span>
-            }
-            key="favorites"
-          >
-            <List
-              itemLayout="vertical"
-              dataSource={articles}
-              renderItem={item => (
-                <List.Item
-                  actions={[
-                    <Space>
-                      <span><EyeOutlined /> {item.views}</span>
-                      <span><LikeOutlined /> {item.likes}</span>
-                      <span><MessageOutlined /> {item.comments}</span>
-                    </Space>
-                  ]}
-                >
-                  <List.Item.Meta
-                    title={<Link to={`/detail/${item.id}`}>{item.title}</Link>}
-                    description={item.description}
+                )}
+              </TabPane>
+              <TabPane
+                tab={
+                  <span>
+                    <HistoryOutlined />
+                    浏览历史
+                  </span>
+                }
+                key="history"
+              >
+                {userHistoryBlogs && userHistoryBlogs.length > 0 ? (
+                  <List
+                    itemLayout="vertical"
+                    dataSource={userHistoryBlogs}
+                    renderItem={item => (
+                      <List.Item>
+                        <List.Item.Meta
+                          title={
+                            <Link to={`/detail/${item.id}`} className="article-title">
+                              {item.title}
+                            </Link>
+                          }
+                          description={
+                            <div className="article-meta">
+                              {item.subtitle && (
+                                <div className="article-subtitle">{item.subtitle}</div>
+                              )}
+                              <div className="article-description">{item.description}</div>
+                              <div className="list-icons">
+                                <span className="list-icon">
+                                  <CalendarOutlined /> {formatDate(item.created_at)}
+                                </span>
+                                {item.tags && item.tags.length > 0 && (
+                                  <span className="list-icon">
+                                    <BarsOutlined /> {item.tags.join(', ')}
+                                  </span>
+                                )}
+                                <span className="list-icon">
+                                  <FireOutlined /> {item.views_count}
+                                </span>
+                              </div>
+                            </div>
+                          }
+                        />
+                      </List.Item>
+                    )}
                   />
-                  <div className="article-meta">
-                    <Tag>{item.createTime}</Tag>
+                ) : (
+                  <Empty
+                    description="暂无浏览历史"
+                    image={Empty.PRESENTED_IMAGE_SIMPLE}
+                  />
+                )}
+              </TabPane>
+              <TabPane
+                tab={
+                  <span>
+                    <LikeOutlined />
+                    点赞
+                  </span>
+                }
+                key="likes"
+              >
+                {blogs.length > 0 ? (
+                  <List
+                    itemLayout="vertical"
+                    dataSource={blogs}
+                    renderItem={item => (
+                      <List.Item>
+                        <List.Item.Meta
+                          title={
+                            <Link to={`/detail/${item.id}`} className="article-title">
+                              {item.title}
+                            </Link>
+                          }
+                          description={
+                            <div className="article-meta">
+                              {item.subtitle && (
+                                <div className="article-subtitle">{item.subtitle}</div>
+                              )}
+                              <div className="article-description">{item.description}</div>
+                              <div className="list-icons">
+                                <span className="list-icon">
+                                  <CalendarOutlined /> {formatDate(item.created_at)}
+                                </span>
+                                {item.tags && item.tags.length > 0 && (
+                                  <span className="list-icon">
+                                    <BarsOutlined /> {item.tags.join(', ')}
+                                  </span>
+                                )}
+                                <span className="list-icon">
+                                  <FireOutlined /> {item.views_count}
+                                </span>
+                              </div>
+                            </div>
+                          }
+                        />
+                      </List.Item>
+                    )}
+                  />
+                ) : (
+                  <div className="empty-state">
+                    <LikeOutlined />
+                    <div className="empty-state-text">暂无点赞文章</div>
+                    <div className="empty-state-subtext">发现好文章，别忘了点赞支持</div>
+                    <Button type="primary" onClick={() => navigate('/')}>
+                      浏览文章
+                    </Button>
                   </div>
-                </List.Item>
-              )}
-            />
-          </TabPane>
+                )}
+              </TabPane>
+              <TabPane
+                tab={
+                  <span>
+                    <StarOutlined />
+                    收藏
+                  </span>
+                }
+                key="favorites"
+              >
+                {blogs.length > 0 ? (
+                  <List
+                    itemLayout="vertical"
+                    dataSource={blogs}
+                    renderItem={item => (
+                      <List.Item>
+                        <List.Item.Meta
+                          title={
+                            <Link to={`/detail/${item.id}`} className="article-title">
+                              {item.title}
+                            </Link>
+                          }
+                          description={
+                            <div className="article-meta">
+                              {item.subtitle && (
+                                <div className="article-subtitle">{item.subtitle}</div>
+                              )}
+                              <div className="article-description">{item.description}</div>
+                              <div className="list-icons">
+                                <span className="list-icon">
+                                  <CalendarOutlined /> {formatDate(item.created_at)}
+                                </span>
+                                {item.tags && item.tags.length > 0 && (
+                                  <span className="list-icon">
+                                    <BarsOutlined /> {item.tags.join(', ')}
+                                  </span>
+                                )}
+                                <span className="list-icon">
+                                  <FireOutlined /> {item.views_count}
+                                </span>
+                              </div>
+                            </div>
+                          }
+                        />
+                      </List.Item>
+                    )}
+                  />
+                ) : (
+                  <div className="empty-state">
+                    <StarOutlined />
+                    <div className="empty-state-text">暂无收藏文章</div>
+                    <div className="empty-state-subtext">收藏喜欢的文章，方便随时查看</div>
+                    <Button type="primary" onClick={() => navigate('/')}>
+                      浏览文章
+                    </Button>
+                  </div>
+                )}
+              </TabPane>
+            </>
+          )}
           <TabPane
             tab={
               <span>
                 <EditOutlined />
-                我的文章
+                {isOtherUser ? '文章' : '我的文章'}
               </span>
             }
             key="articles"
           >
-            <List
-              itemLayout="vertical"
-              dataSource={articles}
-              renderItem={item => (
-                <List.Item
-                  actions={[
-                    <Space>
-                      <Button type="primary" size="small">编辑</Button>
-                      <Button danger size="small">删除</Button>
-                    </Space>,
-                    <Space>
-                      <span><EyeOutlined /> {item.views}</span>
-                      <span><LikeOutlined /> {item.likes}</span>
-                      <span><MessageOutlined /> {item.comments}</span>
-                    </Space>
-                  ]}
-                >
-                  <List.Item.Meta
-                    title={<Link to={`/detail/${item.id}`}>{item.title}</Link>}
-                    description={item.description}
+            {blogs && blogs.length > 0 ? (
+              <List
+                itemLayout="vertical"
+                dataSource={blogs}
+                renderItem={item => (
+                  <List.Item>
+                    <List.Item.Meta
+                      title={
+                        <Link to={`/detail/${item.id}`} className="article-title">
+                          {item.title}
+                        </Link>
+                      }
+                      description={
+                        <div className="article-meta">
+                          {item.subtitle && (
+                            <div className="article-subtitle">{item.subtitle}</div>
+                          )}
+                          <div className="article-description">{item.description}</div>
+                          <div className="list-icons">
+                            <span className="list-icon">
+                              <CalendarOutlined /> {formatDate(item.created_at)}
+                            </span>
+                            {item.tags && item.tags.length > 0 && (
+                              <span className="list-icon">
+                                <BarsOutlined /> {item.tags.join(', ')}
+                              </span>
+                            )}
+                            <span className="list-icon">
+                              <FireOutlined /> {item.views_count}
+                            </span>
+                          </div>
+                        </div>
+                      }
+                    />
+                  </List.Item>
+                )}
+              />
+            ) : (
+              <div className="empty-state">
+                <EditOutlined />
+                <div className="empty-state-text">暂无{isOtherUser ? '文章' : '我的文章'}</div>
+                <div className="empty-state-subtext">
+                  {isOtherUser ? '这个用户还没有发布过文章' : '开始创作你的第一篇文章吧'}
+                </div>
+                {!isOtherUser && (
+                  <Button type="primary" onClick={() => navigate('/editor')}>
+                    写文章
+                  </Button>
+                )}
+              </div>
+            )}
+          </TabPane>
+          {!isOtherUser && (
+            <>
+              <TabPane
+                tab={
+                  <span>
+                    <UserOutlined />
+                    关注
+                  </span>
+                }
+                key="following"
+              >
+                {following.length > 0 ? (
+                  <List
+                    grid={{ gutter: 16, column: 4 }}
+                    dataSource={following}
+                    renderItem={user => (
+                      <List.Item>
+                        <Card>
+                          <div className="user-card">
+                            <Avatar size={64} src={user.avatar} icon={<UserOutlined />} />
+                            <h3>{user.name}</h3>
+                            <p>{user.bio}</p>
+                            <Space>
+                              <Button
+                                type={followingMap[user.id] ? 'default' : 'primary'}
+                                block
+                                onClick={handleFollow(user.id)}
+                                icon={followingMap[user.id] ? <CheckOutlined /> : <UserAddOutlined />}
+                              >
+                                {followingMap[user.id] ? '已关注' : '关注'}
+                              </Button>
+                              <Button block onClick={() => handleMessageClick(Number(user.id), user.username, user.avatar)}>私信</Button>
+                            </Space>
+                          </div>
+                        </Card>
+                      </List.Item>
+                    )}
                   />
-                  <div className="article-meta">
-                    <Tag>{item.createTime}</Tag>
+                ) : (
+                  <div className="empty-state">
+                    <UserOutlined />
+                    <div className="empty-state-text">暂无关注</div>
+                    <div className="empty-state-subtext">关注感兴趣的用户，获取更多精彩内容</div>
+                    <Button type="primary" onClick={() => navigate('/')}>
+                      浏览文章
+                    </Button>
                   </div>
-                </List.Item>
-              )}
-            />
-          </TabPane>
-          <TabPane
-            tab={
-              <span>
-                <UserOutlined />
-                关注
-              </span>
-            }
-            key="following"
-          >
-            <List
-              grid={{ gutter: 16, column: 4 }}
-              dataSource={following}
-              renderItem={user => (
-                <List.Item>
-                  <Card>
-                    <div className="user-card">
-                      <Avatar size={64} src={user.avatar} icon={<UserOutlined />} />
-                      <h3>{user.name}</h3>
-                      <p>{user.bio}</p>
-                      <Space>
-                        <Button
-                          type={followingMap[user.id] ? 'default' : 'primary'}
-                          block
-                          onClick={handleFollow(user.id)}
-                          icon={followingMap[user.id] ? <CheckOutlined /> : <UserAddOutlined />}
-                        >
-                          {followingMap[user.id] ? '已关注' : '关注'}
-                        </Button>
-                        <Button block onClick={() => handleMessage(user.id)}>私信</Button>
-                      </Space>
-                    </div>
-                  </Card>
-                </List.Item>
-              )}
-            />
-          </TabPane>
-          <TabPane
-            tab={
-              <span>
-                <HeartOutlined />
-                粉丝
-              </span>
-            }
-            key="followers"
-          >
-            <List
-              grid={{ gutter: 16, column: 4 }}
-              dataSource={followers}
-              renderItem={user => (
-                <List.Item>
-                  <Card>
-                    <div className="user-card">
-                      <Avatar size={64} src={user.avatar} icon={<UserOutlined />} />
-                      <h3>{user.name}</h3>
-                      <p>{user.bio}</p>
-                      <Space>
-                        <Button
-                          type={followerFollowingMap[user.id] ? 'default' : 'primary'}
-                          block
-                          onClick={handleFollowerFollow(user.id)}
-                          icon={followerFollowingMap[user.id] ? <CheckOutlined /> : <UserAddOutlined />}
-                        >
-                          {followerFollowingMap[user.id] ? '已关注' : '关注'}
-                        </Button>
-                        <Button block onClick={() => handleMessage(user.id)}>私信</Button>
-                      </Space>
-                    </div>
-                  </Card>
-                </List.Item>
-              )}
-            />
-          </TabPane>
+                )}
+              </TabPane>
+              <TabPane
+                tab={
+                  <span>
+                    <HeartOutlined />
+                    粉丝
+                  </span>
+                }
+                key="followers"
+              >
+                {followers.length > 0 ? (
+                  <List
+                    grid={{ gutter: 16, column: 4 }}
+                    dataSource={followers}
+                    renderItem={user => (
+                      <List.Item>
+                        <Card>
+                          <div className="user-card">
+                            <Avatar size={64} src={user.avatar} icon={<UserOutlined />} />
+                            <h3>{user.name}</h3>
+                            <p>{user.bio}</p>
+                            <Space>
+                              <Button
+                                type={followerFollowingMap[user.id] ? 'default' : 'primary'}
+                                block
+                                onClick={handleFollowerFollow(user.id)}
+                                icon={followerFollowingMap[user.id] ? <CheckOutlined /> : <UserAddOutlined />}
+                              >
+                                {followerFollowingMap[user.id] ? '已关注' : '关注'}
+                              </Button>
+                              <Button block onClick={() => handleMessageClick(Number(user.id), user.username, user.avatar)}>私信</Button>
+                            </Space>
+                          </div>
+                        </Card>
+                      </List.Item>
+                    )}
+                  />
+                ) : (
+                  <div className="empty-state">
+                    <HeartOutlined />
+                    <div className="empty-state-text">暂无粉丝</div>
+                    <div className="empty-state-subtext">分享你的文章，让更多人认识你</div>
+                    <Button type="primary" onClick={() => navigate('/editor')}>
+                      写文章
+                    </Button>
+                  </div>
+                )}
+              </TabPane>
+            </>
+          )}
         </Tabs>
       </Card>
     </div>

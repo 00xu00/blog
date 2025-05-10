@@ -6,20 +6,55 @@ import rehypeHighlight from 'rehype-highlight';
 import rehypeRaw from 'rehype-raw';
 import 'highlight.js/styles/github.css';
 import './index.css';
+import axios from 'axios';
+import { useNavigate } from 'react-router-dom';
+
+// 配置axios默认值
+axios.defaults.baseURL = 'http://localhost:8000';
+axios.defaults.headers.common['Content-Type'] = 'application/json';
+
+// 从localStorage获取token
+const token = localStorage.getItem('token');
+if (token) {
+  axios.defaults.headers.common['Authorization'] = `Bearer ${token}`;
+}
 
 const { TextArea } = Input;
 const { Option } = Select;
 
 const Editor: React.FC = () => {
+  const navigate = useNavigate();
   const [title, setTitle] = useState('');
   const [subtitle, setSubtitle] = useState('');
   const [category, setCategory] = useState('');
   const [tags, setTags] = useState<string[]>([]);
   const [inputValue, setInputValue] = useState('');
   const [markdown, setMarkdown] = useState('');
+  const [blogId, setBlogId] = useState<number | null>(null);
   const textareaRef = useRef<HTMLTextAreaElement>(null);
   const editorRef = useRef<HTMLDivElement>(null);
   const previewRef = useRef<HTMLDivElement>(null);
+
+  // 清空编辑器
+  const clearEditor = () => {
+    setTitle('');
+    setSubtitle('');
+    setCategory('');
+    setTags([]);
+    setInputValue('');
+    setMarkdown('');
+    setBlogId(null);
+  };
+
+  useEffect(() => {
+    // 检查是否已登录
+    const token = localStorage.getItem('token');
+    if (!token) {
+      message.warning('请先登录');
+      navigate('/auth');
+      return;
+    }
+  }, [navigate]);
 
   const handleTagClose = (removedTag: string) => {
     const newTags = tags.filter(tag => tag !== removedTag);
@@ -33,21 +68,64 @@ const Editor: React.FC = () => {
     setInputValue('');
   };
 
-  const handleSave = () => {
+  const handleSave = async (isPublish: boolean = false) => {
     if (!title) {
       message.warning('请输入文章标题');
-      return;
-    }
-    if (!category) {
-      message.warning('请选择文章分类');
       return;
     }
     if (!markdown) {
       message.warning('请输入文章内容');
       return;
     }
-    // TODO: 调用保存API
-    message.success('保存成功');
+
+    try {
+      const blogData = {
+        title,
+        subtitle,
+        content: markdown,
+        tags,
+        is_published: isPublish ? 1 : 0
+      };
+
+      // 确保token存在
+      const token = localStorage.getItem('token');
+      if (!token) {
+        message.warning('请先登录');
+        navigate('/auth');
+        return;
+      }
+
+      // 设置请求头
+      const headers = {
+        'Authorization': `Bearer ${token}`,
+        'Content-Type': 'application/json'
+      };
+
+      let response;
+      if (blogId) {
+        // 更新博客
+        response = await axios.put(`/api/v1/blogs/${blogId}`, blogData, { headers });
+        message.success('更新成功');
+      } else {
+        // 创建新博客
+        response = await axios.post('/api/v1/blogs', blogData, { headers });
+        setBlogId(response.data.id);
+        message.success('保存成功');
+      }
+
+      if (isPublish) {
+        message.success('发布成功');
+        clearEditor(); // 清空编辑器
+      }
+    } catch (error: any) {
+      console.error('保存失败:', error);
+      if (error.response?.status === 401) {
+        message.error('登录已过期，请重新登录');
+        navigate('/auth');
+      } else {
+        message.error('保存失败，请重试');
+      }
+    }
   };
 
   useEffect(() => {
@@ -126,10 +204,12 @@ const Editor: React.FC = () => {
               />
             </div>
             <Space>
-              <Button type="primary" onClick={handleSave}>
-                保存
+              <Button type="primary" onClick={() => handleSave(false)}>
+                保存草稿
               </Button>
-              <Button>发布</Button>
+              <Button type="primary" onClick={() => handleSave(true)}>
+                发布文章
+              </Button>
             </Space>
           </Space>
         </div>

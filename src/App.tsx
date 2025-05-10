@@ -9,7 +9,7 @@ import { ThemeProvider } from './contexts/ThemeContext';
 
 function App() {
   const location = useLocation();
-  const isAuthPage = location.pathname === '/login' || location.pathname === '/register';
+  const isAuthPage = location.pathname === '/auth' || location.pathname === '/register';
 
   return (
     <Provider store={store}>

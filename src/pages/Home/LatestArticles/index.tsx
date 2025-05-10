@@ -1,49 +1,47 @@
 import React from 'react';
-import { List } from 'antd';
+import { List, Typography, Empty } from 'antd';
 import { Link } from 'react-router-dom';
-import { CalendarOutlined, FireOutlined, FolderOpenOutlined } from '@ant-design/icons';
-import "./index.css"
+import { CalendarOutlined, FireOutlined } from '@ant-design/icons';
+import type { Blog } from '@/types/blog';
+import './index.css';
 
-const LatestArticles = () => {
-  const latestList = [
-    {
-      id: 1,
-      title: 'React 入门教程',
-      date: '2024-10-21',
-      category: '前端开发',
-      views: 1234
-    },
-    {
-      id: 2,
-      title: 'TypeScript 最佳实践',
-      date: '2024-10-20',
-      category: '前端开发',
-      views: 2345
-    },
-    {
-      id: 3,
-      title: '前端性能优化指南',
-      date: '2024-10-19',
-      category: '前端开发',
-      views: 3456
-    }
-  ];
+const { Title } = Typography;
 
+interface LatestArticlesProps {
+  latestBlogs: Blog[];
+  loading: boolean;
+}
+
+const LatestArticles: React.FC<LatestArticlesProps> = ({ latestBlogs, loading }) => {
   return (
-    <div className="latest-box">
+    <div className="latest-articles">
+      <Title level={4} className="latest-title">最新文章</Title>
       <List
-        header={<div>最新日志</div>}
-        itemLayout="horizontal"
-        dataSource={latestList}
+        loading={loading}
+        dataSource={latestBlogs}
+        locale={{
+          emptyText: (
+            <Empty
+              image={Empty.PRESENTED_IMAGE_SIMPLE}
+              description="暂无最新文章"
+            />
+          )
+        }}
         renderItem={(item) => (
-          <List.Item>
+          <List.Item key={item.id} className="latest-item">
             <Link to={`/detail/${item.id}`}>
-              <div className="latest-item">
+              <div className="latest-content">
                 <div className="latest-title">{item.title}</div>
+                {item.subtitle && (
+                  <div className="latest-subtitle">{item.subtitle}</div>
+                )}
                 <div className="latest-info">
-                  <span className="latest-icon"><CalendarOutlined /> {item.date}</span>
-                  <span className="latest-icon"><FolderOpenOutlined /> {item.category}</span>
-                  <span className="latest-icon"><FireOutlined /> {item.views}</span>
+                  <span className="latest-date">
+                    <CalendarOutlined /> {new Date(item.created_at).toLocaleDateString()}
+                  </span>
+                  <span className="latest-views">
+                    <FireOutlined /> {item.views_count}
+                  </span>
                 </div>
               </div>
             </Link>

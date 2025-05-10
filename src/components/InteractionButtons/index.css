@@ -85,3 +85,75 @@
   position: relative;
   z-index: 1;
 }
+
+.interaction-buttons {
+  display: flex;
+  gap: 16px;
+  margin: 16px 0;
+}
+
+.interaction-buttons button {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  padding: 8px 16px;
+  border-radius: 20px;
+  transition: all 0.3s ease;
+}
+
+/* 未点赞/未收藏状态 */
+.interaction-buttons button:not(.liked):not(.favorited) {
+  background-color: #f0f0f0;
+  border-color: #f0f0f0;
+  color: #666;
+}
+
+.interaction-buttons button:not(.liked):not(.favorited):hover {
+  background-color: #fff;
+  border-color: #1890ff;
+  color: #1890ff;
+  box-shadow: 0 2px 8px rgba(24, 144, 255, 0.2);
+  transform: translateY(-2px);
+}
+
+/* 已点赞/已收藏状态 */
+.interaction-buttons button.liked,
+.interaction-buttons button.favorited {
+  background-color: #e6f7ff;
+  border-color: #1890ff;
+  color: #1890ff;
+  animation: buttonAnimation 0.3s ease;
+}
+
+.interaction-buttons button.liked:hover,
+.interaction-buttons button.favorited:hover {
+  background-color: #1890ff;
+  border-color: #1890ff;
+  color: #fff;
+  box-shadow: 0 2px 8px rgba(24, 144, 255, 0.2);
+}
+
+/* 图标样式 */
+.interaction-buttons .anticon {
+  font-size: 16px;
+  transition: transform 0.3s ease;
+}
+
+.interaction-buttons button:hover .anticon {
+  transform: scale(1.1);
+}
+
+/* 动画效果 */
+@keyframes buttonAnimation {
+  0% {
+    transform: scale(1);
+  }
+
+  50% {
+    transform: scale(1.1);
+  }
+
+  100% {
+    transform: scale(1);
+  }
+}

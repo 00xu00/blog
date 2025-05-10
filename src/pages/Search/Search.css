@@ -1,0 +1,63 @@
+.search-page {
+  padding: 24px;
+  max-width: 1200px;
+  margin: 0 auto;
+}
+
+.search-results {
+  margin-top: 24px;
+}
+
+.search-result-card {
+  margin-bottom: 16px;
+  transition: all 0.3s;
+}
+
+.search-result-card:hover {
+  transform: translateY(-2px);
+  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.1);
+}
+
+.blog-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  margin-bottom: 16px;
+}
+
+.blog-title {
+  margin-bottom: 8px !important;
+}
+
+.blog-subtitle {
+  display: block;
+  margin-bottom: 6px;
+}
+
+.blog-content {
+  display: -webkit-box;
+  -webkit-line-clamp: 3;
+  -webkit-box-orient: vertical;
+  overflow: hidden;
+  margin-bottom: 16px;
+  color: var(--text-secondary);
+}
+
+.blog-footer {
+  display: flex;
+  justify-content: flex-end;
+}
+
+/* 深色模式适配 */
+.dark .search-result-card {
+  background: var(--dark-bg-color);
+  border-color: var(--dark-border-color);
+}
+
+.dark .search-result-card:hover {
+  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.2);
+}
+
+.dark .blog-content {
+  color: var(--dark-text-secondary);
+}

@@ -1,26 +1,34 @@
-import React from 'react';
-import { Col, List, Row, Breadcrumb } from 'antd';
-import { CalendarOutlined, FireOutlined, FolderOpenOutlined } from '@ant-design/icons';
+import React, { useEffect, useState } from 'react';
+import { Col, List, Row, Breadcrumb, Empty, Typography } from 'antd';
+import { CalendarOutlined, FireOutlined, BarsOutlined } from '@ant-design/icons';
 import { Link, useLocation } from 'react-router-dom';
+import { getLatestBlogs } from '../../api/blog';
+import type { Blog } from '@/types/blog';
+import './index.css';
+
+const { Title } = Typography;
 
 const Page = () => {
     const location = useLocation();
-    const [list] = React.useState([{
-        id: 1,
-        title: "灌水第一篇文章",
-        context: "此组件于2024-10-22创建",
-        date: "2024-10-22",
-        category: "视频教学",
-        views: 1234
-    },
-    {
-        id: 1,
-        title: "灌水第一篇文章",
-        context: "此组件于2024-10-22创建",
-        date: "2024-10-22",
-        category: "视频教学",
-        views: 1234
-    }]);
+    const [blogs, setBlogs] = useState<Blog[]>([]);
+    const [loading, setLoading] = useState(true);
+
+    // 获取文章列表
+    useEffect(() => {
+        const fetchBlogs = async () => {
+            try {
+                setLoading(true);
+                const response = await getLatestBlogs();
+                setBlogs(response || []);
+            } catch (error) {
+                console.error('获取文章列表失败:', error);
+            } finally {
+                setLoading(false);
+            }
+        };
+
+        fetchBlogs();
+    }, []);
 
     const breadList = [
         {
@@ -28,7 +36,7 @@ const Page = () => {
             path: "/"
         },
         {
-            title: "列表",
+            title: "文章列表",
             path: "/list"
         }
     ];
@@ -46,22 +54,42 @@ const Page = () => {
                         />
                     </div>
                     <List
-                        header={<div>最新日志</div>}
+                        loading={loading}
+                        header={<Title style={{ marginTop: '10px' }} level={4}>最新文章</Title>}
                         itemLayout={"vertical"}
-                        dataSource={list}
-                        renderItem={(item) => {
-                            return <List.Item key={item.title}>
+                        dataSource={blogs}
+                        locale={{
+                            emptyText: (
+                                <Empty
+                                    image={Empty.PRESENTED_IMAGE_SIMPLE}
+                                    description="暂无文章"
+                                />
+                            )
+                        }}
+                        renderItem={(item) => (
+                            <List.Item key={item.id} className='list-item'>
                                 <Link to={`/detail/${item.id}`}>
                                     <div className='list-title'>{item.title}</div>
+                                    {item.subtitle && (
+                                        <div className='list-subtitle'>{item.subtitle}</div>
+                                    )}
                                     <div className='list-icons'>
-                                        <span className='list-icon'><CalendarOutlined /> 2024-10-22 </span>
-                                        <span className='list-icon'><FolderOpenOutlined /> 视频教学 </span>
-                                        <span className='list-icon'><FireOutlined /> 1234人 </span>
+                                        <span className='list-icon'>
+                                            <CalendarOutlined /> {new Date(item.created_at).toLocaleDateString()}
+                                        </span>
+                                        {item.tags && item.tags.length > 0 && (
+                                            <span className='list-icon'>
+                                                <BarsOutlined /> {item.tags.join(', ')}
+                                            </span>
+                                        )}
+                                        <span className='list-icon'>
+                                            <FireOutlined /> {item.views_count}
+                                        </span>
                                     </div>
-                                    <div className='list-context'>{item.context}</div>
                                 </Link>
                             </List.Item>
-                        }} />
+                        )}
+                    />
                 </Col>
             </Row>
         </>

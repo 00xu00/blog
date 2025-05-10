@@ -1,32 +1,38 @@
 .chat-container {
-  max-width: 800px;
-  margin: 20px auto;
-  height: calc(100vh - 100px);
   display: flex;
   flex-direction: column;
-  background-color: #fff;
-  border-radius: 8px;
-  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.1);
-  overflow: hidden;
+  height: 100vh;
+  background-color: #f5f5f5;
 }
 
 .chat-header {
   padding: 16px;
-  border-bottom: 1px solid #f0f0f0;
   background-color: #fff;
+  border-bottom: 1px solid #e8e8e8;
+  box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
+  z-index: 1;
+}
+
+.chat-header-username {
+  font-size: 16px;
+  font-weight: 500;
+  color: #262626;
 }
 
 .chat-messages {
   flex: 1;
-  padding: 16px;
   overflow-y: auto;
-  background-color: #f5f5f5;
+  padding: 20px;
+  display: flex;
+  flex-direction: column;
+  gap: 16px;
 }
 
 .message-item {
   display: flex;
-  margin-bottom: 16px;
-  max-width: 70%;
+  gap: 12px;
+  max-width: 80%;
+  align-items: flex-start;
 }
 
 .message-item.self {
@@ -35,104 +41,131 @@
 }
 
 .message-avatar {
-  margin: 0 8px;
+  flex-shrink: 0;
 }
 
 .message-content {
-  display: flex;
-  flex-direction: column;
+  background-color: #fff;
+  padding: 12px 16px;
+  border-radius: 12px;
+  box-shadow: 0 1px 2px rgba(0, 0, 0, 0.1);
+  min-width: 120px;
+}
+
+.message-item.self .message-content {
+  background-color: #1890ff;
+  color: #fff;
 }
 
 .message-info {
   display: flex;
   justify-content: space-between;
-  margin-bottom: 4px;
+  align-items: center;
+  margin-bottom: 8px;
+  padding-bottom: 4px;
+  border-bottom: 1px solid rgba(0, 0, 0, 0.1);
+}
+
+.message-item.self .message-info {
+  border-bottom-color: rgba(255, 255, 255, 0.2);
 }
 
 .message-name {
-  font-weight: bold;
-  color: #333;
+  font-weight: 600;
+  font-size: 14px;
+  color: #262626;
+  display: flex;
+  align-items: center;
+  gap: 4px;
+}
+
+.message-item.self .message-name {
+  color: #fff;
 }
 
 .message-time {
   font-size: 12px;
-  color: #999;
+  color: #8c8c8c;
   margin-left: 8px;
+  white-space: nowrap;
+}
+
+.message-item.self .message-time {
+  color: rgba(255, 255, 255, 0.8);
 }
 
 .message-text {
-  padding: 8px 12px;
-  border-radius: 4px;
-  background-color: #fff;
-  box-shadow: 0 1px 2px rgba(0, 0, 0, 0.1);
+  word-break: break-word;
+  line-height: 1.5;
+  font-size: 14px;
+  color: #262626;
 }
 
 .message-item.self .message-text {
-  background-color: #e6f7ff;
+  color: #fff;
 }
 
 .chat-input {
   padding: 16px;
-  border-top: 1px solid #f0f0f0;
   background-color: #fff;
+  border-top: 1px solid #e8e8e8;
   display: flex;
-  gap: 8px;
+  gap: 12px;
+  align-items: flex-end;
 }
 
 .chat-input .ant-input {
-  flex: 1;
+  border-radius: 8px;
+  resize: none;
 }
 
 .send-button {
-  height: 32px;
-  align-self: flex-end;
+  height: 40px;
+  width: 40px;
+  border-radius: 8px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
 }
 
 /* 暗色模式适配 */
-.dark-mode .chat-container {
-  background-color: #141414;
-}
-
-.dark-mode .chat-header {
-  background-color: #141414;
-  border-bottom-color: #303030;
-}
-
-.dark-mode .chat-messages {
-  background-color: #1f1f1f;
-}
-
-.dark-mode .message-name {
-  color: #e0e0e0;
-}
-
-.dark-mode .message-time {
-  color: #8c8c8c;
-}
-
-.dark-mode .message-text {
-  background-color: #1f1f1f;
-  color: #e0e0e0;
-}
-
-.dark-mode .message-item.self .message-text {
-  background-color: #111b26;
-}
-
-.dark-mode .chat-input {
-  background-color: #141414;
-  border-top-color: #303030;
-}
-
-/* 响应式设计 */
-@media (max-width: 768px) {
+@media (prefers-color-scheme: dark) {
   .chat-container {
-    margin: 0;
-    height: 100vh;
-    border-radius: 0;
+    background-color: #1f1f1f;
   }
 
-  .message-item {
-    max-width: 85%;
+  .chat-header {
+    background-color: #141414;
+    border-bottom-color: #303030;
+  }
+
+  .chat-header-username {
+    color: #fff;
+  }
+
+  .message-content {
+    background-color: #141414;
+    box-shadow: 0 1px 2px rgba(0, 0, 0, 0.2);
+  }
+
+  .message-item.self .message-content {
+    background-color: #1890ff;
+  }
+
+  .message-name {
+    color: #fff;
+  }
+
+  .message-text {
+    color: #fff;
+  }
+
+  .message-time {
+    color: #8c8c8c;
+  }
+
+  .chat-input {
+    background-color: #141414;
+    border-top-color: #303030;
   }
 }
