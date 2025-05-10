@@ -11,6 +11,7 @@ from app.services import blog as blog_service
 import logging
 from datetime import datetime, timedelta
 from sqlalchemy import text
+from app.services import history as history_service
 
 logger = logging.getLogger(__name__)
 router = APIRouter()
@@ -103,6 +104,9 @@ async def get_blog(
         db.commit()
         db.refresh(blog)
         logger.info(f"增加浏览量: blog_id={blog_id}, views_count={blog.views_count}")
+    
+    # 添加浏览历史
+    history_service.add_history(db, current_user.id, blog_id)
     
     # 检查当前用户是否点赞
     like = db.query(BlogLike).filter(

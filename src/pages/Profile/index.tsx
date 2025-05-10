@@ -1,5 +1,5 @@
 import React, { useEffect, useState } from 'react';
-import { Tabs, List, Avatar, Space, Badge, Button, Card, Tag, message, Input, Modal, Upload } from 'antd';
+import { Tabs, List, Avatar, Space, Badge, Button, Card, Tag, message, Input, Modal, Upload, Empty } from 'antd';
 import {
   MailOutlined,
   HistoryOutlined,
@@ -17,12 +17,13 @@ import {
   BarsOutlined,
   FireOutlined,
   SendOutlined,
-  ArrowLeftOutlined
+  ArrowLeftOutlined,
+  CommentOutlined
 } from '@ant-design/icons';
 import './index.css';
 import { useNavigate, Link, useLocation } from 'react-router-dom';
 import { getUserInfo, getUserFollowing, getUserFollowers, followUser, unfollowUser, checkFollowingStatus } from '../../api/user';
-import { getUserBlogs, getUserLikedBlogs, getUserFavoriteBlogs, likeBlog, unlikeBlog, favoriteBlog, unfavoriteBlog } from '../../api/blog';
+import { getUserBlogs, getUserLikedBlogs, getUserFavoriteBlogs, likeBlog, unlikeBlog, favoriteBlog, unfavoriteBlog, getUserHistoryBlogs } from '../../api/blog';
 import { formatDate } from '../../utils/date';
 import { getMessages, getConversation, createMessage, markMessageAsRead } from '../../api/message';
 import axios from 'axios';
@@ -53,6 +54,12 @@ interface Blog {
   is_favorited?: boolean;
   tags?: string[];
   subtitle?: string;
+  content?: string;
+  author?: {
+    id: number;
+    username: string;
+    avatar: string | null;
+  };
 }
 
 interface User {
@@ -108,6 +115,7 @@ const Profile: React.FC = () => {
   const [newMessage, setNewMessage] = useState('');
   const [isFollowing, setIsFollowing] = useState(false);
   const [currentUserId, setCurrentUserId] = useState<number | null>(null);
+  const [userHistoryBlogs, setUserHistoryBlogs] = useState<Blog[]>([]);
 
   // 获取用户信息
   useEffect(() => {
@@ -164,15 +172,20 @@ const Profile: React.FC = () => {
             case 'favorites':
               data = await getUserFavoriteBlogs();
               break;
+            case 'history':
+              data = await getUserHistoryBlogs();
+              break;
             default:
               data = [];
           }
         }
         setBlogs(data || []);
+        setUserHistoryBlogs(data || []);
       } catch (error: any) {
         console.error('获取博客列表出错:', error);
         message.error(error.response?.data?.detail || '获取博客列表失败，请稍后重试');
         setBlogs([]);
+        setUserHistoryBlogs([]);
       }
     };
 
@@ -731,33 +744,53 @@ const Profile: React.FC = () => {
                 tab={
                   <span>
                     <HistoryOutlined />
-                    历史记录
+                    浏览历史
                   </span>
                 }
                 key="history"
               >
-                {blogs && blogs.length > 0 ? (
+                {userHistoryBlogs && userHistoryBlogs.length > 0 ? (
                   <List
-                    itemLayout="horizontal"
-                    dataSource={blogs}
-                    renderItem={(item: Blog) => (
+                    itemLayout="vertical"
+                    dataSource={userHistoryBlogs}
+                    renderItem={item => (
                       <List.Item>
                         <List.Item.Meta
-                          title={<Link to={`/detail/${item.id}`}>{item.title}</Link>}
-                          description={item.description}
+                          title={
+                            <Link to={`/detail/${item.id}`} className="article-title">
+                              {item.title}
+                            </Link>
+                          }
+                          description={
+                            <div className="article-meta">
+                              {item.subtitle && (
+                                <div className="article-subtitle">{item.subtitle}</div>
+                              )}
+                              <div className="article-description">{item.description}</div>
+                              <div className="list-icons">
+                                <span className="list-icon">
+                                  <CalendarOutlined /> {formatDate(item.created_at)}
+                                </span>
+                                {item.tags && item.tags.length > 0 && (
+                                  <span className="list-icon">
+                                    <BarsOutlined /> {item.tags.join(', ')}
+                                  </span>
+                                )}
+                                <span className="list-icon">
+                                  <FireOutlined /> {item.views_count}
+                                </span>
+                              </div>
+                            </div>
+                          }
                         />
                       </List.Item>
                     )}
                   />
                 ) : (
-                  <div className="empty-state">
-                    <HistoryOutlined />
-                    <div className="empty-state-text">暂无浏览记录</div>
-                    <div className="empty-state-subtext">开始阅读文章，记录你的足迹</div>
-                    <Button type="primary" onClick={() => navigate('/')}>
-                      浏览文章
-                    </Button>
-                  </div>
+                  <Empty
+                    description="暂无浏览历史"
+                    image={Empty.PRESENTED_IMAGE_SIMPLE}
+                  />
                 )}
               </TabPane>
               <TabPane

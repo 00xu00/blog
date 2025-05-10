@@ -30,11 +30,12 @@ class User(Base):
     comments = relationship("Comment", back_populates="author")
     following = relationship(
         "User",
-        secondary=user_following,
-        primaryjoin=(id == user_following.c.follower_id),
-        secondaryjoin=(id == user_following.c.followed_id),
+        secondary="follows",
+        primaryjoin="User.id==follows.c.follower_id",
+        secondaryjoin="User.id==follows.c.followed_id",
         backref="followers"
     )
+    histories = relationship("History", back_populates="user")
     
     # 消息关系
     sent_messages = relationship("Message", foreign_keys="Message.sender_id", back_populates="sender")

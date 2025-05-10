@@ -99,3 +99,14 @@ export const unfavoriteBlog = async (blogId: number) => {
   );
   return response.data;
 };
+
+// 获取用户历史记录
+export const getUserHistoryBlogs = async () => {
+  const token = localStorage.getItem("token");
+  const response = await axios.get(`${API_URL}/histories/me`, {
+    headers: {
+      Authorization: `Bearer ${token}`,
+    },
+  });
+  return response.data;
+};

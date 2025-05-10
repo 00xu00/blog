@@ -3,6 +3,7 @@ from app.models.user import User, user_following
 from app.models.blog import Blog
 from app.models.comment import Comment
 from app.models.interaction import BlogLike, BlogFavorite, CommentLike
+from app.models.history import History
 
 # 定义 User 的关系
 User.following = relationship(
@@ -17,6 +18,7 @@ User.comments = relationship("Comment", back_populates="author", lazy="dynamic")
 User.blog_likes = relationship("BlogLike", back_populates="user", lazy="dynamic")
 User.blog_favorites = relationship("BlogFavorite", back_populates="user", lazy="dynamic")
 User.comment_likes = relationship("CommentLike", back_populates="user", lazy="dynamic")
+User.histories = relationship("History", back_populates="user", lazy="dynamic")
 
 # 确保所有模型都被导入
 __all__ = [
@@ -25,5 +27,6 @@ __all__ = [
     "Comment",
     "BlogLike",
     "BlogFavorite",
-    "CommentLike"
+    "CommentLike",
+    "History"
 ] 

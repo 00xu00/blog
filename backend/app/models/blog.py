@@ -20,10 +20,11 @@ class Blog(Base):
     views_count = Column(Integer, default=0)  # 浏览量
     
     # 关系
-    author = relationship("User", back_populates="articles")
+    author = relationship("User", back_populates="blogs")
     comments = relationship("Comment", back_populates="blog", cascade="all, delete-orphan")
-    likes = relationship("BlogLike", back_populates="blog", cascade="all, delete-orphan")
-    favorites = relationship("BlogFavorite", back_populates="blog", cascade="all, delete-orphan")
+    likes = relationship("BlogLike", back_populates="blog")
+    favorites = relationship("BlogFavorite", back_populates="blog")
+    histories = relationship("History", back_populates="blog")
     
     # 非数据库字段
     is_liked = Column(Boolean, default=False)
