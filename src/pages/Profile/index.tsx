@@ -78,6 +78,11 @@ interface Message {
     username: string;
     avatar: string | null;
   };
+  receiver: {
+    id: number;
+    username: string;
+    avatar: string | null;
+  };
 }
 
 const Profile: React.FC = () => {
@@ -218,14 +223,49 @@ const Profile: React.FC = () => {
   // 加载消息列表
   const loadMessages = async () => {
     try {
+      console.log('开始加载消息...');
       const response = await getMessages();
-      setMessages(response);
+      console.log('获取到的消息数据:', response);
+
+      if (!response || !Array.isArray(response)) {
+        console.error('获取消息失败：返回数据格式不正确');
+        setMessages([]);
+        return;
+      }
+
+      // 按用户分组，只保留每个用户的最新消息
+      const userMessages = response.reduce((acc: Record<string, Message>, msg: Message) => {
+        if (!msg || !msg.sender || !msg.receiver) {
+          console.log('跳过无效消息:', msg);
+          return acc;
+        }
+
+        const otherUserId = msg.sender_id === Number(userInfo?.id) ? msg.receiver_id : msg.sender_id;
+
+        if (!acc[otherUserId] || new Date(msg.created_at) > new Date(acc[otherUserId].created_at)) {
+          acc[otherUserId] = msg;
+        }
+        return acc;
+      }, {});
+
+      console.log('处理后的用户消息:', userMessages);
+
+      const sortedMessages = Object.values(userMessages).sort((a, b) =>
+        new Date((b as Message).created_at).getTime() - new Date((a as Message).created_at).getTime()
+      ) as Message[];
+
+      console.log('排序后的消息列表:', sortedMessages);
+      setMessages(sortedMessages);
+
       // 计算未读消息数量
-      const unread = response.filter((msg: Message) => !msg.is_read && msg.receiver_id === Number(userInfo?.id)).length;
+      const unread = response.filter((msg: Message) =>
+        !msg.is_read && msg.receiver_id === Number(userInfo?.id)
+      ).length;
       setUnreadCount(unread);
     } catch (error) {
       console.error('加载私信失败:', error);
       message.error('加载私信失败');
+      setMessages([]);
     }
   };
 
@@ -265,11 +305,13 @@ const Profile: React.FC = () => {
     }
   };
 
+  // 确保在组件加载和用户信息更新时加载消息
   useEffect(() => {
-    if (activeTab === 'messages') {
+    if (userInfo && activeTab === 'messages') {
+      console.log('触发消息加载，当前用户信息:', userInfo);
       loadMessages();
     }
-  }, [activeTab]);
+  }, [userInfo, activeTab]);
 
   useEffect(() => {
     if (selectedUser) {
@@ -596,19 +638,37 @@ const Profile: React.FC = () => {
                       <List
                         itemLayout="horizontal"
                         dataSource={messages}
-                        renderItem={item => (
-                          <List.Item
-                            className={`message-item ${!item.is_read && item.receiver_id === Number(userInfo?.id) ? 'unread' : ''}`}
-                            onClick={() => handleMessageClick(item.sender_id === Number(userInfo?.id) ? item.receiver_id : item.sender_id, item.sender.username)}
-                          >
-                            <List.Item.Meta
-                              avatar={<Avatar src={item.sender.avatar} icon={<UserOutlined />} />}
-                              title={item.sender.username}
-                              description={item.content}
-                            />
-                            <div className="message-time">{formatDate(item.created_at)}</div>
-                          </List.Item>
-                        )}
+                        renderItem={item => {
+                          if (!item || !item.sender || !item.receiver) return null;
+
+                          const otherUserId = item.sender_id === Number(userInfo?.id) ? item.receiver_id : item.sender_id;
+                          const otherUsername = item.sender_id === Number(userInfo?.id) ? item.receiver.username : item.sender.username;
+                          const otherAvatar = item.sender_id === Number(userInfo?.id) ? item.receiver.avatar : item.sender.avatar;
+                          const isUnread = !item.is_read && item.receiver_id === Number(userInfo?.id);
+                          const isSent = item.sender_id === Number(userInfo?.id);
+
+                          return (
+                            <List.Item
+                              className={`message-item ${isUnread ? 'unread' : ''}`}
+                              onClick={() => handleMessageClick(otherUserId, otherUsername)}
+                            >
+                              <div className="message-item-content">
+                                <Avatar src={otherAvatar} icon={<UserOutlined />} size={48} />
+                                <div className="message-item-info">
+                                  <div className="message-item-header">
+                                    <span className="message-item-username">{otherUsername}</span>
+                                    <span className="message-item-time">{formatDate(item.created_at)}</span>
+                                  </div>
+                                  <div className="message-item-preview">
+                                    {isSent && <span className="message-sent-indicator">你：</span>}
+                                    {item.content.length > 50 ? `${item.content.substring(0, 50)}...` : item.content}
+                                  </div>
+                                </div>
+                                {isUnread && <div className="message-item-unread" />}
+                              </div>
+                            </List.Item>
+                          );
+                        }}
                       />
                     </div>
                     {selectedUser && (

@@ -36,7 +36,8 @@ async def get_messages(
 ):
     """获取当前用户的所有消息"""
     messages = db.query(Message).options(
-        joinedload(Message.sender)
+        joinedload(Message.sender),
+        joinedload(Message.receiver)
     ).filter(
         (Message.sender_id == current_user.id) | 
         (Message.receiver_id == current_user.id)
@@ -51,7 +52,8 @@ async def get_conversation(
 ):
     """获取与特定用户的对话"""
     messages = db.query(Message).options(
-        joinedload(Message.sender)
+        joinedload(Message.sender),
+        joinedload(Message.receiver)
     ).filter(
         ((Message.sender_id == current_user.id) & (Message.receiver_id == user_id)) |
         ((Message.sender_id == user_id) & (Message.receiver_id == current_user.id))

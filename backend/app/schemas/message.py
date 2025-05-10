@@ -16,6 +16,7 @@ class MessageResponse(MessageBase):
     is_read: bool
     created_at: datetime
     sender: UserInDB
+    receiver: UserInDB
 
     class Config:
         from_attributes = True 

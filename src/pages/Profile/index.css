@@ -645,25 +645,25 @@
   margin-top: 4px !important;
 }
 
-/* 消息相关样式 */
+/* 私信列表样式 */
 .message-container {
-  display: flex;
-  height: 600px;
-  border: 1px solid #f0f0f0;
+  background: #fff;
   border-radius: 8px;
   overflow: hidden;
+  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.06);
 }
 
 .message-list {
-  width: 300px;
-  border-right: 1px solid #f0f0f0;
+  max-height: 600px;
   overflow-y: auto;
 }
 
 .message-item {
-  padding: 12px 16px;
+  padding: 16px !important;
   cursor: pointer;
   transition: all 0.3s ease;
+  border-bottom: 1px solid #f0f0f0;
+  background: #fff;
 }
 
 .message-item:hover {
@@ -671,111 +671,123 @@
 }
 
 .message-item.unread {
-  background-color: #e6f7ff;
+  background-color: #f0f7ff;
 }
 
-.message-item.unread:hover {
-  background-color: #bae7ff;
-}
-
-.message-time {
-  font-size: 12px;
-  color: #999;
-  margin-top: 4px;
-}
-
-.conversation-container {
-  flex: 1;
+.message-item-content {
   display: flex;
-  flex-direction: column;
-  background-color: #fff;
-}
-
-.conversation-header {
-  padding: 12px 16px;
-  border-bottom: 1px solid #f0f0f0;
-  display: flex;
-  align-items: center;
+  align-items: flex-start;
   gap: 12px;
-}
-
-.conversation-header span {
-  font-size: 16px;
-  font-weight: 500;
-}
-
-.conversation-messages {
-  flex: 1;
-  padding: 16px;
-  overflow-y: auto;
-  display: flex;
-  flex-direction: column;
-  gap: 16px;
-}
-
-.message-bubble {
-  max-width: 70%;
-  padding: 12px 16px;
-  border-radius: 8px;
   position: relative;
 }
 
-.message-bubble.sent {
-  align-self: flex-end;
-  background-color: #1890ff;
-  color: #fff;
-}
-
-.message-bubble.received {
-  align-self: flex-start;
-  background-color: #f5f5f5;
-  color: #333;
-}
-
-.message-bubble .message-time {
-  font-size: 11px;
-  margin-top: 4px;
-  opacity: 0.8;
-}
-
-.message-bubble.sent .message-time {
-  color: rgba(255, 255, 255, 0.8);
-}
-
-.message-input {
-  padding: 16px;
-  border-top: 1px solid #f0f0f0;
-  display: flex;
-  gap: 12px;
-  align-items: flex-end;
-}
-
-.message-input .ant-input {
+.message-item-info {
   flex: 1;
-  resize: none;
-  border-radius: 4px;
+  min-width: 0;
 }
 
-.message-input .ant-btn {
-  height: 40px;
-  padding: 0 20px;
+.message-item-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  margin-bottom: 4px;
 }
 
-/* 响应式设计 */
-@media (max-width: 768px) {
-  .message-container {
-    flex-direction: column;
-    height: auto;
-  }
+.message-item-username {
+  font-weight: 500;
+  color: #262626;
+  font-size: 16px;
+}
 
-  .message-list {
-    width: 100%;
-    border-right: none;
-    border-bottom: 1px solid #f0f0f0;
-    max-height: 300px;
-  }
+.message-item-time {
+  color: #8c8c8c;
+  font-size: 12px;
+  margin-left: 10px;
+}
 
-  .conversation-container {
-    height: 500px;
-  }
+.message-item-preview {
+  color: #595959;
+  font-size: 14px;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  display: flex;
+  align-items: center;
+  gap: 4px;
+}
+
+.message-sent-indicator {
+  color: #1890ff;
+  font-weight: 500;
+}
+
+.message-item-unread {
+  position: absolute;
+  top: 0;
+  right: 0;
+  width: 8px;
+  height: 8px;
+  background-color: #1890ff;
+  border-radius: 50%;
+}
+
+/* 暗色模式适配 */
+.dark-mode .message-container {
+  background: #1f1f1f;
+  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.2);
+}
+
+.dark-mode .message-item {
+  background: #1f1f1f;
+  border-bottom-color: #303030;
+}
+
+.dark-mode .message-item:hover {
+  background-color: #262626;
+}
+
+.dark-mode .message-item.unread {
+  background-color: #111b26;
+}
+
+.dark-mode .message-item-username {
+  color: #e0e0e0;
+}
+
+.dark-mode .message-item-time {
+  color: #8c8c8c;
+}
+
+.dark-mode .message-item-preview {
+  color: #d9d9d9;
+}
+
+.dark-mode .message-sent-indicator {
+  color: #177ddc;
+}
+
+/* 空状态样式 */
+.empty-state {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  padding: 48px 0;
+  color: #8c8c8c;
+}
+
+.empty-state .anticon {
+  font-size: 48px;
+  margin-bottom: 16px;
+}
+
+.empty-state-text {
+  font-size: 16px;
+  font-weight: 500;
+  margin-bottom: 8px;
+}
+
+.empty-state-subtext {
+  font-size: 14px;
+  margin-bottom: 24px;
 }
