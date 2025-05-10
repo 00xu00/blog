@@ -235,11 +235,10 @@ const Profile: React.FC = () => {
 
   // 加载消息列表
   const loadMessages = async () => {
-    try {
-      console.log('开始加载消息...');
-      const response = await getMessages();
-      console.log('获取到的消息数据:', response);
+    if (!userInfo) return;
 
+    try {
+      const response = await getMessages();
       if (!response || !Array.isArray(response)) {
         console.error('获取消息失败：返回数据格式不正确');
         setMessages([]);
@@ -253,26 +252,23 @@ const Profile: React.FC = () => {
           return acc;
         }
 
-        const otherUserId = msg.sender_id === Number(userInfo?.id) ? msg.receiver_id : msg.sender_id;
+        const otherUserId = msg.sender_id === Number(userInfo.id) ? msg.receiver_id : msg.sender_id;
 
-        if (!acc[otherUserId] || new Date(msg.created_at) > new Date(acc[otherUserId].created_at)) {
+        if (!acc[otherUserId] || new Date((msg as Message).created_at).getTime() > new Date((acc[otherUserId] as Message).created_at).getTime()) {
           acc[otherUserId] = msg;
         }
         return acc;
       }, {});
 
-      console.log('处理后的用户消息:', userMessages);
-
       const sortedMessages = Object.values(userMessages).sort((a, b) =>
         new Date((b as Message).created_at).getTime() - new Date((a as Message).created_at).getTime()
       ) as Message[];
 
-      console.log('排序后的消息列表:', sortedMessages);
       setMessages(sortedMessages);
 
       // 计算未读消息数量
       const unread = response.filter((msg: Message) =>
-        !msg.is_read && msg.receiver_id === Number(userInfo?.id)
+        !msg.is_read && msg.receiver_id === Number(userInfo.id)
       ).length;
       setUnreadCount(unread);
     } catch (error) {
@@ -281,6 +277,15 @@ const Profile: React.FC = () => {
       setMessages([]);
     }
   };
+
+  // 定期刷新消息
+  useEffect(() => {
+    if (userInfo && activeTab === 'messages') {
+      loadMessages();
+      const timer = setInterval(loadMessages, 30000); // 每30秒刷新一次
+      return () => clearInterval(timer);
+    }
+  }, [userInfo, activeTab]);
 
   // 加载与特定用户的对话
   const loadConversation = async (userId: number) => {
@@ -318,19 +323,38 @@ const Profile: React.FC = () => {
     }
   };
 
-  // 确保在组件加载和用户信息更新时加载消息
-  useEffect(() => {
-    if (userInfo && activeTab === 'messages') {
-      console.log('触发消息加载，当前用户信息:', userInfo);
-      loadMessages();
-    }
-  }, [userInfo, activeTab]);
+  // 处理消息点击
+  const handleMessageClick = async (userId: number, username: string, avatar: string | null = null) => {
+    // 找到与该用户的最新消息
+    const message = messages.find(msg =>
+      msg.sender_id === userId || msg.receiver_id === userId
+    );
 
-  useEffect(() => {
-    if (selectedUser) {
-      loadConversation(selectedUser);
+    if (message && !message.is_read && message.receiver_id === Number(userInfo?.id)) {
+      try {
+        await markMessageAsRead(message.id);
+        // 更新消息状态
+        setMessages(prevMessages =>
+          prevMessages.map(msg =>
+            msg.id === message.id ? { ...msg, is_read: true } : msg
+          )
+        );
+        // 更新未读计数
+        setUnreadCount(prev => Math.max(0, prev - 1));
+      } catch (error) {
+        console.error('标记消息已读失败:', error);
+      }
     }
-  }, [selectedUser]);
+
+    // 跳转到聊天页面
+    navigate('/chat', {
+      state: {
+        userId,
+        username,
+        avatar
+      }
+    });
+  };
 
   // 获取当前登录用户id
   useEffect(() => {
@@ -607,18 +631,6 @@ const Profile: React.FC = () => {
         </div>
       </div>
     );
-  };
-
-  // 处理私信按钮点击
-  const handleMessageClick = (userId: number, username: string, avatar: string | null = null) => {
-    // 跳转到chat页并传递对方信息
-    navigate('/chat', {
-      state: {
-        userId,
-        username,
-        avatar
-      }
-    });
   };
 
   // 在组件加载时检查是否有需要打开的消息对话

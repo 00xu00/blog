@@ -1,9 +1,8 @@
 import React, { useState, useEffect, useRef } from "react"
 import { useNavigate, Link, useLocation } from "react-router-dom"
-import { Row, Col, Menu, Input, Dropdown, Avatar, Badge, Switch, Drawer, Button, MenuProps, Space, message } from "antd"
+import { Row, Col, Menu, Input, Dropdown, Avatar, Badge, Switch, Drawer, Button, MenuProps, Space, message as antMessage } from "antd"
 import { useDispatch, useSelector } from 'react-redux';
 import { RootState } from '../../store';
-import { markAsRead, Message } from '../../store/messageSlice';
 import { useTheme } from '../../contexts/ThemeContext';
 import Logo from '../Logo/Logo';
 import {
@@ -22,6 +21,7 @@ import {
     LoginOutlined,
 } from "@ant-design/icons";
 import "./header.css"
+import { getMessages, markMessageAsRead } from '../../api/message';
 
 const { Search } = Input;
 
@@ -36,6 +36,25 @@ interface UserInfo {
     articles_count: number;
 }
 
+interface Message {
+    id: number;
+    sender_id: number;
+    receiver_id: number;
+    content: string;
+    is_read: boolean;
+    created_at: string;
+    sender: {
+        id: number;
+        username: string;
+        avatar: string | null;
+    };
+    receiver: {
+        id: number;
+        username: string;
+        avatar: string | null;
+    };
+}
+
 const Header = () => {
     const location = useLocation();
     const [current, setCurrent] = useState('home');
@@ -44,12 +63,13 @@ const Header = () => {
     const [indicatorStyle, setIndicatorStyle] = useState({ width: '0px', left: '0px' });
     const menuRef = useRef<HTMLDivElement>(null);
     const dispatch = useDispatch();
-    const { messages, unreadCount } = useSelector((state: RootState) => state.message);
     const { isDarkMode, toggleTheme } = useTheme();
     const navigate = useNavigate();
     const [isLoggedIn, setIsLoggedIn] = useState(false);
     const [userInfo, setUserInfo] = useState<UserInfo | null>(null);
     const [isLoading, setIsLoading] = useState(true);
+    const [localMessages, setLocalMessages] = useState<Message[]>([]);
+    const [localUnreadCount, setLocalUnreadCount] = useState(0);
 
     // 获取用户真实数据
     useEffect(() => {
@@ -111,18 +131,109 @@ const Header = () => {
                 }
 
                 if (lastError) {
-                    message.error(lastError);
+                    antMessage.error(lastError);
                 }
                 setIsLoading(false);
             } catch (error) {
                 console.error('获取用户信息出错:', error);
-                message.error('获取用户信息失败，请稍后重试');
+                antMessage.error('获取用户信息失败，请稍后重试');
                 setIsLoading(false);
             }
         };
 
         fetchUserInfo();
     }, [navigate]);
+
+    // 加载消息列表
+    const loadMessages = async () => {
+        if (!userInfo) return;
+
+        try {
+            const response = await getMessages();
+            if (!response || !Array.isArray(response)) {
+                console.error('获取消息失败：返回数据格式不正确');
+                setLocalMessages([]);
+                return;
+            }
+
+            // 按用户分组，只保留每个用户的最新消息
+            const userMessages = response.reduce((acc: Record<string, Message>, msg: Message) => {
+                if (!msg || !msg.sender || !msg.receiver) {
+                    console.log('跳过无效消息:', msg);
+                    return acc;
+                }
+
+                const otherUserId = msg.sender_id === Number(userInfo.id) ? msg.receiver_id : msg.sender_id;
+
+                if (!acc[otherUserId] || new Date(msg.created_at) > new Date(acc[otherUserId].created_at)) {
+                    acc[otherUserId] = msg;
+                }
+                return acc;
+            }, {});
+
+            const sortedMessages = Object.values(userMessages).sort((a, b) =>
+                new Date((b as Message).created_at).getTime() - new Date((a as Message).created_at).getTime()
+            ) as Message[];
+
+            setLocalMessages(sortedMessages);
+
+            // 计算未读消息数量
+            const unread = response.filter((msg: Message) =>
+                !msg.is_read && msg.receiver_id === Number(userInfo.id)
+            ).length;
+            setLocalUnreadCount(unread);
+        } catch (error) {
+            console.error('加载私信失败:', error);
+            antMessage.error('加载私信失败');
+            setLocalMessages([]);
+        }
+    };
+
+    // 定期刷新消息
+    useEffect(() => {
+        if (userInfo) {
+            loadMessages();
+            const timer = setInterval(loadMessages, 30000); // 每30秒刷新一次
+            return () => clearInterval(timer);
+        }
+    }, [userInfo]);
+
+    // 处理消息点击
+    const handleMessageClick = async (message: Message) => {
+        try {
+            // 如果是接收者且消息未读，则标记为已读
+            if (message.receiver_id === Number(userInfo?.id) && !message.is_read) {
+                await markMessageAsRead(message.id);
+                // 更新消息状态
+                setLocalMessages(prevMessages =>
+                    prevMessages.map(msg =>
+                        msg.id === message.id ? { ...msg, is_read: true } : msg
+                    )
+                );
+                // 更新未读计数
+                setLocalUnreadCount(prev => Math.max(0, prev - 1));
+            }
+
+            // 确定聊天对象
+            const chatUserId = message.sender_id === Number(userInfo?.id) ? message.receiver_id : message.sender_id;
+            const chatUsername = message.sender_id === Number(userInfo?.id) ? message.receiver.username : message.sender.username;
+            const chatUserAvatar = message.sender_id === Number(userInfo?.id) ? message.receiver.avatar : message.sender.avatar;
+
+            // 跳转到聊天页面
+            navigate('/chat', {
+                state: {
+                    userId: chatUserId,
+                    username: chatUsername,
+                    avatar: chatUserAvatar,
+                    initialMessage: message.content,
+                    timestamp: message.created_at
+                }
+            });
+        } catch (error: any) {
+            console.error('处理消息点击失败:', error);
+            antMessage.error('操作失败，请稍后重试');
+        }
+    };
 
     // 根据路由路径获取对应的菜单key
     const getMenuKeyFromPath = (path: string) => {
@@ -166,7 +277,7 @@ const Header = () => {
         localStorage.removeItem('token');
         setUserInfo(null);
         setIsLoggedIn(false);
-        message.success('已退出登录');
+        antMessage.success('已退出登录');
         navigate('/auth');
     };
 
@@ -245,36 +356,44 @@ const Header = () => {
         }, 0);
     };
 
-    const handleMessageClick = (message: Message) => {
-        if (!message.isRead) {
-            dispatch(markAsRead(message.id));
-        }
-        // 跳转到聊天页面
-        navigate(`/chat/${message.sender.id}`);
-    };
-
     const messageItems = [
         {
             key: 'messages',
             label: '私信',
             icon: <MailOutlined />,
-            count: unreadCount,
-            children: messages.map(message => ({
-                key: message.id,
-                label: (
-                    <div className="header-notification-item" onClick={() => handleMessageClick(message)}>
-                        <Avatar src={message.sender.avatar} icon={<UserOutlined />} />
-                        <div className="notification-content">
-                            <div className="notification-title">
-                                <span>{message.sender.name}</span>
-                                {!message.isRead && <Badge status="processing" />}
+            count: localUnreadCount,
+            children: localMessages.map(message => {
+                const isUnread = message.receiver_id === Number(userInfo?.id) && !message.is_read;
+                const isSent = message.sender_id === Number(userInfo?.id);
+                const otherUser = isSent ? message.receiver : message.sender;
+
+                return {
+                    key: message.id,
+                    label: (
+                        <div
+                            className={`header-notification-item ${isUnread ? 'unread' : ''}`}
+                            onClick={() => handleMessageClick(message)}
+                        >
+                            <Avatar src={otherUser.avatar} icon={<UserOutlined />} />
+                            <div className="notification-content">
+                                <div className="notification-title">
+                                    <span>{otherUser.username}</span>
+                                    {isUnread && <Badge status="processing" />}
+                                </div>
+                                <div className="notification-desc">
+                                    {isSent && <span className="message-sent-indicator">你：</span>}
+                                    {message.content.length > 30
+                                        ? `${message.content.substring(0, 30)}...`
+                                        : message.content}
+                                </div>
+                                <div className="notification-time">
+                                    {new Date(message.created_at).toLocaleString()}
+                                </div>
                             </div>
-                            <div className="notification-desc">{message.content}</div>
-                            <div className="notification-time">{message.createTime}</div>
                         </div>
-                    </div>
-                )
-            }))
+                    )
+                };
+            })
         }
     ];
 
@@ -328,7 +447,7 @@ const Header = () => {
                                             trigger={['click']}
                                             overlayClassName="header-notification-dropdown"
                                         >
-                                            <Badge count={unreadCount} className="header-notification">
+                                            <Badge count={localUnreadCount} className="header-notification">
                                                 <MailOutlined className="header-icon" />
                                             </Badge>
                                         </Dropdown>
