@@ -1,90 +1,67 @@
-import React, { useState, useEffect, useRef } from 'react';
-import { Avatar, Input, Button, Space, message } from 'antd';
-import { UserOutlined, SendOutlined } from '@ant-design/icons';
+import React, { useEffect, useRef, useState } from 'react';
+import { useLocation } from 'react-router-dom';
+import { Avatar, Button, Input, message, Space } from 'antd';
+import { SendOutlined, UserOutlined } from '@ant-design/icons';
+import { Message as MessageType, createMessage, getConversation, markMessageAsRead } from '../../api/message';
 import './index.css';
 
-interface Message {
-  id: string;
-  sender: {
-    id: string;
-    name: string;
-    avatar: string;
-  };
-  content: string;
-  createTime: string;
-  isRead: boolean;
-}
-
 const Chat: React.FC = () => {
-  const [messages, setMessages] = useState<Message[]>([]);
+  const location = useLocation();
+  const [messages, setMessages] = useState<MessageType[]>([]);
   const [inputValue, setInputValue] = useState('');
   const messagesEndRef = useRef<HTMLDivElement>(null);
+  const [chatUser, setChatUser] = useState<{ id: number; name: string }>({ id: 0, name: '' });
 
-  useEffect(() => {
-    // 模拟获取聊天记录
-    const mockMessages: Message[] = [
-      {
-        id: '1',
-        sender: {
-          id: '2',
-          name: '用户A',
-          avatar: ''
-        },
-        content: '你好，请问这篇文章的代码可以分享一下吗？',
-        createTime: '2024-01-01 12:00',
-        isRead: true
-      },
-      {
-        id: '2',
-        sender: {
-          id: '1',
-          name: '我',
-          avatar: ''
-        },
-        content: '当然可以，这是代码链接：https://github.com/example',
-        createTime: '2024-01-01 12:05',
-        isRead: true
-      },
-      {
-        id: '3',
-        sender: {
-          id: '2',
-          name: '用户A',
-          avatar: ''
-        },
-        content: '感谢你的分享，对我帮助很大！',
-        createTime: '2024-01-01 12:10',
-        isRead: true
-      }
-    ];
-    setMessages(mockMessages);
-  }, []);
-
-  useEffect(() => {
-    // 滚动到底部
+  // 滚动到最新消息
+  const scrollToBottom = () => {
     messagesEndRef.current?.scrollIntoView({ behavior: 'smooth' });
-  }, [messages]);
+  };
 
-  const handleSend = () => {
-    if (!inputValue.trim()) {
+  useEffect(() => {
+    // 如果有location.state，自动设置聊天对象
+    if (location.state && location.state.userId) {
+      setChatUser({
+        id: Number(location.state.userId),
+        name: location.state.username || `用户${location.state.userId}`
+      });
+      loadMessages(Number(location.state.userId));
+    }
+  }, [location.state]);
+
+  // 加载消息
+  const loadMessages = async (userId: number) => {
+    try {
+      const response = await getConversation(userId);
+      setMessages(response);
+      // 标记未读消息为已读
+      response.forEach((msg: MessageType) => {
+        if (!msg.is_read && msg.sender_id === userId) {
+          markMessageAsRead(msg.id);
+        }
+      });
+      scrollToBottom();
+    } catch (error) {
+      console.error('加载消息失败:', error);
+      message.error('加载消息失败');
+    }
+  };
+
+  // 发送消息
+  const handleSend = async () => {
+    if (!inputValue.trim() || !chatUser.id) {
       message.warning('请输入消息内容');
       return;
     }
 
-    const newMessage: Message = {
-      id: Date.now().toString(),
-      sender: {
-        id: '1',
-        name: '我',
-        avatar: ''
-      },
-      content: inputValue,
-      createTime: new Date().toLocaleString(),
-      isRead: true
-    };
-
-    setMessages([...messages, newMessage]);
-    setInputValue('');
+    try {
+      const newMessage = await createMessage(chatUser.id, inputValue);
+      setMessages([...messages, newMessage]);
+      setInputValue('');
+      scrollToBottom();
+    } catch (error) {
+      console.error('发送消息失败:', error);
+      message.error('发送消息失败');
+    }
   };
 
   return (
@@ -92,22 +69,22 @@ const Chat: React.FC = () => {
       <div className="chat-header">
         <Space>
           <Avatar src="" icon={<UserOutlined />} />
-          <span>用户A</span>
+          <span>{chatUser.name}</span>
         </Space>
       </div>
       <div className="chat-messages">
         {messages.map(message => (
           <div
             key={message.id}
-            className={`message-item ${message.sender.id === '1' ? 'self' : 'other'}`}
+            className={`message-item ${message.sender_id === 1 ? 'self' : 'other'}`}
           >
             <div className="message-avatar">
               <Avatar src={message.sender.avatar} icon={<UserOutlined />} />
             </div>
             <div className="message-content">
               <div className="message-info">
-                <span className="message-name">{message.sender.name}</span>
-                <span className="message-time">{message.createTime}</span>
+                <span className="message-name">{message.sender.username}</span>
+                <span className="message-time">{new Date(message.created_at).toLocaleString()}</span>
               </div>
               <div className="message-text">{message.content}</div>
             </div>

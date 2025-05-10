@@ -1,5 +1,4 @@
 import React, { useEffect, useState } from 'react';
-import { useDispatch, useSelector } from 'react-redux';
 import { Tabs, List, Avatar, Space, Badge, Button, Card, Tag, message, Input, Modal, Upload } from 'antd';
 import {
   MailOutlined,
@@ -20,22 +19,12 @@ import {
   SendOutlined,
   ArrowLeftOutlined
 } from '@ant-design/icons';
-import { RootState } from '../../store';
-import {
-  setProfile,
-  setArticles,
-  setFollowing,
-  setFollowers,
-  setActiveTab
-} from '../../store/profile/actions';
-import { setMessages, markAsRead } from '../../store/messageSlice';
-import { ProfileState } from '../../store/profile/types';
 import './index.css';
 import { useNavigate, Link, useLocation } from 'react-router-dom';
 import { getUserInfo, getUserFollowing, getUserFollowers, followUser, unfollowUser, checkFollowingStatus } from '../../api/user';
 import { getUserBlogs, getUserLikedBlogs, getUserFavoriteBlogs, likeBlog, unlikeBlog, favoriteBlog, unfavoriteBlog } from '../../api/blog';
 import { formatDate } from '../../utils/date';
-import { getMessages, getConversation, sendMessage, markMessageAsRead } from '../../api/message';
+import { getMessages, getConversation, createMessage, markMessageAsRead } from '../../api/message';
 import axios from 'axios';
 
 const API_URL = "http://localhost:8000/api/v1";
@@ -92,7 +81,6 @@ interface Message {
 }
 
 const Profile: React.FC = () => {
-  const dispatch = useDispatch();
   const navigate = useNavigate();
   const location = useLocation();
   const isOtherUser = location.state?.isOtherUser;
@@ -114,14 +102,7 @@ const Profile: React.FC = () => {
   const [conversation, setConversation] = useState<Message[]>([]);
   const [newMessage, setNewMessage] = useState('');
   const [isFollowing, setIsFollowing] = useState(false);
-
-  const {
-    articles,
-    following: reduxFollowing,
-    followers: reduxFollowers,
-    activeTab: reduxActiveTab
-  } = useSelector((state: RootState) => state.profile);
-  const { messages: reduxMessages, unreadCount: reduxUnreadCount } = useSelector((state: RootState) => state.message);
+  const [currentUserId, setCurrentUserId] = useState<number | null>(null);
 
   // 获取用户信息
   useEffect(() => {
@@ -182,10 +163,11 @@ const Profile: React.FC = () => {
               data = [];
           }
         }
-        setBlogs(data);
+        setBlogs(data || []);
       } catch (error: any) {
         console.error('获取博客列表出错:', error);
         message.error(error.response?.data?.detail || '获取博客列表失败，请稍后重试');
+        setBlogs([]);
       }
     };
 
@@ -237,11 +219,12 @@ const Profile: React.FC = () => {
   const loadMessages = async () => {
     try {
       const response = await getMessages();
-      setMessages(response.data);
+      setMessages(response);
       // 计算未读消息数量
-      const unread = response.data.filter((msg: Message) => !msg.is_read && msg.receiver_id === Number(userInfo?.id)).length;
+      const unread = response.filter((msg: Message) => !msg.is_read && msg.receiver_id === Number(userInfo?.id)).length;
       setUnreadCount(unread);
     } catch (error) {
+      console.error('加载私信失败:', error);
       message.error('加载私信失败');
     }
   };
@@ -250,33 +233,34 @@ const Profile: React.FC = () => {
   const loadConversation = async (userId: number) => {
     try {
       const response = await getConversation(userId);
-      setConversation(response.data);
+      setConversation(response);
       // 标记未读消息为已读
-      response.data.forEach((msg: Message) => {
+      response.forEach((msg: Message) => {
         if (!msg.is_read && msg.receiver_id === Number(userInfo?.id)) {
           markMessageAsRead(msg.id);
         }
       });
     } catch (error) {
+      console.error('加载对话失败:', error);
       message.error('加载对话失败');
     }
   };
 
   // 发送消息
-  const handleSendMessage = async () => {
-    if (!newMessage.trim() || !selectedUser) return;
+  const handleSendMessage = async (receiverId: number, content: string) => {
+    if (!content.trim()) {
+      message.warning('请输入消息内容');
+      return;
+    }
 
     try {
-      await sendMessage({
-        content: newMessage,
-        receiver_id: selectedUser
-      });
+      const newMessage = await createMessage(receiverId, content);
+      setConversation([...conversation, newMessage]);
       setNewMessage('');
-      // 重新加载对话
-      loadConversation(selectedUser);
       // 重新加载消息列表
       loadMessages();
     } catch (error) {
+      console.error('发送消息失败:', error);
       message.error('发送消息失败');
     }
   };
@@ -293,14 +277,24 @@ const Profile: React.FC = () => {
     }
   }, [selectedUser]);
 
+  // 获取当前登录用户id
+  useEffect(() => {
+    const userInfoStr = localStorage.getItem('userInfo');
+    if (userInfoStr) {
+      try {
+        const user = JSON.parse(userInfoStr);
+        setCurrentUserId(user.id);
+      } catch { }
+    }
+  }, []);
+
   const handleFollow = (userId: string) => async (e: React.MouseEvent) => {
     e.preventDefault();
+    if (Number(userId) === currentUserId) {
+      message.warning('不能关注自己');
+      return;
+    }
     try {
-      if (userId === userInfo?.id) {
-        message.warning('不能关注自己');
-        return;
-      }
-
       if (isFollowing) {
         await unfollowUser(Number(userId));
         message.success('已取消关注');
@@ -310,8 +304,6 @@ const Profile: React.FC = () => {
         message.success('关注成功');
         setIsFollowing(true);
       }
-
-      // 更新关注者数量
       if (userInfo) {
         setUserInfo({
           ...userInfo,
@@ -539,7 +531,7 @@ const Profile: React.FC = () => {
                 >
                   {isFollowing ? '已关注' : '关注'}
                 </Button>
-                <Button onClick={() => setSelectedUser(Number(userInfo.id))}>私信</Button>
+                <Button onClick={() => handleMessageClick(Number(userInfo.id), userInfo.username)}>私信</Button>
               </>
             )}
           </div>
@@ -563,19 +555,14 @@ const Profile: React.FC = () => {
   };
 
   // 处理私信按钮点击
-  const handleMessageClick = (userId: number) => {
-    if (!isOtherUser) {
-      setSelectedUser(userId);
-      setActiveTab('messages');
-    } else {
-      // 如果是其他用户的profile，跳转到消息页面并打开对话
-      navigate('/profile', {
-        state: {
-          selectedUser: userId,
-          activeTab: 'messages'
-        }
-      });
-    }
+  const handleMessageClick = (userId: number, username: string) => {
+    // 跳转到chat页并传递对方信息
+    navigate('/chat', {
+      state: {
+        userId,
+        username
+      }
+    });
   };
 
   // 在组件加载时检查是否有需要打开的消息对话
@@ -603,7 +590,7 @@ const Profile: React.FC = () => {
                 }
                 key="messages"
               >
-                {messages.length > 0 ? (
+                {messages && messages.length > 0 ? (
                   <div className="message-container">
                     <div className="message-list">
                       <List
@@ -612,7 +599,7 @@ const Profile: React.FC = () => {
                         renderItem={item => (
                           <List.Item
                             className={`message-item ${!item.is_read && item.receiver_id === Number(userInfo?.id) ? 'unread' : ''}`}
-                            onClick={() => handleMessageClick(item.sender_id === Number(userInfo?.id) ? item.receiver_id : item.sender_id)}
+                            onClick={() => handleMessageClick(item.sender_id === Number(userInfo?.id) ? item.receiver_id : item.sender_id, item.sender.username)}
                           >
                             <List.Item.Meta
                               avatar={<Avatar src={item.sender.avatar} icon={<UserOutlined />} />}
@@ -652,14 +639,14 @@ const Profile: React.FC = () => {
                             onPressEnter={e => {
                               if (!e.shiftKey) {
                                 e.preventDefault();
-                                handleSendMessage();
+                                handleSendMessage(selectedUser, newMessage);
                               }
                             }}
                           />
                           <Button
                             type="primary"
                             icon={<SendOutlined />}
-                            onClick={handleSendMessage}
+                            onClick={() => handleSendMessage(selectedUser, newMessage)}
                             disabled={!newMessage.trim()}
                           >
                             发送
@@ -688,11 +675,11 @@ const Profile: React.FC = () => {
                 }
                 key="history"
               >
-                {articles.length > 0 ? (
+                {blogs && blogs.length > 0 ? (
                   <List
                     itemLayout="horizontal"
-                    dataSource={articles}
-                    renderItem={item => (
+                    dataSource={blogs}
+                    renderItem={(item: Blog) => (
                       <List.Item>
                         <List.Item.Meta
                           title={<Link to={`/detail/${item.id}`}>{item.title}</Link>}
@@ -837,7 +824,7 @@ const Profile: React.FC = () => {
             }
             key="articles"
           >
-            {blogs.length > 0 ? (
+            {blogs && blogs.length > 0 ? (
               <List
                 itemLayout="vertical"
                 dataSource={blogs}
@@ -920,7 +907,7 @@ const Profile: React.FC = () => {
                               >
                                 {followingMap[user.id] ? '已关注' : '关注'}
                               </Button>
-                              <Button block onClick={() => setSelectedUser(Number(user.id))}>私信</Button>
+                              <Button block onClick={() => handleMessageClick(Number(user.id), user.username)}>私信</Button>
                             </Space>
                           </div>
                         </Card>
@@ -967,7 +954,7 @@ const Profile: React.FC = () => {
                               >
                                 {followerFollowingMap[user.id] ? '已关注' : '关注'}
                               </Button>
-                              <Button block onClick={() => setSelectedUser(Number(user.id))}>私信</Button>
+                              <Button block onClick={() => handleMessageClick(Number(user.id), user.username)}>私信</Button>
                             </Space>
                           </div>
                         </Card>
