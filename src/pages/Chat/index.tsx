@@ -10,7 +10,25 @@ const Chat: React.FC = () => {
   const [messages, setMessages] = useState<MessageType[]>([]);
   const [inputValue, setInputValue] = useState('');
   const messagesEndRef = useRef<HTMLDivElement>(null);
-  const [chatUser, setChatUser] = useState<{ id: number; name: string }>({ id: 0, name: '' });
+  const [chatUser, setChatUser] = useState<{ id: number; name: string; avatar: string | null }>({
+    id: 0,
+    name: '',
+    avatar: null
+  });
+  const [currentUserId, setCurrentUserId] = useState<number | null>(null);
+
+  // 获取当前用户ID
+  useEffect(() => {
+    const userInfoStr = localStorage.getItem('userInfo');
+    if (userInfoStr) {
+      try {
+        const user = JSON.parse(userInfoStr);
+        setCurrentUserId(user.id);
+      } catch (error) {
+        console.error('解析用户信息失败:', error);
+      }
+    }
+  }, []);
 
   // 滚动到最新消息
   const scrollToBottom = () => {
@@ -22,7 +40,8 @@ const Chat: React.FC = () => {
     if (location.state && location.state.userId) {
       setChatUser({
         id: Number(location.state.userId),
-        name: location.state.username || `用户${location.state.userId}`
+        name: location.state.username || `用户${location.state.userId}`,
+        avatar: location.state.avatar || null
       });
       loadMessages(Number(location.state.userId));
     }
@@ -68,18 +87,29 @@ const Chat: React.FC = () => {
     <div className="chat-container">
       <div className="chat-header">
         <Space>
-          <Avatar src="" icon={<UserOutlined />} />
-          <span>{chatUser.name}</span>
+          <Avatar
+            src={chatUser.avatar}
+            icon={<UserOutlined />}
+            size={40}
+            style={{ backgroundColor: '#1890ff' }}
+          />
+          <span className="chat-header-username">{chatUser.name}</span>
         </Space>
       </div>
       <div className="chat-messages">
         {messages.map(message => (
           <div
             key={message.id}
-            className={`message-item ${message.sender_id === 1 ? 'self' : 'other'}`}
+            className={`message-item ${message.sender_id === currentUserId ? 'self' : 'other'}`}
+            style={{ backgroundColor: '#f5f5f5' }}
           >
             <div className="message-avatar">
-              <Avatar src={message.sender.avatar} icon={<UserOutlined />} />
+              <Avatar
+                src={message.sender.avatar}
+                icon={<UserOutlined />}
+                size={36}
+                style={{ backgroundColor: '#1890ff' }}
+              />
             </div>
             <div className="message-content">
               <div className="message-info">

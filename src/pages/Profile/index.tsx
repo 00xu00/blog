@@ -573,7 +573,7 @@ const Profile: React.FC = () => {
                 >
                   {isFollowing ? '已关注' : '关注'}
                 </Button>
-                <Button onClick={() => handleMessageClick(Number(userInfo.id), userInfo.username)}>私信</Button>
+                <Button onClick={() => handleMessageClick(Number(userInfo.id), userInfo.username, userInfo.avatar)}>私信</Button>
               </>
             )}
           </div>
@@ -597,12 +597,13 @@ const Profile: React.FC = () => {
   };
 
   // 处理私信按钮点击
-  const handleMessageClick = (userId: number, username: string) => {
+  const handleMessageClick = (userId: number, username: string, avatar: string | null = null) => {
     // 跳转到chat页并传递对方信息
     navigate('/chat', {
       state: {
         userId,
-        username
+        username,
+        avatar
       }
     });
   };
@@ -650,7 +651,7 @@ const Profile: React.FC = () => {
                           return (
                             <List.Item
                               className={`message-item ${isUnread ? 'unread' : ''}`}
-                              onClick={() => handleMessageClick(otherUserId, otherUsername)}
+                              onClick={() => handleMessageClick(otherUserId, otherUsername, otherAvatar)}
                             >
                               <div className="message-item-content">
                                 <Avatar src={otherAvatar} icon={<UserOutlined />} size={48} />
@@ -967,7 +968,7 @@ const Profile: React.FC = () => {
                               >
                                 {followingMap[user.id] ? '已关注' : '关注'}
                               </Button>
-                              <Button block onClick={() => handleMessageClick(Number(user.id), user.username)}>私信</Button>
+                              <Button block onClick={() => handleMessageClick(Number(user.id), user.username, user.avatar)}>私信</Button>
                             </Space>
                           </div>
                         </Card>
@@ -1014,7 +1015,7 @@ const Profile: React.FC = () => {
                               >
                                 {followerFollowingMap[user.id] ? '已关注' : '关注'}
                               </Button>
-                              <Button block onClick={() => handleMessageClick(Number(user.id), user.username)}>私信</Button>
+                              <Button block onClick={() => handleMessageClick(Number(user.id), user.username, user.avatar)}>私信</Button>
                             </Space>
                           </div>
                         </Card>
