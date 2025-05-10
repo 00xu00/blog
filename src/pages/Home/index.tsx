@@ -41,7 +41,7 @@ const Home = () => {
       <Row className='comm-main' justify={"center"}>
         <Col className='comm-left' xs={24} sm={24} md={17} lg={19} xl={15}>
           <List
-            header={<Title level={4} style={{ margin: '16px 0' }}>推荐文章</Title>}
+            header={<Title level={4} style={{ margin: '6px 0' }}>推荐文章</Title>}
             itemLayout={"vertical"}
             dataSource={recommendedBlogs}
             loading={loading}

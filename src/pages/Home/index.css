@@ -17,6 +17,10 @@
   border-bottom: 1px solid #eee;
 }
 
+.ant-list-header {
+  padding-bottom: 0 !important;
+}
+
 .blog-list-item {
   padding: 1rem 0.5rem;
   border-bottom: 1px solid #f0f0f0;
