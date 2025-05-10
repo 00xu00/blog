@@ -383,7 +383,7 @@
 .profile-container .article-title {
   font-size: 18px;
   font-weight: 500;
-  color: #1a1a1a;
+  color: #1890ff !important;
   margin-bottom: 8px;
   transition: color 0.3s ease;
   padding-left: 24px;
@@ -630,7 +630,7 @@
 
 .profile-container .ant-list-item {
   padding: 8px 0;
-  margin: 0 !important;
+  /* margin: 0 !important; */
 }
 
 .profile-container .ant-list-item-meta {
@@ -650,7 +650,7 @@
   background: #fff;
   border-radius: 8px;
   overflow: hidden;
-  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.06);
+  /* box-shadow: 0 2px 8px rgba(0, 0, 0, 0.06); */
 }
 
 .message-list {
@@ -724,7 +724,7 @@
 .message-item-unread {
   position: absolute;
   top: 0;
-  right: 0;
+  right: -10px;
   width: 8px;
   height: 8px;
   background-color: #1890ff;
