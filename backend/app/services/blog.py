@@ -18,7 +18,8 @@ def create_blog(db: Session, blog_in: BlogCreate, author_id: int) -> Blog:
             subtitle=blog_in.subtitle,
             content=blog_in.content,
             tags=blog_in.tags,
-            author_id=author_id
+            author_id=author_id,
+            is_published=blog_in.is_published if hasattr(blog_in, 'is_published') else 0
         )
         db.add(db_blog)
         db.commit()

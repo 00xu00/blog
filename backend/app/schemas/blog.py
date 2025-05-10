@@ -10,7 +10,7 @@ class BlogBase(BaseModel):
     tags: List[str] = Field(default_factory=list)
 
 class BlogCreate(BlogBase):
-    pass
+    is_published: int = Field(default=0)  # 0: 草稿, 1: 已发布
 
 class BlogUpdate(BlogBase):
     title: Optional[str] = Field(None, min_length=1, max_length=100)
