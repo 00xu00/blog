@@ -18,8 +18,9 @@
     "typeRoots": ["./node_modules/@types", "./src/types"],
     "baseUrl": ".",
     "paths": {
-      "@/*": ["src/*"]
+      "@/*": ["src/*"],
+      "types/*": ["src/types/*"]
     }
   },
-  "include": ["src"]
+  "include": ["src", "src/types/*.ts", "src/types/*.d.ts"]
 }

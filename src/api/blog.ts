@@ -1,4 +1,6 @@
 import axios from "axios";
+import { Blog } from "../types/blog";
+import request from "../utils/request";
 
 const API_URL = "http://localhost:8000/api/v1";
 
@@ -104,6 +106,28 @@ export const unfavoriteBlog = async (blogId: number) => {
 export const getUserHistoryBlogs = async () => {
   const token = localStorage.getItem("token");
   const response = await axios.get(`${API_URL}/histories/me`, {
+    headers: {
+      Authorization: `Bearer ${token}`,
+    },
+  });
+  return response.data;
+};
+
+// 获取推荐博客
+export const getRecommendedBlogs = async (): Promise<Blog[]> => {
+  const token = localStorage.getItem("token");
+  const response = await axios.get(`${API_URL}/blogs/recommended`, {
+    headers: {
+      Authorization: `Bearer ${token}`,
+    },
+  });
+  return response.data;
+};
+
+// 获取最新博客
+export const getLatestBlogs = async (): Promise<Blog[]> => {
+  const token = localStorage.getItem("token");
+  const response = await axios.get(`${API_URL}/blogs/latest`, {
     headers: {
       Authorization: `Bearer ${token}`,
     },

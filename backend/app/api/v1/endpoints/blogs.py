@@ -61,6 +61,68 @@ async def update_blog(
     logger.info(f"博客更新成功: id={db_blog.id}")
     return db_blog
 
+@router.get("/recommended", response_model=List[BlogInDB])
+async def get_recommended_blogs(
+    request: Request,
+    limit: int = 10,
+    db: Session = Depends(get_db),
+    current_user: User = Depends(get_current_user)
+):
+    """获取个性化推荐的博客列表"""
+    logger.info(f"收到获取推荐博客请求: user_id={current_user.id}")
+    
+    blogs = blog_service.get_recommended_blogs(db, current_user.id, limit)
+    
+    # 设置当前用户的点赞和收藏状态
+    for blog in blogs:
+        # 检查是否点赞
+        like = db.query(BlogLike).filter(
+            BlogLike.blog_id == blog.id,
+            BlogLike.user_id == current_user.id
+        ).first()
+        blog.is_liked = like is not None
+        
+        # 检查是否收藏
+        favorite = db.query(BlogFavorite).filter(
+            BlogFavorite.blog_id == blog.id,
+            BlogFavorite.user_id == current_user.id
+        ).first()
+        blog.is_favorited = favorite is not None
+    
+    logger.info(f"成功返回推荐博客: count={len(blogs)}")
+    return blogs
+
+@router.get("/latest", response_model=List[BlogInDB])
+async def get_latest_blogs(
+    request: Request,
+    limit: int = 3,
+    db: Session = Depends(get_db),
+    current_user: User = Depends(get_current_user)
+):
+    """获取最新的博客列表"""
+    logger.info(f"收到获取最新博客请求: user_id={current_user.id}")
+    
+    blogs = blog_service.get_latest_blogs(db, limit)
+    
+    # 设置当前用户的点赞和收藏状态
+    for blog in blogs:
+        # 检查是否点赞
+        like = db.query(BlogLike).filter(
+            BlogLike.blog_id == blog.id,
+            BlogLike.user_id == current_user.id
+        ).first()
+        blog.is_liked = like is not None
+        
+        # 检查是否收藏
+        favorite = db.query(BlogFavorite).filter(
+            BlogFavorite.blog_id == blog.id,
+            BlogFavorite.user_id == current_user.id
+        ).first()
+        blog.is_favorited = favorite is not None
+    
+    logger.info(f"成功返回最新博客: count={len(blogs)}")
+    return blogs
+
 @router.get("/{blog_id}", response_model=BlogInDB)
 async def get_blog(
     request: Request,

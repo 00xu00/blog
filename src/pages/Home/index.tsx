@@ -1,27 +1,37 @@
-import React from 'react';
-import { Col, List, Row } from 'antd';
+import React, { useEffect, useState } from 'react';
+import { Col, List, Row, message } from 'antd';
 import { CalendarOutlined, FireOutlined, BarsOutlined } from '@ant-design/icons';
 import { Link } from 'react-router-dom';
 import Advert from './Advert/Advert';
 import LatestArticles from './LatestArticles';
+import { getRecommendedBlogs, getLatestBlogs } from '../../api/blog';
+import type { Blog } from '@/types/blog';
 
 const Home = () => {
-  const [list] = React.useState([{
-    id: 1,
-    title: "灌水第一篇文章",
-    context: "此组件于2024-10-22创建",
-    date: "2024-10-22",
-    category: "视频教学",
-    views: 1234
-  },
-  {
-    id: 1,
-    title: "灌水第一篇文章",
-    context: "此组件于2024-10-22创建",
-    date: "2024-10-22",
-    category: "视频教学",
-    views: 1234
-  }]);
+  const [recommendedBlogs, setRecommendedBlogs] = useState<Blog[]>([]);
+  const [latestBlogs, setLatestBlogs] = useState<Blog[]>([]);
+  const [loading, setLoading] = useState(true);
+
+  useEffect(() => {
+    const fetchBlogs = async () => {
+      try {
+        setLoading(true);
+        const [recommendedData, latestData] = await Promise.all([
+          getRecommendedBlogs(),
+          getLatestBlogs()
+        ]);
+        setRecommendedBlogs(recommendedData);
+        setLatestBlogs(latestData);
+      } catch (error) {
+        console.error('获取博客列表失败:', error);
+        message.error('获取博客列表失败，请稍后重试');
+      } finally {
+        setLoading(false);
+      }
+    };
+
+    fetchBlogs();
+  }, []);
 
   return (
     <>
@@ -30,23 +40,24 @@ const Home = () => {
           <List
             header={<div style={{ padding: "0 0.5rem" }}>推荐文章</div>}
             itemLayout={"vertical"}
-            dataSource={list}
+            dataSource={recommendedBlogs}
+            loading={loading}
             renderItem={(item) => {
               return <List.Item key={item.id}>
                 <Link to={`/detail/${item.id}`}>
                   <div className='list-title'>{item.title}</div>
                   <div className='list-icons'>
-                    <span className='list-icon'><CalendarOutlined /> {item.date} </span>
-                    <span className='list-icon'><BarsOutlined /> {item.category} </span>
-                    <span className='list-icon'><FireOutlined /> {item.views} </span>
+                    <span className='list-icon'><CalendarOutlined /> {new Date(item.created_at).toLocaleDateString()} </span>
+                    <span className='list-icon'><BarsOutlined /> {item.tags?.join(', ')} </span>
+                    <span className='list-icon'><FireOutlined /> {item.views_count} </span>
                   </div>
-                  <div className='list-context'>{item.context}</div>
+                  <div className='list-context'>{item.subtitle}</div>
                 </Link>
               </List.Item>
             }} />
         </Col>
         <Col className='comm-right' xs={0} sm={0} md={7} lg={5} xl={5}>
-          <LatestArticles />
+          <LatestArticles latestBlogs={latestBlogs} loading={loading} />
           <Advert />
         </Col>
       </Row>
