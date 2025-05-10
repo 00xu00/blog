@@ -117,7 +117,22 @@ async def get_blog(
         BlogFavorite.user_id == current_user.id
     ).first()
     blog.is_favorited = favorite is not None
-    
+
+    # 检查当前用户是否关注了作者
+    is_following = False
+    if blog.author_id != current_user.id:
+        follow_row = db.execute(
+            text("""
+                SELECT 1 FROM user_following WHERE follower_id = :follower_id AND followed_id = :followed_id
+            """),
+            {"follower_id": current_user.id, "followed_id": blog.author_id}
+        ).first()
+        is_following = follow_row is not None
+
+    # 将is_following加到author对象
+    if hasattr(blog, 'author') and blog.author:
+        blog.author.is_following = is_following
+
     logger.info(f"获取博客详情成功: blog_id={blog_id}, user_id={current_user.id}")
     return blog
 

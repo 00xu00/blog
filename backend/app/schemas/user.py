@@ -44,6 +44,7 @@ class UserInDB(UserBase):
     followers_count: int = 0
     articles_count: int = 0
     created_at: datetime
+    is_following: Optional[bool] = None
 
     class Config:
         from_attributes = True

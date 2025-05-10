@@ -19,25 +19,17 @@ interface AuthorProps {
     };
     onAuthorClick?: (author: AuthorProps['author']) => void;
     isCurrentUser?: boolean;
+    isFollowing?: boolean;
 }
 
-const Author: React.FC<AuthorProps> = ({ author, onAuthorClick, isCurrentUser = false }) => {
+const Author: React.FC<AuthorProps> = ({ author, onAuthorClick, isCurrentUser = false, isFollowing: isFollowingProp }) => {
     const navigate = useNavigate();
-    const [isFollowing, setIsFollowing] = useState(false);
+    const [isFollowing, setIsFollowing] = useState(!!isFollowingProp);
     const [isLoading, setIsLoading] = useState(false);
 
     useEffect(() => {
-        const checkStatus = async () => {
-            if (isCurrentUser) return;
-            try {
-                const response = await checkFollowingStatus(author.id);
-                setIsFollowing(response.data.is_following);
-            } catch (error) {
-                console.error('检查关注状态失败:', error);
-            }
-        };
-        checkStatus();
-    }, [author.id, isCurrentUser]);
+        setIsFollowing(!!isFollowingProp);
+    }, [isFollowingProp]);
 
     const handleAvatarClick = () => {
         if (onAuthorClick) {

@@ -27,6 +27,7 @@ interface BlogAuthor {
     github?: string;
     [key: string]: string | undefined;
   };
+  is_following?: boolean;
 }
 
 interface Blog {
@@ -222,6 +223,7 @@ const Detail = () => {
               }}
               onAuthorClick={handleAuthorClick}
               isCurrentUser={currentUserId === blog.author.id}
+              isFollowing={blog.author.is_following}
             />
           )}
           <div className="toc-container">
