@@ -3,7 +3,10 @@ from sqlalchemy.orm import sessionmaker
 from app.core.config import settings
 import logging
 from app.db.base_class import Base
-from app.models import User, Blog, Comment, BlogLike, BlogFavorite, CommentLike
+from app.models import (
+    User, Blog, Comment, BlogLike, BlogFavorite, CommentLike,
+    History, SearchHistory, Message
+)
 
 # 配置日志
 logging.basicConfig(level=logging.INFO)
@@ -31,7 +34,10 @@ __all__ = [
     "Comment",
     "BlogLike",
     "BlogFavorite",
-    "CommentLike"
+    "CommentLike",
+    "History",
+    "SearchHistory",
+    "Message"
 ]
 
 # 数据库依赖项

@@ -10,6 +10,7 @@ from app.models.user import User
 from app.models.blog import Blog
 from app.models.comment import Comment
 from app.models.message import Message
+from app.models.search_history import SearchHistory
 from app.models.interaction import *
 
 # this is the Alembic Config object, which provides

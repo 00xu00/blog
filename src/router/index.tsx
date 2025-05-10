@@ -10,6 +10,7 @@ import Profile from '../pages/Profile';
 import Chat from '../pages/Chat';
 import Editor from '../pages/Editor';
 import AIHelper from '../pages/AIHelper';
+import Search from '../pages/Search/Search';
 import PrivateRoute from '../components/PrivateRoute';
 
 const router = createBrowserRouter([
@@ -28,6 +29,10 @@ const router = createBrowserRouter([
       {
         path: 'list',
         element: <List />
+      },
+      {
+        path: 'search',
+        element: <Search />
       },
       {
         path: 'profile',

@@ -22,6 +22,7 @@ import {
 } from "@ant-design/icons";
 import "./header.css"
 import { getMessages, markMessageAsRead } from '../../api/message';
+import { getSearchHistory, searchBlogs, SearchHistory, SearchResult } from '../../api/search';
 
 const { Search } = Input;
 
@@ -70,6 +71,10 @@ const Header = () => {
     const [isLoading, setIsLoading] = useState(true);
     const [localMessages, setLocalMessages] = useState<Message[]>([]);
     const [localUnreadCount, setLocalUnreadCount] = useState(0);
+    const [searchHistory, setSearchHistory] = useState<SearchHistory[]>([]);
+    const [searchResults, setSearchResults] = useState<SearchResult[]>([]);
+    const [isSearchFocused, setIsSearchFocused] = useState(false);
+    const searchTimeoutRef = useRef<NodeJS.Timeout>();
 
     // 获取用户真实数据
     useEffect(() => {
@@ -314,12 +319,79 @@ const Header = () => {
         },
     ];
 
-    const onSearch = (value: string) => {
-        console.log('搜索:', value);
+    // 加载搜索历史
+    const loadSearchHistory = async () => {
+        if (!isLoggedIn) return;
+
+        try {
+            console.log('开始加载搜索历史...');
+            const history = await getSearchHistory();
+            console.log('搜索历史加载成功:', history);
+            setSearchHistory(history);
+        } catch (error) {
+            console.error('加载搜索历史失败:', error);
+            antMessage.error('加载搜索历史失败');
+        }
     };
 
+    // 处理搜索框获得焦点
+    const handleSearchFocus = () => {
+        console.log('搜索框获得焦点');
+        setIsSearchFocused(true);
+        if (isLoggedIn) {
+            console.log('用户已登录，加载搜索历史');
+            loadSearchHistory();
+        } else {
+            console.log('用户未登录，不加载搜索历史');
+        }
+    };
+
+    // 处理搜索框失去焦点
+    const handleSearchBlur = () => {
+        console.log('搜索框失去焦点');
+        setTimeout(() => {
+            setIsSearchFocused(false);
+        }, 200);
+    };
+
+    // 处理搜索
+    const onSearch = async (value: string) => {
+        if (!value.trim()) return;
+
+        try {
+            const results = await searchBlogs(value);
+            setSearchResults(results);
+            navigate('/search', { state: { results, keyword: value } });
+        } catch (error) {
+            console.error('搜索失败:', error);
+            antMessage.error('搜索失败，请稍后重试');
+        }
+    };
+
+    // 处理搜索输入变化
     const handleSearchChange = (e: React.ChangeEvent<HTMLInputElement>) => {
-        setSearchValue(e.target.value);
+        const value = e.target.value;
+        setSearchValue(value);
+
+        // 清除之前的定时器
+        if (searchTimeoutRef.current) {
+            clearTimeout(searchTimeoutRef.current);
+        }
+
+        // 设置新的定时器，延迟300ms执行搜索
+        if (value.trim()) {
+            searchTimeoutRef.current = setTimeout(() => {
+                onSearch(value);
+            }, 300);
+        } else {
+            setSearchResults([]);
+        }
+    };
+
+    // 处理搜索历史点击
+    const handleHistoryClick = (keyword: string) => {
+        setSearchValue(keyword);
+        onSearch(keyword);
     };
 
     const updateIndicator = (key: string) => {
@@ -429,15 +501,41 @@ const Header = () => {
 
                     <Col xs={20} sm={20} md={11} lg={10} xl={10}>
                         <div className="header-actions">
-                            <Search
-                                placeholder="搜索文章..."
-                                onSearch={onSearch}
-                                onChange={handleSearchChange}
-                                value={searchValue}
-                                className="header-search"
-                                prefix={<SearchOutlined />}
-                                allowClear
-                            />
+                            <div className="search-container">
+                                <Search
+                                    placeholder="搜索文章..."
+                                    onSearch={onSearch}
+                                    onChange={handleSearchChange}
+                                    value={searchValue}
+                                    className="header-search"
+                                    prefix={<SearchOutlined />}
+                                    allowClear
+                                    onFocus={handleSearchFocus}
+                                    onBlur={handleSearchBlur}
+                                />
+                                {isSearchFocused && isLoggedIn && searchHistory.length > 0 && (
+                                    <div className="search-history-dropdown">
+                                        <div className="search-history-header">
+                                            <span>搜索历史</span>
+                                            <Button type="link" size="small" onClick={() => setSearchHistory([])}>
+                                                清空历史
+                                            </Button>
+                                        </div>
+                                        <div className="search-history-list">
+                                            {searchHistory.map((item) => (
+                                                <div
+                                                    key={item.id}
+                                                    className="search-history-item"
+                                                    onClick={() => handleHistoryClick(item.keyword)}
+                                                >
+                                                    <SearchOutlined />
+                                                    <span>{item.keyword}</span>
+                                                </div>
+                                            ))}
+                                        </div>
+                                    </div>
+                                )}
+                            </div>
                             {isLoggedIn ? (
                                 <>
                                     <Space size="large">

@@ -36,6 +36,7 @@ class User(Base):
         backref="followers"
     )
     histories = relationship("History", back_populates="user")
+    search_histories = relationship("SearchHistory", back_populates="user", lazy="dynamic")
     
     # 消息关系
     sent_messages = relationship("Message", foreign_keys="Message.sender_id", back_populates="sender")
