@@ -16,7 +16,9 @@ import {
   UploadOutlined,
   CalendarOutlined,
   BarsOutlined,
-  FireOutlined
+  FireOutlined,
+  SendOutlined,
+  ArrowLeftOutlined
 } from '@ant-design/icons';
 import { RootState } from '../../store';
 import {
@@ -30,9 +32,13 @@ import { setMessages, markAsRead } from '../../store/messageSlice';
 import { ProfileState } from '../../store/profile/types';
 import './index.css';
 import { useNavigate, Link, useLocation } from 'react-router-dom';
-import { getUserInfo, getUserFollowing, getUserFollowers, followUser, unfollowUser } from '../../api/user';
+import { getUserInfo, getUserFollowing, getUserFollowers, followUser, unfollowUser, checkFollowingStatus } from '../../api/user';
 import { getUserBlogs, getUserLikedBlogs, getUserFavoriteBlogs, likeBlog, unlikeBlog, favoriteBlog, unfavoriteBlog } from '../../api/blog';
 import { formatDate } from '../../utils/date';
+import { getMessages, getConversation, sendMessage, markMessageAsRead } from '../../api/message';
+import axios from 'axios';
+
+const API_URL = "http://localhost:8000/api/v1";
 const { TabPane } = Tabs;
 
 interface UserInfo {
@@ -72,11 +78,17 @@ interface User {
 }
 
 interface Message {
-  id: string;
-  sender: User;
+  id: number;
+  sender_id: number;
+  receiver_id: number;
   content: string;
-  isRead: boolean;
-  createdAt: string;
+  is_read: boolean;
+  created_at: string;
+  sender: {
+    id: number;
+    username: string;
+    avatar: string | null;
+  };
 }
 
 const Profile: React.FC = () => {
@@ -96,6 +108,12 @@ const Profile: React.FC = () => {
   const [blogs, setBlogs] = useState<Blog[]>([]);
   const [following, setFollowing] = useState<User[]>([]);
   const [followers, setFollowers] = useState<User[]>([]);
+  const [messages, setMessages] = useState<Message[]>([]);
+  const [unreadCount, setUnreadCount] = useState(0);
+  const [selectedUser, setSelectedUser] = useState<number | null>(null);
+  const [conversation, setConversation] = useState<Message[]>([]);
+  const [newMessage, setNewMessage] = useState('');
+  const [isFollowing, setIsFollowing] = useState(false);
 
   const {
     articles,
@@ -103,7 +121,7 @@ const Profile: React.FC = () => {
     followers: reduxFollowers,
     activeTab: reduxActiveTab
   } = useSelector((state: RootState) => state.profile);
-  const { messages, unreadCount } = useSelector((state: RootState) => state.message);
+  const { messages: reduxMessages, unreadCount: reduxUnreadCount } = useSelector((state: RootState) => state.message);
 
   // 获取用户信息
   useEffect(() => {
@@ -117,6 +135,13 @@ const Profile: React.FC = () => {
 
         const data = await getUserInfo(isOtherUser ? Number(otherUserId) : undefined);
         setUserInfo(data);
+
+        // 如果是其他用户的profile，检查关注状态
+        if (isOtherUser && otherUserId) {
+          const followingStatus = await checkFollowingStatus(Number(otherUserId));
+          setIsFollowing(followingStatus.is_following);
+        }
+
         setIsLoading(false);
       } catch (error: any) {
         console.error('获取用户信息出错:', error);
@@ -133,18 +158,29 @@ const Profile: React.FC = () => {
     const fetchBlogs = async () => {
       try {
         let data;
-        switch (activeTab) {
-          case 'articles':
-            data = await getUserBlogs();
-            break;
-          case 'likes':
-            data = await getUserLikedBlogs();
-            break;
-          case 'favorites':
-            data = await getUserFavoriteBlogs();
-            break;
-          default:
-            data = [];
+        if (isOtherUser && otherUserId) {
+          // 获取其他用户的文章
+          const response = await axios.get(`${API_URL}/blogs/user/${otherUserId}`, {
+            headers: {
+              Authorization: `Bearer ${localStorage.getItem('token')}`,
+            },
+          });
+          data = response.data;
+        } else {
+          // 获取当前用户的文章
+          switch (activeTab) {
+            case 'articles':
+              data = await getUserBlogs();
+              break;
+            case 'likes':
+              data = await getUserLikedBlogs();
+              break;
+            case 'favorites':
+              data = await getUserFavoriteBlogs();
+              break;
+            default:
+              data = [];
+          }
         }
         setBlogs(data);
       } catch (error: any) {
@@ -156,7 +192,7 @@ const Profile: React.FC = () => {
     if (userInfo) {
       fetchBlogs();
     }
-  }, [activeTab, userInfo]);
+  }, [activeTab, userInfo, isOtherUser, otherUserId]);
 
   // 获取关注和粉丝列表
   useEffect(() => {
@@ -197,53 +233,65 @@ const Profile: React.FC = () => {
     }
   }, [userInfo]);
 
-  // 处理私信
-  const handleMessage = (userId: string) => {
-    navigate(`/chat/${userId}`);
-  };
-
-  // 标记消息为已读
-  const handleMarkAsRead = (messageId: string) => {
-    dispatch(markAsRead(messageId));
-  };
-
-  // 加载私信列表
+  // 加载消息列表
   const loadMessages = async () => {
     try {
-      const response = await fetch('/api/messages', {
-        headers: {
-          'Authorization': `Bearer ${localStorage.getItem('token')}`
-        }
-      });
-      const data = await response.json();
-      dispatch(setMessages(data));
+      const response = await getMessages();
+      setMessages(response.data);
+      // 计算未读消息数量
+      const unread = response.data.filter((msg: Message) => !msg.is_read && msg.receiver_id === Number(userInfo?.id)).length;
+      setUnreadCount(unread);
     } catch (error) {
       message.error('加载私信失败');
     }
   };
 
-  // 加载历史记录
-  const loadHistory = async () => {
+  // 加载与特定用户的对话
+  const loadConversation = async (userId: number) => {
     try {
-      const response = await fetch('/api/history', {
-        headers: {
-          'Authorization': `Bearer ${localStorage.getItem('token')}`
+      const response = await getConversation(userId);
+      setConversation(response.data);
+      // 标记未读消息为已读
+      response.data.forEach((msg: Message) => {
+        if (!msg.is_read && msg.receiver_id === Number(userInfo?.id)) {
+          markMessageAsRead(msg.id);
         }
       });
-      const data = await response.json();
-      dispatch(setArticles(data));
     } catch (error) {
-      message.error('加载历史记录失败');
+      message.error('加载对话失败');
+    }
+  };
+
+  // 发送消息
+  const handleSendMessage = async () => {
+    if (!newMessage.trim() || !selectedUser) return;
+
+    try {
+      await sendMessage({
+        content: newMessage,
+        receiver_id: selectedUser
+      });
+      setNewMessage('');
+      // 重新加载对话
+      loadConversation(selectedUser);
+      // 重新加载消息列表
+      loadMessages();
+    } catch (error) {
+      message.error('发送消息失败');
     }
   };
 
   useEffect(() => {
     if (activeTab === 'messages') {
       loadMessages();
-    } else if (activeTab === 'history') {
-      loadHistory();
     }
   }, [activeTab]);
+
+  useEffect(() => {
+    if (selectedUser) {
+      loadConversation(selectedUser);
+    }
+  }, [selectedUser]);
 
   const handleFollow = (userId: string) => async (e: React.MouseEvent) => {
     e.preventDefault();
@@ -253,18 +301,23 @@ const Profile: React.FC = () => {
         return;
       }
 
-      if (followingMap[userId]) {
+      if (isFollowing) {
         await unfollowUser(Number(userId));
         message.success('已取消关注');
+        setIsFollowing(false);
       } else {
         await followUser(Number(userId));
         message.success('关注成功');
+        setIsFollowing(true);
       }
 
-      setFollowingMap(prev => ({
-        ...prev,
-        [userId]: !prev[userId]
-      }));
+      // 更新关注者数量
+      if (userInfo) {
+        setUserInfo({
+          ...userInfo,
+          followers_count: isFollowing ? userInfo.followers_count - 1 : userInfo.followers_count + 1
+        });
+      }
     } catch (error: any) {
       message.error(error.response?.data?.detail || '操作失败');
     }
@@ -479,10 +532,14 @@ const Profile: React.FC = () => {
           <div className="profile-actions">
             {isOtherUser && (
               <>
-                <Button type="primary" onClick={handleFollow(userInfo.id)}>
-                  <UserAddOutlined /> 关注
+                <Button
+                  type={isFollowing ? "default" : "primary"}
+                  onClick={handleFollow(userInfo.id)}
+                  icon={isFollowing ? <CheckOutlined /> : <UserAddOutlined />}
+                >
+                  {isFollowing ? '已关注' : '关注'}
                 </Button>
-                <Button onClick={() => handleMessage(userInfo.id)}>私信</Button>
+                <Button onClick={() => setSelectedUser(Number(userInfo.id))}>私信</Button>
               </>
             )}
           </div>
@@ -505,6 +562,30 @@ const Profile: React.FC = () => {
     );
   };
 
+  // 处理私信按钮点击
+  const handleMessageClick = (userId: number) => {
+    if (!isOtherUser) {
+      setSelectedUser(userId);
+      setActiveTab('messages');
+    } else {
+      // 如果是其他用户的profile，跳转到消息页面并打开对话
+      navigate('/profile', {
+        state: {
+          selectedUser: userId,
+          activeTab: 'messages'
+        }
+      });
+    }
+  };
+
+  // 在组件加载时检查是否有需要打开的消息对话
+  useEffect(() => {
+    if (location.state?.selectedUser && location.state?.activeTab === 'messages') {
+      setSelectedUser(location.state.selectedUser);
+      setActiveTab('messages');
+    }
+  }, [location.state]);
+
   return (
     <div className="profile-container">
       <Card className="profile-card">
@@ -523,25 +604,70 @@ const Profile: React.FC = () => {
                 key="messages"
               >
                 {messages.length > 0 ? (
-                  <List
-                    itemLayout="horizontal"
-                    dataSource={messages}
-                    renderItem={item => (
-                      <List.Item
-                        actions={[
-                          <Button type="link" onClick={() => handleMessage(item.sender.id)}>
-                            回复
+                  <div className="message-container">
+                    <div className="message-list">
+                      <List
+                        itemLayout="horizontal"
+                        dataSource={messages}
+                        renderItem={item => (
+                          <List.Item
+                            className={`message-item ${!item.is_read && item.receiver_id === Number(userInfo?.id) ? 'unread' : ''}`}
+                            onClick={() => handleMessageClick(item.sender_id === Number(userInfo?.id) ? item.receiver_id : item.sender_id)}
+                          >
+                            <List.Item.Meta
+                              avatar={<Avatar src={item.sender.avatar} icon={<UserOutlined />} />}
+                              title={item.sender.username}
+                              description={item.content}
+                            />
+                            <div className="message-time">{formatDate(item.created_at)}</div>
+                          </List.Item>
+                        )}
+                      />
+                    </div>
+                    {selectedUser && (
+                      <div className="conversation-container">
+                        <div className="conversation-header">
+                          <Button icon={<ArrowLeftOutlined />} onClick={() => setSelectedUser(null)}>
+                            返回
                           </Button>
-                        ]}
-                      >
-                        <List.Item.Meta
-                          avatar={<Avatar src={item.sender.avatar} />}
-                          title={item.sender.name}
-                          description={item.content}
-                        />
-                      </List.Item>
+                          <span>与 {conversation[0]?.sender.username} 的对话</span>
+                        </div>
+                        <div className="conversation-messages">
+                          {conversation.map(msg => (
+                            <div
+                              key={msg.id}
+                              className={`message-bubble ${msg.sender_id === Number(userInfo?.id) ? 'sent' : 'received'}`}
+                            >
+                              <div className="message-content">{msg.content}</div>
+                              <div className="message-time">{formatDate(msg.created_at)}</div>
+                            </div>
+                          ))}
+                        </div>
+                        <div className="message-input">
+                          <Input.TextArea
+                            value={newMessage}
+                            onChange={e => setNewMessage(e.target.value)}
+                            placeholder="输入消息..."
+                            autoSize={{ minRows: 2, maxRows: 6 }}
+                            onPressEnter={e => {
+                              if (!e.shiftKey) {
+                                e.preventDefault();
+                                handleSendMessage();
+                              }
+                            }}
+                          />
+                          <Button
+                            type="primary"
+                            icon={<SendOutlined />}
+                            onClick={handleSendMessage}
+                            disabled={!newMessage.trim()}
+                          >
+                            发送
+                          </Button>
+                        </div>
+                      </div>
                     )}
-                  />
+                  </div>
                 ) : (
                   <div className="empty-state">
                     <MailOutlined />
@@ -794,7 +920,7 @@ const Profile: React.FC = () => {
                               >
                                 {followingMap[user.id] ? '已关注' : '关注'}
                               </Button>
-                              <Button block onClick={() => handleMessage(user.id)}>私信</Button>
+                              <Button block onClick={() => setSelectedUser(Number(user.id))}>私信</Button>
                             </Space>
                           </div>
                         </Card>
@@ -841,7 +967,7 @@ const Profile: React.FC = () => {
                               >
                                 {followerFollowingMap[user.id] ? '已关注' : '关注'}
                               </Button>
-                              <Button block onClick={() => handleMessage(user.id)}>私信</Button>
+                              <Button block onClick={() => setSelectedUser(Number(user.id))}>私信</Button>
                             </Space>
                           </div>
                         </Card>

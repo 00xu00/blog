@@ -20,7 +20,7 @@ class Blog(Base):
     views_count = Column(Integer, default=0)  # 浏览量
     
     # 关系
-    author = relationship("User", back_populates="blogs")
+    author = relationship("User", back_populates="articles")
     comments = relationship("Comment", back_populates="blog", cascade="all, delete-orphan")
     likes = relationship("BlogLike", back_populates="blog", cascade="all, delete-orphan")
     favorites = relationship("BlogFavorite", back_populates="blog", cascade="all, delete-orphan")

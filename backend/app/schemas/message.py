@@ -1,6 +1,7 @@
 from pydantic import BaseModel
 from datetime import datetime
 from typing import Optional
+from app.schemas.user import UserInDB
 
 class MessageBase(BaseModel):
     content: str
@@ -14,6 +15,7 @@ class MessageResponse(MessageBase):
     sender_id: int
     is_read: bool
     created_at: datetime
+    sender: UserInDB
 
     class Config:
         from_attributes = True 

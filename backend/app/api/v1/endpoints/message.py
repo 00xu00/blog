@@ -1,5 +1,5 @@
 from fastapi import APIRouter, Depends, HTTPException, status
-from sqlalchemy.orm import Session
+from sqlalchemy.orm import Session, joinedload
 from typing import List
 from app.core.auth import get_current_user
 from app.db.session import get_db
@@ -10,7 +10,7 @@ from datetime import datetime
 
 router = APIRouter()
 
-@router.post("/messages", response_model=MessageResponse)
+@router.post("", response_model=MessageResponse)
 async def create_message(
     message: MessageCreate,
     current_user: User = Depends(get_current_user),
@@ -25,34 +25,40 @@ async def create_message(
     db.add(db_message)
     db.commit()
     db.refresh(db_message)
+    # 加载发送者信息
+    db_message.sender = current_user
     return db_message
 
-@router.get("/messages", response_model=List[MessageResponse])
+@router.get("", response_model=List[MessageResponse])
 async def get_messages(
     current_user: User = Depends(get_current_user),
     db: Session = Depends(get_db)
 ):
     """获取当前用户的所有消息"""
-    messages = db.query(Message).filter(
+    messages = db.query(Message).options(
+        joinedload(Message.sender)
+    ).filter(
         (Message.sender_id == current_user.id) | 
         (Message.receiver_id == current_user.id)
     ).order_by(Message.created_at.desc()).all()
     return messages
 
-@router.get("/messages/{user_id}", response_model=List[MessageResponse])
+@router.get("/{user_id}", response_model=List[MessageResponse])
 async def get_conversation(
     user_id: int,
     current_user: User = Depends(get_current_user),
     db: Session = Depends(get_db)
 ):
     """获取与特定用户的对话"""
-    messages = db.query(Message).filter(
+    messages = db.query(Message).options(
+        joinedload(Message.sender)
+    ).filter(
         ((Message.sender_id == current_user.id) & (Message.receiver_id == user_id)) |
         ((Message.sender_id == user_id) & (Message.receiver_id == current_user.id))
     ).order_by(Message.created_at.asc()).all()
     return messages
 
-@router.put("/messages/{message_id}/read")
+@router.put("/{message_id}/read")
 async def mark_message_as_read(
     message_id: int,
     current_user: User = Depends(get_current_user),
@@ -74,7 +80,7 @@ async def mark_message_as_read(
     db.commit()
     return {"status": "success"}
 
-@router.get("/messages/unread/count")
+@router.get("/unread/count")
 async def get_unread_count(
     current_user: User = Depends(get_current_user),
     db: Session = Depends(get_db)

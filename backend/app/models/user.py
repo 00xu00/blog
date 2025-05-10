@@ -15,17 +15,19 @@ class User(Base):
     __tablename__ = "users"
 
     id = Column(Integer, primary_key=True, index=True)
-    username = Column(String(50), unique=True, index=True)
-    email = Column(String(100), unique=True, index=True)
-    hashed_password = Column(String(100))
-    avatar = Column(Text, nullable=True)
-    bio = Column(String(500), nullable=True)
+    username = Column(String, unique=True, index=True, nullable=False)
+    email = Column(String, unique=True, index=True, nullable=False)
+    hashed_password = Column(String, nullable=False)
+    avatar = Column(String, nullable=True)
+    bio = Column(Text, nullable=True)
     following_count = Column(Integer, default=0)
     followers_count = Column(Integer, default=0)
     articles_count = Column(Integer, default=0)
     created_at = Column(DateTime, default=datetime.utcnow)
     
     # 关系
+    articles = relationship("Blog", back_populates="author")
+    comments = relationship("Comment", back_populates="author")
     following = relationship(
         "User",
         secondary=user_following,

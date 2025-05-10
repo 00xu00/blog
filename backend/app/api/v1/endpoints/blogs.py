@@ -151,6 +151,40 @@ async def get_user_blogs(
     logger.info(f"成功获取用户博客列表: count={len(blogs)}")
     return blogs
 
+@router.get("/user/{user_id}", response_model=List[BlogInDB])
+async def get_other_user_blogs(
+    request: Request,
+    user_id: int,
+    skip: int = 0,
+    limit: int = 100,
+    db: Session = Depends(get_db),
+    current_user: User = Depends(get_current_user)
+):
+    """获取指定用户的博客列表"""
+    logger.info(f"收到获取其他用户博客列表请求: user_id={user_id}, current_user_id={current_user.id}")
+    
+    # 获取指定用户的博客
+    blogs = blog_service.get_user_blogs(db, user_id, skip, limit)
+    
+    # 设置当前用户的点赞和收藏状态
+    for blog in blogs:
+        # 检查是否点赞
+        like = db.query(BlogLike).filter(
+            BlogLike.blog_id == blog.id,
+            BlogLike.user_id == current_user.id
+        ).first()
+        blog.is_liked = like is not None
+        
+        # 检查是否收藏
+        favorite = db.query(BlogFavorite).filter(
+            BlogFavorite.blog_id == blog.id,
+            BlogFavorite.user_id == current_user.id
+        ).first()
+        blog.is_favorited = favorite is not None
+    
+    logger.info(f"成功获取其他用户博客列表: count={len(blogs)}")
+    return blogs
+
 @router.delete("/{blog_id}")
 async def delete_blog(
     request: Request,
