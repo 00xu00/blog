@@ -522,4 +522,38 @@ async def get_user_favorite_blogs(
         blog.is_favorited = True
     
     logger.info(f"成功获取用户收藏博客列表: count={len(blogs)}")
-    return blogs 
+    return blogs
+
+@router.get("/user/me/draft", response_model=BlogInDB)
+async def get_user_draft_blog(
+    request: Request,
+    db: Session = Depends(get_db),
+    current_user: User = Depends(get_current_user)
+):
+    """获取当前用户最新的草稿博客"""
+    logger.info(f"收到获取用户草稿博客请求: user_id={current_user.id}")
+    
+    draft_blog = blog_service.get_user_draft_blog(db, current_user.id)
+    if not draft_blog:
+        # 返回一个有效的空博客对象
+        return BlogInDB(
+            id=0,
+            title="新博客",  # 设置一个默认标题
+            subtitle="",
+            content="",
+            tags=[],
+            author_id=current_user.id,
+            created_at=datetime.utcnow(),
+            updated_at=datetime.utcnow(),
+            is_published=0,
+            likes_count=0,
+            favorites_count=0,
+            views_count=0,
+            is_liked=False,
+            is_favorited=False,
+            comments_count=0,
+            author=current_user
+        )
+    
+    logger.info(f"成功获取用户草稿博客: id={draft_blog.id}")
+    return draft_blog 

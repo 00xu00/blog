@@ -46,6 +46,32 @@ const Editor: React.FC = () => {
     setBlogId(null);
   };
 
+  // 获取草稿博客
+  const fetchDraftBlog = async () => {
+    try {
+      const response = await axios.get('/api/v1/blogs/user/me/draft');
+      const draftBlog = response.data;
+
+      // 回填数据
+      setTitle(draftBlog.title);
+      setSubtitle(draftBlog.subtitle || '');
+      setTags(draftBlog.tags || []);
+      setMarkdown(draftBlog.content);
+      setBlogId(draftBlog.id);
+
+      message.info('已加载草稿博客');
+    } catch (error: any) {
+      // 如果是404错误（没有找到草稿），不显示错误提示
+      if (error.response?.status === 404) {
+        console.log('没有找到草稿博客');
+        return;
+      }
+      // 其他错误才显示错误提示
+      console.error('获取草稿博客失败:', error);
+      message.error('获取草稿博客失败');
+    }
+  };
+
   useEffect(() => {
     // 检查是否已登录
     const token = localStorage.getItem('token');
@@ -54,6 +80,9 @@ const Editor: React.FC = () => {
       navigate('/auth');
       return;
     }
+
+    // 获取草稿博客
+    fetchDraftBlog();
   }, [navigate]);
 
   const handleTagClose = (removedTag: string) => {

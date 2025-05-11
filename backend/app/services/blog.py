@@ -163,4 +163,19 @@ def get_latest_blogs(db: Session, limit: int = 3) -> List[Blog]:
     for blog in latest_blogs:
         logger.info(f"博客ID: {blog.id}, 标题: {blog.title}, 创建时间: {blog.created_at}, 发布状态: {blog.is_published}")
     
-    return latest_blogs 
+    return latest_blogs
+
+def get_user_draft_blog(db: Session, author_id: int) -> Optional[Blog]:
+    """获取用户最新的草稿博客"""
+    logger.info(f"获取用户草稿博客: author_id={author_id}")
+    
+    # 获取用户最新的草稿博客，并加载作者信息
+    draft_blog = db.query(Blog).options(joinedload(Blog.author)).filter(
+        Blog.author_id == author_id,
+        Blog.is_published == 0
+    ).order_by(
+        Blog.updated_at.desc()
+    ).first()
+    
+    logger.info(f"获取草稿博客结果: {'找到' if draft_blog else '未找到'}")
+    return draft_blog 
