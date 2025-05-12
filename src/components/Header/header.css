@@ -163,10 +163,32 @@
 
 .header-nav {
     display: flex;
+    align-items: center;
     justify-content: center;
-    height: 100%;
     width: 100%;
-    position: relative;
+}
+
+.header-nav .ant-menu {
+    display: flex;
+    justify-content: center;
+    width: 100%;
+    background: transparent;
+    border-bottom: none;
+}
+
+.header-nav .ant-menu-item {
+    flex: 0 0 auto;
+    margin: 0 8px !important;
+    padding: 0 16px !important;
+}
+
+.header-nav .ant-menu-overflow {
+    display: flex;
+    justify-content: center;
+}
+
+.header-nav .ant-menu-overflow-item {
+    flex: 0 0 auto;
 }
 
 .header-actions {
@@ -290,11 +312,8 @@
     position: absolute;
     bottom: 0;
     height: 2px;
-    background-color: var(--primary-color);
-    transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
-    z-index: 0;
-    pointer-events: none;
-    transform-origin: left;
+    background-color: #1890ff;
+    transition: all 0.3s ease;
 }
 
 .theme-switch {
@@ -483,6 +502,7 @@
 }
 
 .search-container {
+    padding-left: 15px;
     position: relative;
     width: 100%;
     max-width: 300px;
@@ -547,4 +567,41 @@
 
 .dark .search-history-item .anticon {
     color: var(--dark-text-secondary);
+}
+
+/* 移动端适配 */
+@media screen and (max-width: 768px) {
+    .header-nav {
+        display: none;
+    }
+
+    .mobile-menu-button {
+        display: block !important;
+    }
+}
+
+/* 暗色模式适配 */
+.dark .header-nav .ant-menu {
+    background: transparent;
+}
+
+.dark .header-nav .ant-menu-item {
+    color: rgba(255, 255, 255, 0.85);
+}
+
+.dark .header-nav .ant-menu-item-selected {
+    color: #1890ff;
+}
+
+/* 菜单指示器样式 */
+.menu-indicator {
+    position: absolute;
+    bottom: 0;
+    height: 2px;
+    background-color: #1890ff;
+    transition: all 0.3s ease;
+}
+
+.dark .menu-indicator {
+    background-color: #1890ff;
 }

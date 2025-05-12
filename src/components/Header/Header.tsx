@@ -19,6 +19,7 @@ import {
     AppstoreOutlined,
     LogoutOutlined,
     LoginOutlined,
+    ExperimentOutlined,
 } from "@ant-design/icons";
 import "./header.css"
 import { getMessages, markMessageAsRead } from '../../api/message';
@@ -275,6 +276,11 @@ const Header = () => {
             label: <Link to="/ai-helper">AI助手</Link>,
             key: "ai-helper",
             icon: <RobotOutlined />
+        },
+        {
+            label: <Link to="/flexbox-froggy">Flexbox游戏</Link>,
+            key: "flexbox-froggy",
+            icon: <ExperimentOutlined />
         }
     ];
 
