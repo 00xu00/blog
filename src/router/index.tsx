@@ -11,7 +11,7 @@ import Chat from '../pages/Chat';
 import Editor from '../pages/Editor';
 import AIHelper from '../pages/AIHelper';
 import Search from '../pages/Search/Search';
-import FlexboxFroggy from '../components/FlexboxFroggy/FlexboxFroggy';
+import FlexboxFroggy from '../pages/FlexboxFroggy/FlexboxFroggy';
 import PrivateRoute from '../components/PrivateRoute';
 
 const router = createBrowserRouter([
