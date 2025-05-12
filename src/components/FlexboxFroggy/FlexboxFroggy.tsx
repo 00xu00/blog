@@ -29,8 +29,8 @@ const FlexboxFroggy: React.FC = () => {
       html: `<div id="pond">
     <div class="frog"></div>
 </div>`,
-      solution: "justify-content: flex-end;",
-      hint: "justify-content 属性用于在主轴（水平方向）上对齐元素"
+      solution: "justify-content: flex-end",
+      hint: "justify-content 属性用于在主轴（水平方向）上对齐元素。可以使用 flex-end、right 或 end 值将元素对齐到右侧。"
     },
     {
       id: 2,
@@ -39,8 +39,8 @@ const FlexboxFroggy: React.FC = () => {
       html: `<div id="pond">
     <div class="frog"></div>
 </div>`,
-      solution: "justify-content: center;",
-      hint: "center 值会将元素居中显示"
+      solution: "justify-content: center",
+      hint: "justify-content: center 或 middle 可以将元素在水平方向上居中对齐。"
     },
     {
       id: 3,
@@ -51,8 +51,8 @@ const FlexboxFroggy: React.FC = () => {
     <div class="frog"></div>
     <div class="frog"></div>
 </div>`,
-      solution: "justify-content: space-between;",
-      hint: "space-between 会在元素之间创建相等的间距"
+      solution: "justify-content: space-between",
+      hint: "justify-content: space-between 或 space 或 between 会在元素之间创建相等的间距，第一个元素靠左，最后一个元素靠右。"
     },
     {
       id: 4,
@@ -61,8 +61,8 @@ const FlexboxFroggy: React.FC = () => {
       html: `<div id="pond">
     <div class="frog"></div>
 </div>`,
-      solution: "align-items: flex-start;",
-      hint: "align-items 属性用于在交叉轴（垂直方向）上对齐元素"
+      solution: "align-items: flex-start",
+      hint: "align-items 属性用于在交叉轴（垂直方向）上对齐元素。可以使用 flex-start、top 或 start 值将元素对齐到顶部。"
     },
     {
       id: 5,
@@ -72,8 +72,8 @@ const FlexboxFroggy: React.FC = () => {
     <div class="frog"></div>
     <div class="frog"></div>
 </div>`,
-      solution: "flex-direction: column;",
-      hint: "flex-direction 属性可以改变主轴的方向"
+      solution: "flex-direction: column",
+      hint: "flex-direction 属性可以改变主轴的方向。使用 column、vertical 或 top-to-bottom 可以让元素垂直排列。"
     },
     {
       id: 6,
@@ -86,8 +86,8 @@ const FlexboxFroggy: React.FC = () => {
     <div class="frog"></div>
     <div class="frog"></div>
 </div>`,
-      solution: "flex-wrap: wrap;",
-      hint: "flex-wrap 属性允许元素在需要时换行"
+      solution: "flex-wrap: wrap",
+      hint: "flex-wrap: wrap 允许元素在需要时换行显示，防止元素溢出容器。"
     },
     {
       id: 7,
@@ -98,8 +98,8 @@ const FlexboxFroggy: React.FC = () => {
     <div class="frog"></div>
     <div class="frog"></div>
 </div>`,
-      solution: "#pond .frog:nth-child(2) { flex: 2; }",
-      hint: "flex 属性是 flex-grow、flex-shrink 和 flex-basis 的简写"
+      solution: "#pond .frog:nth-child(2) { flex: 2 }",
+      hint: "flex 属性是 flex-grow、flex-shrink 和 flex-basis 的简写。使用 flex: 2 可以让元素占据其他元素两倍的空间。"
     },
     {
       id: 8,
@@ -110,8 +110,29 @@ const FlexboxFroggy: React.FC = () => {
     <div class="frog"></div>
     <div class="frog"></div>
 </div>`,
-      solution: "#pond .frog:nth-child(3) { order: -1; }",
-      hint: "order 属性可以改变元素的显示顺序"
+      solution: "#pond .frog:nth-child(3) { order: -1 }",
+      hint: "order 属性可以改变元素的显示顺序。使用负值可以让元素显示在其他元素之前。"
+    },
+    {
+      id: 9,
+      description: "使用 justify-content 和 align-items 属性让青蛙居中显示",
+      css: "#pond { display: flex; }",
+      html: `<div id="pond">
+    <div class="frog"></div>
+</div>`,
+      solution: "justify-content: center; align-items: center",
+      hint: "同时使用 justify-content: center 和 align-items: center 可以让元素在容器中完全居中显示。"
+    },
+    {
+      id: 10,
+      description: "使用 flex-direction 和 justify-content 属性让青蛙垂直居中",
+      css: "#pond { display: flex; }",
+      html: `<div id="pond">
+    <div class="frog"></div>
+    <div class="frog"></div>
+</div>`,
+      solution: "flex-direction: column; justify-content: center",
+      hint: "当使用 flex-direction: column 时，justify-content 会在垂直方向上对齐元素。"
     }
   ];
 
@@ -125,10 +146,14 @@ const FlexboxFroggy: React.FC = () => {
     // 尝试解析 CSS
     try {
       if (inputValue.trim()) {
-        const [property, cssValue] = inputValue.split(':').map((s: string) => s.trim());
+        // 移除末尾的分号（如果有）
+        const cleanValue = inputValue.replace(/;$/, '').trim();
+        const [property, cssValue] = cleanValue.split(':').map((s: string) => s.trim());
+
         if (!property || !cssValue) {
           throw new Error('CSS 格式不正确，请使用 "属性: 值" 的格式');
         }
+
         // 检查是否是有效的 CSS 属性
         const validProperties = [
           'justify-content',
@@ -151,7 +176,9 @@ const FlexboxFroggy: React.FC = () => {
     try {
       if (!css.trim()) return { display: 'flex' };
 
-      const [property, cssValue] = css.split(':').map((s: string) => s.trim());
+      // 移除末尾的分号（如果有）
+      const cleanValue = css.replace(/;$/, '').trim();
+      const [property, cssValue] = cleanValue.split(':').map((s: string) => s.trim());
       if (!property || !cssValue) return { display: 'flex' };
 
       return {
@@ -169,7 +196,79 @@ const FlexboxFroggy: React.FC = () => {
       return;
     }
 
-    if (currentLevelData && css.trim() === currentLevelData.solution) {
+    if (!currentLevelData) return;
+
+    // 移除末尾的分号（如果有）
+    const cleanInput = css.replace(/;$/, '').trim();
+    const cleanSolution = currentLevelData.solution.replace(/;$/, '').trim();
+
+    // 检查等效写法
+    const isEquivalent = (input: string, solution: string) => {
+      // 处理 justify-content 的等效值
+      if (solution.includes('justify-content')) {
+        const equivalentValues = {
+          'flex-end': ['right', 'end'],
+          'flex-start': ['left', 'start'],
+          'center': ['middle'],
+          'space-between': ['space', 'between'],
+          'space-around': ['around'],
+          'space-evenly': ['evenly']
+        };
+
+        const [inputProp, inputValue] = input.split(':').map(s => s.trim());
+        const [solutionProp, solutionValue] = solution.split(':').map(s => s.trim());
+
+        if (inputProp === solutionProp) {
+          if (inputValue === solutionValue) return true;
+          const equivalents = equivalentValues[solutionValue as keyof typeof equivalentValues] || [];
+          return equivalents.includes(inputValue);
+        }
+      }
+
+      // 处理 align-items 的等效值
+      if (solution.includes('align-items')) {
+        const equivalentValues = {
+          'flex-start': ['top', 'start'],
+          'flex-end': ['bottom', 'end'],
+          'center': ['middle'],
+          'stretch': ['fill'],
+          'baseline': ['base']
+        };
+
+        const [inputProp, inputValue] = input.split(':').map(s => s.trim());
+        const [solutionProp, solutionValue] = solution.split(':').map(s => s.trim());
+
+        if (inputProp === solutionProp) {
+          if (inputValue === solutionValue) return true;
+          const equivalents = equivalentValues[solutionValue as keyof typeof equivalentValues] || [];
+          return equivalents.includes(inputValue);
+        }
+      }
+
+      // 处理 flex-direction 的等效值
+      if (solution.includes('flex-direction')) {
+        const equivalentValues = {
+          'row': ['horizontal', 'left-to-right'],
+          'row-reverse': ['horizontal-reverse', 'right-to-left'],
+          'column': ['vertical', 'top-to-bottom'],
+          'column-reverse': ['vertical-reverse', 'bottom-to-top']
+        };
+
+        const [inputProp, inputValue] = input.split(':').map(s => s.trim());
+        const [solutionProp, solutionValue] = solution.split(':').map(s => s.trim());
+
+        if (inputProp === solutionProp) {
+          if (inputValue === solutionValue) return true;
+          const equivalents = equivalentValues[solutionValue as keyof typeof equivalentValues] || [];
+          return equivalents.includes(inputValue);
+        }
+      }
+
+      // 处理其他属性
+      return input === solution;
+    };
+
+    if (isEquivalent(cleanInput, cleanSolution)) {
       setIsCorrect(true);
       message.success('恭喜你，答案正确！');
     } else {
@@ -214,21 +313,23 @@ const FlexboxFroggy: React.FC = () => {
             <Title level={3}>Flexbox Froggy</Title>
             <Progress
               percent={Math.round((currentLevel / levels.length) * 100)}
-              size="small"
               status="active"
+              style={{ width: '80%' }}
             />
           </div>
 
           <div className="game-description">
-            <Text>{currentLevelData?.description}</Text>
-            <Button
-              type="link"
-              icon={<QuestionCircleOutlined />}
-              onClick={toggleHint}
-              className="hint-button"
-            >
-              提示
-            </Button>
+            <Typography.Title level={4}>
+              第 {currentLevel} 关：{levels[currentLevel - 1].description}
+            </Typography.Title>
+            <Typography.Paragraph>
+              提示：{levels[currentLevel - 1].hint}
+            </Typography.Paragraph>
+            <Typography.Paragraph type="secondary">
+              在右侧的代码编辑器中输入 CSS 代码，实时预览效果。
+              每行输入一个属性，格式为：属性: 值;
+              例如：justify-content: center;
+            </Typography.Paragraph>
           </div>
 
           <div className="game-playground">
@@ -237,7 +338,16 @@ const FlexboxFroggy: React.FC = () => {
               <textarea
                 value={css}
                 onChange={handleCssChange}
-                placeholder="输入你的 CSS 代码..."
+                placeholder={`请输入 CSS 代码，格式为：属性: 值;
+例如：justify-content: center;
+
+支持的属性：
+- justify-content: 控制水平对齐
+- align-items: 控制垂直对齐
+- flex-direction: 控制排列方向
+- flex-wrap: 控制是否换行
+- flex: 控制元素伸缩
+- order: 控制显示顺序`}
                 style={{ width: '95%' }}
                 className={cssError ? 'error' : ''}
               />

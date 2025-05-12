@@ -18,7 +18,7 @@
 
 .header {
     background-color: var(--bg-color);
-    padding: 0 2rem;
+    padding: 0 0rem;
     height: 4rem;
     border-bottom: 1px solid var(--border-color);
     box-shadow: 0 2px 8px var(--shadow-color);
@@ -502,7 +502,7 @@
 }
 
 .search-container {
-    padding-left: 15px;
+    padding-left: 40px;
     position: relative;
     width: 100%;
     max-width: 300px;

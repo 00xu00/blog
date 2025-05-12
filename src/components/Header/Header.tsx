@@ -247,6 +247,7 @@ const Header = () => {
         if (path.startsWith('/list')) return 'list';
         if (path.startsWith('/editor')) return 'write';
         if (path.startsWith('/ai-helper')) return 'ai-helper';
+        if (path.startsWith('/flexbox-froggy')) return 'flexbox-froggy';
         return 'home';
     };
 
@@ -254,6 +255,10 @@ const Header = () => {
     useEffect(() => {
         const menuKey = getMenuKeyFromPath(location.pathname);
         setCurrent(menuKey);
+        // 更新指示器位置
+        setTimeout(() => {
+            updateIndicator(menuKey);
+        }, 100);
     }, [location.pathname]);
 
     const menuItems: MenuProps['items'] = [
