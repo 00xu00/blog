@@ -332,12 +332,13 @@ const Header = () => {
 
     // 加载搜索历史
     const loadSearchHistory = async () => {
-        if (!isLoggedIn) return;
+        if (!isLoggedIn) {
+            setSearchHistory([]);
+            return;
+        }
 
         try {
-            console.log('开始加载搜索历史...');
             const history = await getSearchHistory();
-            console.log('搜索历史加载成功:', history);
             setSearchHistory(history);
         } catch (error) {
             console.error('加载搜索历史失败:', error);
@@ -347,19 +348,14 @@ const Header = () => {
 
     // 处理搜索框获得焦点
     const handleSearchFocus = () => {
-        console.log('搜索框获得焦点');
         setIsSearchFocused(true);
         if (isLoggedIn) {
-            console.log('用户已登录，加载搜索历史');
             loadSearchHistory();
-        } else {
-            console.log('用户未登录，不加载搜索历史');
         }
     };
 
     // 处理搜索框失去焦点
     const handleSearchBlur = () => {
-        console.log('搜索框失去焦点');
         setTimeout(() => {
             setIsSearchFocused(false);
         }, 200);
@@ -383,26 +379,28 @@ const Header = () => {
     const handleSearchChange = (e: React.ChangeEvent<HTMLInputElement>) => {
         const value = e.target.value;
         setSearchValue(value);
-
-        // 清除之前的定时器
-        if (searchTimeoutRef.current) {
-            clearTimeout(searchTimeoutRef.current);
-        }
-
-        // 设置新的定时器，延迟300ms执行搜索
-        if (value.trim()) {
-            searchTimeoutRef.current = setTimeout(() => {
-                onSearch(value);
-            }, 300);
-        } else {
-            setSearchResults([]);
-        }
     };
 
     // 处理搜索历史点击
     const handleHistoryClick = (keyword: string) => {
         setSearchValue(keyword);
         onSearch(keyword);
+    };
+
+    // 清空搜索历史
+    const handleClearHistory = async () => {
+        if (!isLoggedIn) {
+            antMessage.warning('请先登录');
+            return;
+        }
+
+        try {
+            setSearchHistory([]);
+            antMessage.success('搜索历史已清空');
+        } catch (error) {
+            console.error('清空搜索历史失败:', error);
+            antMessage.error('清空搜索历史失败');
+        }
     };
 
     const updateIndicator = (key: string) => {
@@ -528,7 +526,7 @@ const Header = () => {
                                     <div className="search-history-dropdown">
                                         <div className="search-history-header">
                                             <span>搜索历史</span>
-                                            <Button type="link" size="small" onClick={() => setSearchHistory([])}>
+                                            <Button type="link" size="small" onClick={handleClearHistory}>
                                                 清空历史
                                             </Button>
                                         </div>

@@ -1,12 +1,13 @@
 from typing import List
 from fastapi import APIRouter, Depends, HTTPException, Query
 from sqlalchemy.orm import Session
-from app.api import deps
+from app.core import deps
 from app.models.search_history import SearchHistory
 from app.schemas.search_history import SearchHistoryCreate, SearchHistoryInDB
 from app.models.blog import Blog
-from sqlalchemy import or_
+from sqlalchemy import or_, and_, func
 import logging
+from datetime import datetime
 
 logger = logging.getLogger(__name__)
 router = APIRouter()
@@ -15,30 +16,49 @@ router = APIRouter()
 def create_search_history(
     *,
     db: Session = Depends(deps.get_db),
-    current_user = Depends(deps.get_current_user),
+    current_user = Depends(deps.get_current_user_optional),
     search: SearchHistoryCreate
 ):
     """
     创建搜索历史记录
     """
+    if not current_user:
+        raise HTTPException(
+            status_code=403,
+            detail="需要登录才能保存搜索历史"
+        )
+    
     logger.info(f"创建搜索历史记录: user_id={current_user.id}, keyword={search.keyword}")
     
-    # 创建新的搜索历史
-    db_search = SearchHistory(
-        user_id=current_user.id,
-        keyword=search.keyword
-    )
-    db.add(db_search)
-    
-    # 删除旧的搜索历史，只保留最新的100条
-    old_searches = db.query(SearchHistory).filter(
-        SearchHistory.user_id == current_user.id
-    ).order_by(SearchHistory.created_at.desc()).offset(100).all()
-    
-    for old_search in old_searches:
-        db.delete(old_search)
-    
     try:
+        # 查找是否存在相同关键词的历史记录
+        existing_search = db.query(SearchHistory).filter(
+            and_(
+                SearchHistory.user_id == current_user.id,
+                SearchHistory.keyword == search.keyword
+            )
+        ).first()
+        
+        if existing_search:
+            # 如果存在，更新创建时间
+            existing_search.created_at = datetime.utcnow()
+            db_search = existing_search
+        else:
+            # 如果不存在，创建新记录
+            db_search = SearchHistory(
+                user_id=current_user.id,
+                keyword=search.keyword
+            )
+            db.add(db_search)
+        
+        # 删除旧的搜索历史，只保留最新的100条
+        old_searches = db.query(SearchHistory).filter(
+            SearchHistory.user_id == current_user.id
+        ).order_by(SearchHistory.created_at.desc()).offset(100).all()
+        
+        for old_search in old_searches:
+            db.delete(old_search)
+        
         db.commit()
         db.refresh(db_search)
         logger.info(f"搜索历史记录创建成功: id={db_search.id}")
@@ -100,11 +120,24 @@ def search_blogs(
     # 如果用户已登录，记录搜索历史
     if current_user:
         try:
-            db_search = SearchHistory(
-                user_id=current_user.id,
-                keyword=keyword
-            )
-            db.add(db_search)
+            # 查找是否存在相同关键词的历史记录
+            existing_search = db.query(SearchHistory).filter(
+                and_(
+                    SearchHistory.user_id == current_user.id,
+                    SearchHistory.keyword == keyword
+                )
+            ).first()
+            
+            if existing_search:
+                # 如果存在，更新创建时间
+                existing_search.created_at = datetime.utcnow()
+            else:
+                # 如果不存在，创建新记录
+                db_search = SearchHistory(
+                    user_id=current_user.id,
+                    keyword=keyword
+                )
+                db.add(db_search)
             
             # 删除旧的搜索历史，只保留最新的100条
             old_searches = db.query(SearchHistory).filter(

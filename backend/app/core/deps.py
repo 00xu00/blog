@@ -6,9 +6,10 @@ from app.core.config import settings
 from app.db.base import get_db
 from app.models.user import User
 import logging
+from typing import Optional
 
 logger = logging.getLogger(__name__)
-oauth2_scheme = OAuth2PasswordBearer(tokenUrl=f"{settings.API_V1_STR}/auth/token")
+oauth2_scheme = OAuth2PasswordBearer(tokenUrl=f"{settings.API_V1_STR}/auth/token", auto_error=False)
 
 async def get_current_user(
     db: Session = Depends(get_db),
@@ -38,6 +39,37 @@ async def get_current_user(
     if user is None:
         logger.error(f"未找到用户: {email}")
         raise credentials_exception
+    
+    logger.info(f"用户验证成功: {user.username}")
+    return user
+
+async def get_current_user_optional(
+    db: Session = Depends(get_db),
+    token: str = Depends(oauth2_scheme)
+) -> Optional[User]:
+    """
+    可选的用户认证，如果token无效或不存在，返回None而不是抛出异常
+    """
+    if not token:
+        logger.info("未提供token")
+        return None
+        
+    try:
+        payload = jwt.decode(
+            token, settings.SECRET_KEY, algorithms=[settings.ALGORITHM]
+        )
+        email: str = payload.get("sub")
+        if email is None:
+            logger.info("token中未找到email")
+            return None
+    except JWTError:
+        logger.info("token无效")
+        return None
+    
+    user = db.query(User).filter(User.email == email).first()
+    if user is None:
+        logger.info(f"未找到用户: {email}")
+        return None
     
     logger.info(f"用户验证成功: {user.username}")
     return user 
