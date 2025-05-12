@@ -52,14 +52,15 @@ const Editor: React.FC = () => {
       const response = await axios.get('/api/v1/blogs/user/me/draft');
       const draftBlog = response.data;
 
-      // 回填数据
-      setTitle(draftBlog.title);
-      setSubtitle(draftBlog.subtitle || '');
-      setTags(draftBlog.tags || []);
-      setMarkdown(draftBlog.content);
-      setBlogId(draftBlog.id);
-
-      message.info('已加载草稿博客');
+      // 只有当草稿博客有内容时才回填数据
+      if (draftBlog.content || draftBlog.title !== "新博客") {
+        setTitle(draftBlog.title);
+        setSubtitle(draftBlog.subtitle || '');
+        setTags(draftBlog.tags || []);
+        setMarkdown(draftBlog.content);
+        setBlogId(draftBlog.id);
+        message.info('已加载草稿博客');
+      }
     } catch (error: any) {
       // 如果是404错误（没有找到草稿），不显示错误提示
       if (error.response?.status === 404) {
