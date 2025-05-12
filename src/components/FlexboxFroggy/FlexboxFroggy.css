@@ -21,6 +21,13 @@
   margin-bottom: 24px;
   font-size: 16px;
   color: #666;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+}
+
+.hint-button {
+  margin-left: 16px;
 }
 
 .game-playground {
@@ -46,6 +53,18 @@
   border: 1px solid #d9d9d9;
   border-radius: 4px;
   resize: vertical;
+  transition: all 0.3s ease;
+}
+
+.code-editor textarea:focus {
+  border-color: #1890ff;
+  box-shadow: 0 0 0 2px rgba(24, 144, 255, 0.2);
+  outline: none;
+}
+
+.code-editor textarea.error {
+  border-color: #ff4d4f;
+  background-color: #fff2f0;
 }
 
 .preview {
@@ -55,6 +74,7 @@
   display: flex;
   align-items: center;
   justify-content: center;
+  min-height: 200px;
 }
 
 .pond {
@@ -63,6 +83,7 @@
   background: #e6f7ff;
   border-radius: 4px;
   position: relative;
+  transition: all 0.3s ease;
 }
 
 .frog {
@@ -71,6 +92,8 @@
   background: #52c41a;
   border-radius: 50%;
   position: relative;
+  transition: all 0.3s ease;
+  margin: 8px;
 }
 
 .frog::before {
@@ -85,6 +108,18 @@
   border-radius: 50%;
 }
 
+.frog::after {
+  content: '';
+  position: absolute;
+  top: -5px;
+  left: 50%;
+  transform: translateX(-50%);
+  width: 10px;
+  height: 10px;
+  background: #fff;
+  border-radius: 50%;
+}
+
 .game-controls {
   display: flex;
   justify-content: center;
@@ -95,6 +130,15 @@
   margin-top: 16px;
   padding: 12px;
   background: #f5f5f5;
+  border-radius: 4px;
+  border-left: 4px solid #1890ff;
+}
+
+.css-error-message {
+  margin-top: 8px;
+  padding: 8px 12px;
+  background-color: #fff2f0;
+  border: 1px solid #ffccc7;
   border-radius: 4px;
 }
 
@@ -123,6 +167,17 @@
 
 .dark .game-hint {
   background: #141414;
+  border-left-color: #1890ff;
+}
+
+.dark .code-editor textarea.error {
+  background-color: #2a1f1f;
+  border-color: #ff4d4f;
+}
+
+.dark .css-error-message {
+  background-color: #2a1f1f;
+  border-color: #ff4d4f;
 }
 
 /* 响应式布局 */
@@ -134,4 +189,47 @@
   .flexbox-froggy-container {
     padding: 16px;
   }
+
+  .game-description {
+    flex-direction: column;
+    align-items: flex-start;
+    gap: 8px;
+  }
+
+  .hint-button {
+    margin-left: 0;
+  }
+}
+
+/* 动画效果 */
+@keyframes bounce {
+
+  0%,
+  100% {
+    transform: translateY(0);
+  }
+
+  50% {
+    transform: translateY(-10px);
+  }
+}
+
+.frog {
+  animation: bounce 2s infinite;
+}
+
+.frog:nth-child(2) {
+  animation-delay: 0.2s;
+}
+
+.frog:nth-child(3) {
+  animation-delay: 0.4s;
+}
+
+.frog:nth-child(4) {
+  animation-delay: 0.6s;
+}
+
+.frog:nth-child(5) {
+  animation-delay: 0.8s;
 }
