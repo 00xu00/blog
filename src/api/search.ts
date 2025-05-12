@@ -38,6 +38,20 @@ export const getSearchHistory = async (): Promise<SearchHistory[]> => {
   }
 };
 
+// 清空搜索历史
+export const clearSearchHistory = async (): Promise<void> => {
+  if (!isAuthenticated()) {
+    return;
+  }
+
+  try {
+    await request.delete("/api/v1/search/history");
+  } catch (error) {
+    console.error("清空搜索历史失败:", error);
+    throw error;
+  }
+};
+
 // 保存搜索历史
 export const saveSearchHistory = async (keyword: string): Promise<void> => {
   if (!isAuthenticated()) {

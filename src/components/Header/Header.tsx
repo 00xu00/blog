@@ -23,7 +23,7 @@ import {
 } from "@ant-design/icons";
 import "./header.css"
 import { getMessages, markMessageAsRead } from '../../api/message';
-import { getSearchHistory, searchBlogs, SearchHistory, SearchResult } from '../../api/search';
+import { getSearchHistory, searchBlogs, clearSearchHistory, SearchHistory, SearchResult } from '../../api/search';
 
 const { Search } = Input;
 
@@ -395,6 +395,7 @@ const Header = () => {
         }
 
         try {
+            await clearSearchHistory();
             setSearchHistory([]);
             antMessage.success('搜索历史已清空');
         } catch (error) {

@@ -181,4 +181,35 @@ def search_blogs(
         return result
     except Exception as e:
         logger.error(f"搜索博客失败: {str(e)}")
-        raise HTTPException(status_code=500, detail="搜索博客失败") 
+        raise HTTPException(status_code=500, detail="搜索博客失败")
+
+@router.delete("/history", response_model=dict)
+def clear_search_history(
+    *,
+    db: Session = Depends(deps.get_db),
+    current_user = Depends(deps.get_current_user_optional)
+):
+    """
+    清空用户的搜索历史
+    """
+    if not current_user:
+        raise HTTPException(
+            status_code=403,
+            detail="需要登录才能清空搜索历史"
+        )
+    
+    logger.info(f"清空用户搜索历史: user_id={current_user.id}")
+    
+    try:
+        # 删除用户的所有搜索历史
+        db.query(SearchHistory).filter(
+            SearchHistory.user_id == current_user.id
+        ).delete()
+        
+        db.commit()
+        logger.info(f"搜索历史清空成功: user_id={current_user.id}")
+        return {"message": "搜索历史已清空"}
+    except Exception as e:
+        logger.error(f"清空搜索历史失败: {str(e)}")
+        db.rollback()
+        raise HTTPException(status_code=500, detail="清空搜索历史失败") 
