@@ -12,6 +12,9 @@ import {
 } from '@ant-design/icons';
 import { useNavigate } from 'react-router-dom';
 import axios from 'axios';
+import ReactMarkdown from 'react-markdown';
+import remarkGfm from 'remark-gfm';
+import { Components } from 'react-markdown';
 import './AIHelper.css';
 
 interface Article {
@@ -86,6 +89,23 @@ const AIHelper: React.FC = () => {
     }
   };
 
+  const components: Components = {
+    code({ node, className, children, ...props }) {
+      const match = /language-(\w+)/.exec(className || '');
+      return match ? (
+        <pre className={className}>
+          <code {...props}>
+            {String(children).replace(/\n$/, '')}
+          </code>
+        </pre>
+      ) : (
+        <code className={className} {...props}>
+          {children}
+        </code>
+      );
+    }
+  };
+
   return (
     <div className="ai-helper-container">
       <Tabs activeKey={activeTab} onChange={setActiveTab} className="ai-helper-tabs">
@@ -132,7 +152,14 @@ const AIHelper: React.FC = () => {
                       </Space>
                     }
                   >
-                    <pre className="suggestion-content">{item.content}</pre>
+                    <div className="suggestion-content">
+                      <ReactMarkdown
+                        remarkPlugins={[remarkGfm]}
+                        components={components}
+                      >
+                        {item.content}
+                      </ReactMarkdown>
+                    </div>
                   </Card>
                 ))}
               </div>
