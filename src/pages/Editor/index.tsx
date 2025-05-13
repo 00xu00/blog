@@ -1,5 +1,5 @@
 import React, { useState, useRef, useEffect } from 'react';
-import { Card, Input, Select, Tag, Button, Space, message, Spin } from 'antd';
+import { Card, Input, Select, Tag, Button, Space, message, Spin, Popover } from 'antd';
 import ReactMarkdown from 'react-markdown';
 import remarkGfm from 'remark-gfm';
 import rehypeHighlight from 'rehype-highlight';
@@ -35,6 +35,9 @@ const Editor: React.FC = () => {
   const textareaRef = useRef<HTMLTextAreaElement>(null);
   const editorRef = useRef<HTMLDivElement>(null);
   const previewRef = useRef<HTMLDivElement>(null);
+  const [completionLoading, setCompletionLoading] = useState(false);
+  const [completionSuggestions, setCompletionSuggestions] = useState<string[]>([]);
+  const [showCompletion, setShowCompletion] = useState(false);
 
   // 清空编辑器
   const clearEditor = () => {
@@ -191,6 +194,49 @@ const Editor: React.FC = () => {
     }
   }, []);
 
+  // 获取代码补全建议
+  const getCompletion = async () => {
+    if (!markdown) {
+      message.warning('请先输入一些内容');
+      return;
+    }
+
+    try {
+      setCompletionLoading(true);
+      const response = await axios.post('https://api.deepseek.com/v1/chat/completions', {
+        model: 'deepseek-chat',
+        messages: [
+          {
+            role: 'user',
+            content: `请根据以下内容提供补全建议：\n${markdown}`
+          }
+        ],
+        temperature: 0.7,
+        max_tokens: 100
+      }, {
+        headers: {
+          'Authorization': `Bearer sk-5917a900fb8b4246b4a3e449bc6c1275`,
+          'Content-Type': 'application/json'
+        }
+      });
+
+      const suggestions = response.data.choices[0].message.content.split('\n').filter(Boolean);
+      setCompletionSuggestions(suggestions);
+      setShowCompletion(true);
+    } catch (error) {
+      console.error('获取补全建议失败:', error);
+      message.error('获取补全建议失败');
+    } finally {
+      setCompletionLoading(false);
+    }
+  };
+
+  // 应用补全建议
+  const applyCompletion = (suggestion: string) => {
+    setMarkdown(prev => prev + '\n' + suggestion);
+    setShowCompletion(false);
+  };
+
   return (
     <div className="editor-container">
       <Spin spinning={loading} tip="正在处理中...">
@@ -244,12 +290,51 @@ const Editor: React.FC = () => {
                 />
               </div>
               <Space>
-                <Button type="primary" onClick={() => handleSave(false)} disabled={loading}>
+                <Button
+                  type="primary"
+                  onClick={() => handleSave(false)}
+                  disabled={loading}
+                >
                   保存草稿
                 </Button>
-                <Button type="primary" onClick={() => handleSave(true)} disabled={loading}>
+                <Button
+                  type="primary"
+                  onClick={() => handleSave(true)}
+                  disabled={loading}
+                >
                   发布文章
                 </Button>
+                <Popover
+                  content={
+                    <div style={{ maxHeight: '200px', overflowY: 'auto' }}>
+                      {completionSuggestions.map((suggestion, index) => (
+                        <div
+                          key={index}
+                          style={{
+                            padding: '8px',
+                            cursor: 'pointer',
+                            borderBottom: '1px solid #f0f0f0'
+                          }}
+                          onClick={() => applyCompletion(suggestion)}
+                        >
+                          {suggestion}
+                        </div>
+                      ))}
+                    </div>
+                  }
+                  title="补全建议"
+                  trigger="click"
+                  open={showCompletion}
+                  onOpenChange={setShowCompletion}
+                >
+                  <Button
+                    type="default"
+                    onClick={getCompletion}
+                    loading={completionLoading}
+                  >
+                    智能补全
+                  </Button>
+                </Popover>
               </Space>
             </Space>
           </div>
