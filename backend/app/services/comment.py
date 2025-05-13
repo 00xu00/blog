@@ -5,7 +5,7 @@ from app.schemas.comment import CommentCreate, CommentUpdate
 from typing import List, Optional
 from app.schemas.user import UserInDB
 
-def create_comment(db: Session, comment: CommentCreate, author_id: int) -> Comment:
+async def create_comment(db: Session, comment: CommentCreate, author_id: int) -> Comment:
     db_comment = Comment(
         content=comment.content,
         blog_id=comment.blog_id,

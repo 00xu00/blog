@@ -8,6 +8,8 @@ from app.models.blog import Blog
 from app.models.interaction import BlogLike, BlogFavorite
 from app.schemas.blog import BlogCreate, BlogUpdate, BlogInDB
 from app.services import blog as blog_service
+from app.services.deepseek_service import DeepSeekService
+from app.services import comment as comment_service
 import logging
 from datetime import datetime, timedelta
 from sqlalchemy import text
@@ -30,8 +32,39 @@ async def create_blog(
     logger.info(f"收到创建博客请求: user_id={current_user.id}")
     logger.info(f"请求头: {dict(request.headers)}")
     try:
+        # 创建博客
         blog = blog_service.create_blog(db, blog_in, current_user.id)
         logger.info(f"博客创建成功: id={blog.id}")
+
+        # 如果是发布状态，进行AI分析
+        if blog_in.is_published:
+            try:
+                # 初始化DeepSeek服务
+                deepseek_service = DeepSeekService()
+                
+                # 分析文章内容
+                analysis = await deepseek_service.analyze_content(blog.content)
+                
+                # 添加AI生成的标签
+                if analysis.get("tags"):
+                    blog.tags = blog.tags or []
+                    blog.tags.extend(analysis["tags"])
+                    db.commit()
+                    db.refresh(blog)
+                
+                # 创建AI评论
+                if analysis.get("summary"):
+                    comment_data = {
+                        "content": f"AI助手总结：\n\n{analysis['summary']}",
+                        "blog_id": blog.id
+                    }
+                    await comment_service.create_comment(db, comment_data, current_user.id)
+                
+                logger.info(f"AI分析完成: blog_id={blog.id}")
+            except Exception as e:
+                logger.error(f"AI分析失败: {str(e)}")
+                # AI分析失败不影响博客发布
+        
         return blog
     except Exception as e:
         logger.error(f"创建博客失败: {str(e)}")
