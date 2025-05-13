@@ -7,6 +7,7 @@ from app.models.user import User
 from app.models.blog import Blog
 from app.models.interaction import BlogLike, BlogFavorite
 from app.schemas.blog import BlogCreate, BlogUpdate, BlogInDB
+from app.schemas.comment import CommentCreate
 from app.services import blog as blog_service
 from app.services.deepseek_service import DeepSeekService
 from app.services import comment as comment_service
@@ -54,11 +55,12 @@ async def create_blog(
                 
                 # 创建AI评论
                 if analysis.get("summary"):
-                    comment_data = {
-                        "content": f"AI助手总结：\n\n{analysis['summary']}",
-                        "blog_id": blog.id
-                    }
+                    comment_data = CommentCreate(
+                        content=f"AI助手总结：\n\n{analysis['summary']}",
+                        blog_id=blog.id
+                    )
                     await comment_service.create_comment(db, comment_data, current_user.id)
+                    logger.info(f"AI评论创建成功: blog_id={blog.id}")
                 
                 logger.info(f"AI分析完成: blog_id={blog.id}")
             except Exception as e:
