@@ -11,6 +11,7 @@ import {
   FireOutlined
 } from '@ant-design/icons';
 import { useNavigate } from 'react-router-dom';
+import axios from 'axios';
 import './AIHelper.css';
 
 interface Article {
@@ -28,6 +29,7 @@ interface WritingSuggestion {
 }
 
 const { TabPane } = Tabs;
+const API_BASE_URL = 'http://localhost:8000/api/v1';
 
 const AIHelper: React.FC = () => {
   const [loading, setLoading] = useState(false);
@@ -41,29 +43,11 @@ const AIHelper: React.FC = () => {
   const fetchRecommendedArticles = async () => {
     setLoading(true);
     try {
-      // TODO: 这里需要调用后端API获取推荐文章
-      // 模拟数据
-      const mockArticles: Article[] = [
-        {
-          id: '1',
-          title: 'React Hooks 最佳实践',
-          description: '深入探讨React Hooks的使用技巧和最佳实践，包括useState、useEffect、useContext等核心Hook的使用方法。',
-          tags: ['React', 'Hooks', '前端'],
-          views: 1234,
-          likes: 89
-        },
-        {
-          id: '2',
-          title: 'TypeScript 类型系统详解',
-          description: '全面解析TypeScript的类型系统和高级特性，帮助你写出更健壮的代码。',
-          tags: ['TypeScript', '类型系统'],
-          views: 2345,
-          likes: 156
-        }
-      ];
-      setRecommendedArticles(mockArticles);
+      const response = await axios.get(`${API_BASE_URL}/ai/recommended-articles`);
+      setRecommendedArticles(response.data);
     } catch (error) {
       message.error('获取推荐文章失败');
+      console.error('Error fetching recommended articles:', error);
     } finally {
       setLoading(false);
     }
@@ -77,25 +61,13 @@ const AIHelper: React.FC = () => {
     }
     setLoading(true);
     try {
-      // TODO: 这里需要调用后端API生成写作建议
-      // 模拟数据
-      const mockSuggestions: WritingSuggestion[] = [
-        {
-          type: 'outline' as const,
-          content: `1. 引言\n   - 介绍React Hooks的背景和重要性\n   - 为什么需要学习Hooks\n2. 核心概念\n   - useState的使用方法和最佳实践\n   - useEffect的生命周期管理\n   - useContext的状态共享\n3. 实践案例\n   - 自定义Hook的创建和使用\n   - 常见问题的解决方案\n4. 总结\n   - Hooks的优势和局限性\n   - 未来发展趋势`
-        },
-        {
-          type: 'code' as const,
-          content: '```typescript\n// 自定义Hook示例\nconst useCounter = (initialValue: number = 0) => {\n  const [count, setCount] = useState(initialValue);\n\n  const increment = () => setCount(count + 1);\n  const decrement = () => setCount(count - 1);\n  const reset = () => setCount(initialValue);\n\n  return { count, increment, decrement, reset };\n};\n\n// 使用示例\nconst Counter = () => {\n  const { count, increment, decrement } = useCounter(0);\n\n  return (\n    <div>\n      <p>当前计数: {count}</p>\n      <button onClick={increment}>增加</button>\n      <button onClick={decrement}>减少</button>\n    </div>\n  );\n};\n```'
-        },
-        {
-          type: 'documentation' as const,
-          content: '1. React官方文档：https://reactjs.org/docs/hooks-intro.html\n2. React Hooks完全指南：https://react-hooks-cheatsheet.com/\n3. TypeScript + React最佳实践：https://react-typescript-cheatsheet.netlify.app/'
-        }
-      ];
-      setWritingSuggestions(mockSuggestions);
+      const response = await axios.post(`${API_BASE_URL}/ai/generate-suggestions`, {
+        topic: articleTopic
+      });
+      setWritingSuggestions(response.data);
     } catch (error) {
       message.error('生成写作建议失败');
+      console.error('Error generating writing suggestions:', error);
     } finally {
       setLoading(false);
     }

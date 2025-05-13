@@ -1,34 +1,36 @@
 .ai-helper-container {
-  padding: 20px;
+  padding: 24px;
   max-width: 1200px;
   margin: 0 auto;
 }
 
 .ai-helper-tabs {
   background: #fff;
-  padding: 20px;
+  padding: 24px;
   border-radius: 8px;
   box-shadow: 0 2px 8px rgba(0, 0, 0, 0.1);
 }
 
-.ai-writer-card {
-  margin-bottom: 24px;
-  border-radius: 8px;
-  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.1);
+.ai-writer-card,
+.recommendations-card {
+  margin-top: 24px;
 }
 
-.ai-writer-header {
+.ai-writer-header,
+.recommendations-header {
   text-align: center;
   margin-bottom: 24px;
 }
 
-.ai-writer-header h2 {
+.ai-writer-header h2,
+.recommendations-header h2 {
   font-size: 24px;
   color: #1890ff;
   margin-bottom: 8px;
 }
 
-.ai-writer-header p {
+.ai-writer-header p,
+.recommendations-header p {
   color: #666;
   font-size: 16px;
 }
@@ -43,7 +45,8 @@
   flex: 1;
 }
 
-.generate-btn {
+.generate-btn,
+.fetch-btn {
   min-width: 120px;
 }
 
@@ -54,61 +57,29 @@
 }
 
 .suggestion-card {
-  transition: all 0.3s ease;
+  background: #fafafa;
 }
 
-.suggestion-card:hover {
-  transform: translateY(-2px);
-  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.15);
+.suggestion-card .ant-card-head {
+  background: #f0f0f0;
 }
 
 .suggestion-content {
+  white-space: pre-wrap;
+  font-family: 'Courier New', Courier, monospace;
   background: #f5f5f5;
   padding: 16px;
   border-radius: 4px;
-  white-space: pre-wrap;
-  font-family: monospace;
-  line-height: 1.6;
-}
-
-.recommendations-card {
-  margin-bottom: 24px;
-}
-
-.recommendations-header {
-  text-align: center;
-  margin-bottom: 24px;
-}
-
-.recommendations-header h2 {
-  font-size: 24px;
-  color: #1890ff;
-  margin-bottom: 8px;
-}
-
-.recommendations-header p {
-  color: #666;
-  font-size: 16px;
-}
-
-.fetch-btn {
-  margin-bottom: 24px;
+  margin: 0;
 }
 
 .article-list {
-  background: #fff;
+  margin-top: 24px;
 }
 
 .article-item {
   padding: 16px;
-  border-radius: 8px;
-  margin-bottom: 16px;
-  transition: all 0.3s ease;
-}
-
-.article-item:hover {
-  background: #f5f5f5;
-  transform: translateX(4px);
+  border-bottom: 1px solid #f0f0f0;
 }
 
 .article-title {
@@ -119,11 +90,14 @@
 
 .article-description {
   color: #666;
-  line-height: 1.6;
 }
 
 .article-tags {
   margin-top: 8px;
+}
+
+.article-tags .ant-tag {
+  margin-right: 8px;
 }
 
 .read-more-btn {
@@ -132,15 +106,16 @@
 
 /* 响应式设计 */
 @media (max-width: 768px) {
+  .ai-helper-container {
+    padding: 16px;
+  }
+
   .ai-writer-input {
     flex-direction: column;
   }
 
-  .generate-btn {
+  .generate-btn,
+  .fetch-btn {
     width: 100%;
-  }
-
-  .suggestions-container {
-    grid-template-columns: 1fr;
   }
 }

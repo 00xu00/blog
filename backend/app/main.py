@@ -5,6 +5,7 @@ from fastapi.staticfiles import StaticFiles
 from app.core.config import settings
 from app.db.base import Base, engine
 from app.api.v1 import api_router
+from app.api import ai  # 导入AI路由
 from app.models import User, Blog  # 导入所有模型
 import logging
 import os
@@ -34,6 +35,7 @@ app.mount("/static", StaticFiles(directory=static_dir), name="static")
 
 # 注册路由
 app.include_router(api_router, prefix=settings.API_V1_STR)
+app.include_router(ai.router, prefix=f"{settings.API_V1_STR}/ai", tags=["ai"])
 
 # 添加重定向路由
 @app.api_route("/api/auth/{path:path}", methods=["GET", "POST", "PUT", "DELETE"])
