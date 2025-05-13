@@ -1,6 +1,6 @@
 import React, { useEffect, useState } from 'react';
-import { Col, List, Row, message, Empty, Typography } from 'antd';
-import { CalendarOutlined, FireOutlined, BarsOutlined } from '@ant-design/icons';
+import { Col, List, Row, message, Empty, Typography, Avatar } from 'antd';
+import { CalendarOutlined, FireOutlined, BarsOutlined, UserOutlined } from '@ant-design/icons';
 import { Link } from 'react-router-dom';
 import Advert from './Advert/Advert';
 import LatestArticles from './LatestArticles';
@@ -21,10 +21,10 @@ const Home = () => {
         setLoading(true);
         const [recommendedData, latestData] = await Promise.all([
           getRecommendedBlogs(),
-          getLatestBlogs()
+          getLatestBlogs(1, 3)
         ]);
         setRecommendedBlogs(recommendedData);
-        setLatestBlogs(latestData);
+        setLatestBlogs(latestData.data);
       } catch (error) {
         console.error('获取博客列表失败:', error);
         message.error('获取博客列表失败，请稍后重试');
@@ -62,6 +62,14 @@ const Home = () => {
                     <span className='list-icon'><CalendarOutlined /> {new Date(item.created_at).toLocaleDateString()} </span>
                     <span className='list-icon'><BarsOutlined /> {item.tags?.join(', ') || '无标签'} </span>
                     <span className='list-icon'><FireOutlined /> {item.views_count}</span>
+                  </div>
+                  <div className='list-author'>
+                    <Avatar
+                      size="small"
+                      src={item.author?.avatar}
+                      icon={<UserOutlined />}
+                    />
+                    <span className='author-name'>{item.author?.username || '未知作者'}</span>
                   </div>
                 </Link>
               </List.Item>

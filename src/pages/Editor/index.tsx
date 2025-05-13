@@ -1,5 +1,5 @@
 import React, { useState, useRef, useEffect } from 'react';
-import { Card, Input, Select, Tag, Button, Space, message } from 'antd';
+import { Card, Input, Select, Tag, Button, Space, message, Spin } from 'antd';
 import ReactMarkdown from 'react-markdown';
 import remarkGfm from 'remark-gfm';
 import rehypeHighlight from 'rehype-highlight';
@@ -31,6 +31,7 @@ const Editor: React.FC = () => {
   const [inputValue, setInputValue] = useState('');
   const [markdown, setMarkdown] = useState('');
   const [blogId, setBlogId] = useState<number | null>(null);
+  const [loading, setLoading] = useState(false);
   const textareaRef = useRef<HTMLTextAreaElement>(null);
   const editorRef = useRef<HTMLDivElement>(null);
   const previewRef = useRef<HTMLDivElement>(null);
@@ -52,14 +53,15 @@ const Editor: React.FC = () => {
       const response = await axios.get('/api/v1/blogs/user/me/draft');
       const draftBlog = response.data;
 
-      // 回填数据
-      setTitle(draftBlog.title);
-      setSubtitle(draftBlog.subtitle || '');
-      setTags(draftBlog.tags || []);
-      setMarkdown(draftBlog.content);
-      setBlogId(draftBlog.id);
-
-      message.info('已加载草稿博客');
+      // 只有当草稿博客有内容时才回填数据
+      if (draftBlog.content || draftBlog.title !== "新博客") {
+        setTitle(draftBlog.title);
+        setSubtitle(draftBlog.subtitle || '');
+        setTags(draftBlog.tags || []);
+        setMarkdown(draftBlog.content);
+        setBlogId(draftBlog.id);
+        message.info('已加载草稿博客');
+      }
     } catch (error: any) {
       // 如果是404错误（没有找到草稿），不显示错误提示
       if (error.response?.status === 404) {
@@ -108,6 +110,7 @@ const Editor: React.FC = () => {
     }
 
     try {
+      setLoading(true);
       const blogData = {
         title,
         subtitle,
@@ -145,6 +148,8 @@ const Editor: React.FC = () => {
       if (isPublish) {
         message.success('发布成功');
         clearEditor(); // 清空编辑器
+        // 跳转到文章详情页
+        navigate(`/detail/${response.data.id}`);
       }
     } catch (error: any) {
       console.error('保存失败:', error);
@@ -154,6 +159,8 @@ const Editor: React.FC = () => {
       } else {
         message.error('保存失败，请重试');
       }
+    } finally {
+      setLoading(false);
     }
   };
 
@@ -186,94 +193,100 @@ const Editor: React.FC = () => {
 
   return (
     <div className="editor-container">
-      <Card className="editor-card">
-        <div className="editor-header">
-          <Input
-            placeholder="请输入文章标题"
-            value={title}
-            onChange={e => setTitle(e.target.value)}
-            className="editor-title"
-          />
-          <Input
-            placeholder="请输入文章副标题（可选）"
-            value={subtitle}
-            onChange={e => setSubtitle(e.target.value)}
-            className="editor-subtitle"
-          />
-          <Space className="editor-meta">
-            {/* <Select
-              placeholder="选择分类"
-              style={{ width: 120 }}
-              value={category}
-              onChange={setCategory}
-            >
-              <Option value="技术">技术</Option>
-              <Option value="生活">生活</Option>
-              <Option value="随笔">随笔</Option>
-            </Select> */}
-            <div className="editor-tags">
-              {tags.map(tag => (
-                <Tag
-                  key={tag}
-                  closable
-                  onClose={() => handleTagClose(tag)}
-                >
-                  {tag}
-                </Tag>
-              ))}
-              <Input
-                type="text"
-                size="small"
-                className="tag-input"
-                value={inputValue}
-                onChange={e => setInputValue(e.target.value)}
-                onBlur={handleInputConfirm}
-                onPressEnter={handleInputConfirm}
-                placeholder="添加标签"
-              />
-            </div>
-            <Space>
-              <Button type="primary" onClick={() => handleSave(false)}>
-                保存草稿
-              </Button>
-              <Button type="primary" onClick={() => handleSave(true)}>
-                发布文章
-              </Button>
+      <Spin spinning={loading} tip="正在处理中...">
+        <Card className="editor-card">
+          <div className="editor-header">
+            <Input
+              placeholder="请输入文章标题"
+              value={title}
+              onChange={e => setTitle(e.target.value)}
+              className="editor-title"
+              disabled={loading}
+            />
+            <Input
+              placeholder="请输入文章副标题（可选）"
+              value={subtitle}
+              onChange={e => setSubtitle(e.target.value)}
+              className="editor-subtitle"
+              disabled={loading}
+            />
+            <Space className="editor-meta">
+              {/* <Select
+                placeholder="选择分类"
+                style={{ width: 120 }}
+                value={category}
+                onChange={setCategory}
+              >
+                <Option value="技术">技术</Option>
+                <Option value="生活">生活</Option>
+                <Option value="随笔">随笔</Option>
+              </Select> */}
+              <div className="editor-tags">
+                {tags.map(tag => (
+                  <Tag
+                    key={tag}
+                    closable
+                    onClose={() => handleTagClose(tag)}
+                  >
+                    {tag}
+                  </Tag>
+                ))}
+                <Input
+                  type="text"
+                  size="small"
+                  className="tag-input"
+                  value={inputValue}
+                  onChange={e => setInputValue(e.target.value)}
+                  onBlur={handleInputConfirm}
+                  onPressEnter={handleInputConfirm}
+                  placeholder="添加标签"
+                  disabled={loading}
+                />
+              </div>
+              <Space>
+                <Button type="primary" onClick={() => handleSave(false)} disabled={loading}>
+                  保存草稿
+                </Button>
+                <Button type="primary" onClick={() => handleSave(true)} disabled={loading}>
+                  发布文章
+                </Button>
+              </Space>
             </Space>
-          </Space>
-        </div>
-        <div className="editor-content">
-          <div className="editor-preview-container">
-            <div className="editor-area" ref={editorRef}>
-              <TextArea
-                ref={textareaRef}
-                value={markdown}
-                onChange={e => setMarkdown(e.target.value)}
-                placeholder="开始写作..."
-                autoSize={true}
-                style={{ resize: 'none' }}
-                className="markdown-editor"
-              />
-            </div>
-            <div className="preview-area" ref={previewRef}>
-              <div className="preview-content">
-                <ReactMarkdown
-                  remarkPlugins={[remarkGfm]}
-                  rehypePlugins={[rehypeHighlight, rehypeRaw]}
-                  skipHtml={false}
-                  components={{
-                    mark: ({ children }) => <mark className="markdown-highlight">{children}</mark>,
-                    sub: ({ children }) => <sub className="markdown-sub">{children}</sub>,
-                    sup: ({ children }) => <sup className="markdown-sup">{children}</sup>
-                  }}
-                >
-                  {markdown}
-                </ReactMarkdown>
+          </div>
+          <div className="editor-content">
+            <div className="editor-preview-container">
+              <div className="editor-area" ref={editorRef}>
+                <TextArea
+                  ref={textareaRef}
+                  value={markdown}
+                  onChange={e => setMarkdown(e.target.value)}
+                  placeholder="开始写作..."
+                  autoSize={true}
+                  style={{ resize: 'none' }}
+                  className="markdown-editor"
+                  disabled={loading}
+                />
+              </div>
+              <div className="preview-area" ref={previewRef}>
+                <div className="preview-content">
+                  <ReactMarkdown
+                    remarkPlugins={[remarkGfm]}
+                    rehypePlugins={[rehypeHighlight, rehypeRaw]}
+                    skipHtml={false}
+                    components={{
+                      mark: ({ children }) => <mark className="markdown-highlight">{children}</mark>,
+                      sub: ({ children }) => <sub className="markdown-sub">{children}</sub>,
+                      sup: ({ children }) => <sup className="markdown-sup">{children}</sup>
+                    }}
+                  >
+                    {markdown}
+                  </ReactMarkdown>
+                </div>
               </div>
             </div>
           </div>
-        </div>
-      </Card>
+        </Card>
+      </Spin>
     </div>
   );
 };
