@@ -1,5 +1,5 @@
 import React, { useEffect, useState } from 'react';
-import { Col, List, Row, Breadcrumb, Empty, Typography } from 'antd';
+import { Col, List, Row, Breadcrumb, Empty, Typography, Pagination } from 'antd';
 import { CalendarOutlined, FireOutlined, BarsOutlined } from '@ant-design/icons';
 import { Link, useLocation } from 'react-router-dom';
 import { getLatestBlogs } from '../../api/blog';
@@ -12,23 +12,39 @@ const Page = () => {
     const location = useLocation();
     const [blogs, setBlogs] = useState<Blog[]>([]);
     const [loading, setLoading] = useState(true);
+    const [currentPage, setCurrentPage] = useState(1);
+    const [total, setTotal] = useState(0);
+    const pageSize = 10;
 
     // 获取文章列表
     useEffect(() => {
         const fetchBlogs = async () => {
             try {
                 setLoading(true);
-                const response = await getLatestBlogs();
-                setBlogs(response || []);
+                const response = await getLatestBlogs(currentPage, pageSize);
+                console.log('获取到的博客数据:', response);
+                if (response && response.data) {
+                    setBlogs(response.data);
+                    setTotal(response.total);
+                } else {
+                    setBlogs([]);
+                    setTotal(0);
+                }
             } catch (error) {
                 console.error('获取文章列表失败:', error);
+                setBlogs([]);
+                setTotal(0);
             } finally {
                 setLoading(false);
             }
         };
 
         fetchBlogs();
-    }, []);
+    }, [currentPage]);
+
+    const handlePageChange = (page: number) => {
+        setCurrentPage(page);
+    };
 
     const breadList = [
         {
@@ -40,6 +56,8 @@ const Page = () => {
             path: "/list"
         }
     ];
+
+    console.log('当前渲染的博客列表:', blogs); // 添加渲染时的日志
 
     return (
         <>
@@ -83,12 +101,23 @@ const Page = () => {
                                             </span>
                                         )}
                                         <span className='list-icon'>
-                                            <FireOutlined /> {item.views_count}
+                                            <FireOutlined /> {item.views_count || 0}
                                         </span>
                                     </div>
                                 </Link>
                             </List.Item>
                         )}
+                        footer={
+                            <div style={{ textAlign: 'center', marginTop: '20px' }}>
+                                <Pagination
+                                    current={currentPage}
+                                    pageSize={pageSize}
+                                    total={total}
+                                    onChange={handlePageChange}
+                                    showSizeChanger={false}
+                                />
+                            </div>
+                        }
                     />
                 </Col>
             </Row>

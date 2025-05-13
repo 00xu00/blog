@@ -21,10 +21,10 @@ const Home = () => {
         setLoading(true);
         const [recommendedData, latestData] = await Promise.all([
           getRecommendedBlogs(),
-          getLatestBlogs()
+          getLatestBlogs(1, 3)
         ]);
         setRecommendedBlogs(recommendedData);
-        setLatestBlogs(latestData);
+        setLatestBlogs(latestData.data);
       } catch (error) {
         console.error('获取博客列表失败:', error);
         message.error('获取博客列表失败，请稍后重试');
