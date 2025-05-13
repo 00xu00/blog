@@ -60,6 +60,24 @@
   text-overflow: ellipsis;
 }
 
+.list-author {
+  color: #666;
+  font-size: 14px;
+  margin: 8px 0;
+  margin-left: 10px;
+  display: flex;
+  align-items: center;
+  gap: 8px;
+}
+
+.author-name {
+  color: #666;
+}
+
+.list-author .anticon {
+  margin-right: 5px;
+}
+
 /* 响应式调整 */
 @media screen and (max-width: 768px) {
   .comm-left {

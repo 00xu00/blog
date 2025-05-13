@@ -1,6 +1,6 @@
 import React, { useEffect, useState } from 'react';
-import { Col, List, Row, Breadcrumb, Empty, Typography, Pagination } from 'antd';
-import { CalendarOutlined, FireOutlined, BarsOutlined } from '@ant-design/icons';
+import { Col, List, Row, Breadcrumb, Empty, Typography, Pagination, Avatar } from 'antd';
+import { CalendarOutlined, FireOutlined, BarsOutlined, UserOutlined } from '@ant-design/icons';
 import { Link, useLocation } from 'react-router-dom';
 import { getLatestBlogs } from '../../api/blog';
 import type { Blog } from '@/types/blog';
@@ -103,6 +103,14 @@ const Page = () => {
                                         <span className='list-icon'>
                                             <FireOutlined /> {item.views_count || 0}
                                         </span>
+                                    </div>
+                                    <div className='list-author'>
+                                        <Avatar
+                                            size="small"
+                                            src={item.author?.avatar}
+                                            icon={<UserOutlined />}
+                                        />
+                                        <span className='author-name'>{item.author?.username || '未知作者'}</span>
                                     </div>
                                 </Link>
                             </List.Item>
