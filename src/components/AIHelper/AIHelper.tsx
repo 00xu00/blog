@@ -20,7 +20,7 @@ import './AIHelper.css';
 interface Article {
   id: string;
   title: string;
-  description: string;
+  subtitle: string;
   tags: string[];
   views: number;
   likes: number;
@@ -208,7 +208,7 @@ const AIHelper: React.FC = () => {
                     title={<h3 className="article-title">{item.title}</h3>}
                     description={
                       <div className="article-description">
-                        <p>{item.description}</p>
+                        <p>{item.subtitle}</p>
                         <div className="article-tags">
                           {item.tags.map(tag => (
                             <Tag key={tag} color="blue">{tag}</Tag>

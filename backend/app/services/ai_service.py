@@ -2,6 +2,10 @@ import os
 import aiohttp
 from typing import List, Dict, Any
 from loguru import logger
+from sqlalchemy.orm import Session
+from app.db.session import get_db
+from app.models.blog import Blog
+from sqlalchemy import desc
 
 DEEPSEEK_API_KEY = "sk-5917a900fb8b4246b4a3e449bc6c1275"
 DEEPSEEK_API_URL = "https://api.deepseek.com/v1/chat/completions"
@@ -75,23 +79,32 @@ class AIService:
 
     @staticmethod
     async def get_recommended_articles() -> List[Dict[str, Any]]:
-        # 这里可以实现文章推荐逻辑
-        # 目前返回模拟数据
-        return [
-            {
-                "id": "1",
-                "title": "React Hooks 最佳实践",
-                "description": "深入探讨React Hooks的使用技巧和最佳实践，包括useState、useEffect、useContext等核心Hook的使用方法。",
-                "tags": ["React", "Hooks", "前端"],
-                "views": 1234,
-                "likes": 89
-            },
-            {
-                "id": "2",
-                "title": "TypeScript 类型系统详解",
-                "description": "全面解析TypeScript的类型系统和高级特性，帮助你写出更健壮的代码。",
-                "tags": ["TypeScript", "类型系统"],
-                "views": 2345,
-                "likes": 156
-            }
-        ] 
+        try:
+            db = next(get_db())
+            # 获取最新的10篇已发布的文章，按创建时间排序
+            articles = db.query(Blog).filter(Blog.is_published == 1).order_by(desc(Blog.created_at)).limit(10).all()
+            
+            # 转换为前端需要的格式
+            recommended_articles = []
+            for article in articles:
+                # 获取文章标签
+                tags = article.tags if article.tags else []
+                
+                # 获取文章副标题
+                subtitle = article.subtitle if article.subtitle else ""
+                
+                recommended_articles.append({
+                    "id": str(article.id),
+                    "title": article.title,
+                    "subtitle": subtitle,
+                    "tags": tags,
+                    "views": article.views_count,
+                    "likes": article.likes_count,
+                    "created_at": article.created_at.isoformat() if article.created_at else None,
+                    "author": article.author.username if article.author else "未知作者"
+                })
+            
+            return recommended_articles
+        except Exception as e:
+            logger.error(f"Error getting recommended articles: {str(e)}")
+            return [] 
