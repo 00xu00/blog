@@ -121,11 +121,8 @@ export const getUserHistoryBlogs = async () => {
 // 获取推荐博客
 export const getRecommendedBlogs = async (): Promise<Blog[]> => {
   const token = localStorage.getItem("token");
-  const response = await axios.get(`${API_URL}/blogs/recommended`, {
-    headers: {
-      Authorization: `Bearer ${token}`,
-    },
-  });
+  const headers = token ? { Authorization: `Bearer ${token}` } : {};
+  const response = await axios.get(`${API_URL}/blogs/recommended`, { headers });
   return response.data;
 };
 
