@@ -4,8 +4,10 @@ from app.models.interaction import CommentLike
 from app.schemas.comment import CommentCreate, CommentUpdate
 from typing import List, Optional
 from app.schemas.user import UserInDB
+from app.models.user import User
 
 async def create_comment(db: Session, comment: CommentCreate, author_id: int) -> Comment:
+    """创建新评论"""
     db_comment = Comment(
         content=comment.content,
         blog_id=comment.blog_id,
@@ -15,6 +17,11 @@ async def create_comment(db: Session, comment: CommentCreate, author_id: int) ->
     db.add(db_comment)
     db.commit()
     db.refresh(db_comment)
+    
+    # 获取作者信息
+    author = db.query(User).filter(User.id == author_id).first()
+    db_comment.author = author
+    
     return db_comment
 
 def get_comment(db: Session, comment_id: int) -> Optional[Comment]:

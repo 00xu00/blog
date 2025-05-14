@@ -10,13 +10,13 @@ from app.schemas.user import UserInDB
 router = APIRouter()
 
 @router.post("/", response_model=Comment)
-def create_comment(
+async def create_comment(
     comment: CommentCreate,
     db: Session = Depends(get_db),
     current_user: User = Depends(get_current_user)
 ):
     """创建新评论"""
-    db_comment = comment_service.create_comment(db, comment, current_user.id)
+    db_comment = await comment_service.create_comment(db, comment, current_user.id)
     # 手动设置作者信息
     db_comment.author = current_user
     return db_comment
