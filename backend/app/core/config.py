@@ -1,5 +1,5 @@
 from pydantic_settings import BaseSettings
-from typing import List
+from typing import List, Optional
 import os
 from pathlib import Path
 
@@ -15,7 +15,7 @@ class Settings(BaseSettings):
     ACCESS_TOKEN_EXPIRE_MINUTES: int = 60 * 24 * 7  # 7天
     
     # 数据库配置
-    DATABASE_URL: str = "sqlite:///./blog.db"
+    SQLALCHEMY_DATABASE_URL: str = "sqlite:///./blog.db"
     
     # CORS配置
     BACKEND_CORS_ORIGINS: List[str] = [
@@ -34,6 +34,13 @@ class Settings(BaseSettings):
     
     # 项目根目录
     BASE_DIR: Path = Path(__file__).resolve().parent.parent.parent
+    
+    # 邮件配置
+    SMTP_HOST: str = "smtp.qq.com"
+    SMTP_PORT: int = 465
+    SMTP_USERNAME: str = "2023654801@qq.com"
+    SMTP_PASSWORD: str = "pkdzyptbrjrebaae"  # QQ邮箱授权码
+    FRONTEND_URL: str = "http://localhost:3000"
     
     class Config:
         case_sensitive = True

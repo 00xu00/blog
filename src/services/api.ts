@@ -71,6 +71,25 @@ export interface RegisterParams {
   password: string;
 }
 
+export interface VerificationCodeParams {
+  email: string;
+}
+
+export interface VerifyCodeParams {
+  email: string;
+  code: string;
+}
+
+export interface ForgotPasswordParams {
+  email: string;
+}
+
+export interface ResetPasswordParams {
+  email: string;
+  token: string;
+  new_password: string;
+}
+
 export const authApi = {
   login: (data: LoginParams): Promise<LoginResponse> => {
     return api.post("/auth/token", {
@@ -81,6 +100,22 @@ export const authApi = {
 
   register: (data: RegisterParams) => {
     return api.post("/auth/register", data);
+  },
+
+  sendVerificationCode: (data: VerificationCodeParams) => {
+    return api.post("/auth/send-verification-code", data);
+  },
+
+  verifyCode: (data: VerifyCodeParams) => {
+    return api.post("/auth/verify-code", data);
+  },
+
+  forgotPassword: (data: ForgotPasswordParams) => {
+    return api.post("/auth/forgot-password", data);
+  },
+
+  resetPassword: (data: ResetPasswordParams) => {
+    return api.post("/auth/reset-password", data);
   },
 };
 

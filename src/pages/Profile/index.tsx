@@ -65,7 +65,6 @@ interface Blog {
 interface User {
   id: string;
   username: string;
-  name: string;
   avatar: string;
   bio: string | null;
   followers_count: number;
@@ -1002,8 +1001,7 @@ const Profile: React.FC = () => {
                         <Card>
                           <div className="user-card">
                             <Avatar size={64} src={user.avatar} icon={<UserOutlined />} />
-                            <h3>{user.name}</h3>
-                            <p>{user.bio}</p>
+                            <h3>{user.username}</h3>
                             <Space>
                               <Button
                                 type={followingMap[user.id] ? 'default' : 'primary'}
@@ -1049,8 +1047,7 @@ const Profile: React.FC = () => {
                         <Card>
                           <div className="user-card">
                             <Avatar size={64} src={user.avatar} icon={<UserOutlined />} />
-                            <h3>{user.name}</h3>
-                            <p>{user.bio}</p>
+                            <h3>{user.username}</h3>
                             <Space>
                               <Button
                                 type={followerFollowingMap[user.id] ? 'default' : 'primary'}
