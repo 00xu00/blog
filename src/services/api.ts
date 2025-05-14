@@ -85,6 +85,7 @@ export interface ForgotPasswordParams {
 }
 
 export interface ResetPasswordParams {
+  email: string;
   token: string;
   new_password: string;
 }

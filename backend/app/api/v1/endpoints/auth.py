@@ -242,9 +242,7 @@ async def verify_code(request: Request):
                 detail="验证码无效或已过期"
             )
             
-        # 验证成功后删除验证码
-        delete_verification_code(email)
-        
+        # 验证成功后不删除验证码，等待重置密码成功后再删除
         return {"message": "验证码验证成功"}
         
     except Exception as e:
@@ -302,30 +300,22 @@ async def reset_password(request: Request, db: Session = Depends(get_db)):
     """重置密码"""
     try:
         data = await request.json()
+        email = data.get("email")
         token = data.get("token")
         new_password = data.get("new_password")
         
-        if not token or not new_password:
+        if not email or not token or not new_password:
             raise HTTPException(
                 status_code=status.HTTP_400_BAD_REQUEST,
-                detail="token和新密码不能为空"
+                detail="邮箱、验证码和新密码不能为空"
             )
             
-        # 验证token
-        try:
-            payload = jwt.decode(
-                token, settings.SECRET_KEY, algorithms=[settings.ALGORITHM]
-            )
-            email = payload.get("sub")
-            if not email:
-                raise HTTPException(
-                    status_code=status.HTTP_400_BAD_REQUEST,
-                    detail="无效的token"
-                )
-        except JWTError:
+        # 验证验证码
+        stored_code = get_verification_code(email)
+        if not stored_code or stored_code != token:
             raise HTTPException(
                 status_code=status.HTTP_400_BAD_REQUEST,
-                detail="无效的token"
+                detail="验证码无效或已过期"
             )
             
         # 更新用户密码
@@ -338,6 +328,9 @@ async def reset_password(request: Request, db: Session = Depends(get_db)):
             
         user.hashed_password = get_password_hash(new_password)
         db.commit()
+        
+        # 重置密码成功后删除验证码
+        delete_verification_code(email)
         
         return {"message": "密码重置成功"}
         

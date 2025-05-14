@@ -1,5 +1,5 @@
 import React, { useState } from 'react';
-import { Form, Input, Button, message } from 'antd';
+import { Form, Input, Button, message, Modal } from 'antd';
 import { UserOutlined, LockOutlined, MailOutlined } from '@ant-design/icons';
 import { useNavigate } from 'react-router-dom';
 import { authApi, LoginResponse } from '../../services/api';
@@ -27,6 +27,7 @@ interface ResetPasswordForm {
   token: string;
   new_password: string;
   confirm_password: string;
+  email: string;
 }
 
 const Auth: React.FC = () => {
@@ -37,6 +38,7 @@ const Auth: React.FC = () => {
   const [verificationCodeSent, setVerificationCodeSent] = useState(false);
   const [countdown, setCountdown] = useState(0);
   const [registerForm] = Form.useForm();
+  const [forgotPasswordForm] = Form.useForm();
   const navigate = useNavigate();
 
   // 发送验证码
@@ -57,6 +59,7 @@ const Auth: React.FC = () => {
       }, 1000);
     } catch (error) {
       message.error(error instanceof Error ? error.message : '发送验证码失败');
+      throw error;
     }
   };
 
@@ -120,14 +123,39 @@ const Auth: React.FC = () => {
     }
   };
 
-  const onForgotPasswordFinish = async (values: ForgotPasswordForm) => {
+  const onForgotPasswordFinish = async (values: any) => {
+    if (!verificationCodeSent) {
+      // 发送验证码
+      try {
+        await handleSendVerificationCode(values.email);
+      } catch (error) {
+        message.error(error instanceof Error ? error.message : '发送验证码失败');
+      }
+      return;
+    }
+
+    // 验证验证码并重置密码
     setLoading(true);
     try {
-      await authApi.forgotPassword(values);
-      message.success('重置密码邮件已发送，请查收');
+      // 先验证验证码
+      await authApi.verifyCode({
+        email: values.email,
+        code: values.verificationCode
+      });
+
+      // 验证码正确后重置密码
+      await authApi.resetPassword({
+        email: values.email,
+        token: values.verificationCode,
+        new_password: values.new_password
+      });
+
+      message.success('密码重置成功，请使用新密码登录');
       setIsForgotPassword(false);
+      setVerificationCodeSent(false);
+      forgotPasswordForm.resetFields();
     } catch (error) {
-      message.error(error instanceof Error ? error.message : '发送重置密码邮件失败');
+      message.error(error instanceof Error ? error.message : '重置密码失败');
     } finally {
       setLoading(false);
     }
@@ -142,6 +170,7 @@ const Auth: React.FC = () => {
     setLoading(true);
     try {
       await authApi.resetPassword({
+        email: values.email,
         token: values.token,
         new_password: values.new_password
       });
@@ -162,16 +191,16 @@ const Auth: React.FC = () => {
     navigate('/auth');
   };
 
-  if (isForgotPassword) {
+  if (isResetPassword) {
     return (
       <div className="auth-container">
         <div className="form-container">
           <Form
-            name="forgot-password"
-            onFinish={onForgotPasswordFinish}
+            name="reset-password"
+            onFinish={onResetPasswordFinish}
             autoComplete="off"
           >
-            <h2>忘记密码</h2>
+            <h2>重置密码</h2>
             <Form.Item
               name="email"
               rules={[
@@ -186,40 +215,6 @@ const Auth: React.FC = () => {
               />
             </Form.Item>
 
-            <Form.Item>
-              <Button
-                type="primary"
-                htmlType="submit"
-                loading={loading}
-                block
-                size="large"
-              >
-                发送重置密码邮件
-              </Button>
-            </Form.Item>
-
-            <Button
-              type="link"
-              onClick={() => setIsForgotPassword(false)}
-            >
-              返回登录
-            </Button>
-          </Form>
-        </div>
-      </div>
-    );
-  }
-
-  if (isResetPassword) {
-    return (
-      <div className="auth-container">
-        <div className="form-container">
-          <Form
-            name="reset-password"
-            onFinish={onResetPasswordFinish}
-            autoComplete="off"
-          >
-            <h2>重置密码</h2>
             <Form.Item
               name="token"
               rules={[{ required: true, message: '请输入重置密码token' }]}
@@ -340,10 +335,130 @@ const Auth: React.FC = () => {
             <Button
               type="link"
               onClick={() => setIsForgotPassword(true)}
+              className="forgot-password-link"
             >
               忘记密码？
             </Button>
           </Form>
+
+          <Modal
+            title="忘记密码"
+            open={isForgotPassword}
+            onCancel={() => {
+              setIsForgotPassword(false);
+              setVerificationCodeSent(false);
+              forgotPasswordForm.resetFields();
+            }}
+            footer={null}
+            width={400}
+            centered
+            maskClosable={false}
+            className="forgot-password-modal"
+          >
+            <Form
+              form={forgotPasswordForm}
+              name="forgot-password"
+              onFinish={onForgotPasswordFinish}
+              autoComplete="off"
+              layout="vertical"
+            >
+              <Form.Item
+                name="email"
+                rules={[
+                  { required: true, message: '请输入邮箱' },
+                  { type: 'email', message: '请输入有效的邮箱地址' }
+                ]}
+              >
+                <Input
+                  prefix={<MailOutlined />}
+                  placeholder="请输入您的邮箱"
+                  size="large"
+                  className="auth-input"
+                  disabled={verificationCodeSent}
+                />
+              </Form.Item>
+
+              {verificationCodeSent && (
+                <>
+                  <Form.Item
+                    name="verificationCode"
+                    rules={[{ required: true, message: '请输入验证码' }]}
+                  >
+                    <Input
+                      prefix={<MailOutlined />}
+                      placeholder="请输入验证码"
+                      size="large"
+                      className="auth-input"
+                      suffix={
+                        <Button
+                          type="link"
+                          disabled={countdown > 0}
+                          onClick={() => {
+                            const email = forgotPasswordForm.getFieldValue('email');
+                            if (email) {
+                              handleSendVerificationCode(email);
+                            }
+                          }}
+                        >
+                          {countdown > 0 ? `${countdown}秒后重试` : '重新获取'}
+                        </Button>
+                      }
+                    />
+                  </Form.Item>
+
+                  <Form.Item
+                    name="new_password"
+                    rules={[
+                      { required: true, message: '请输入新密码' },
+                      { min: 6, message: '密码至少6个字符' }
+                    ]}
+                  >
+                    <Input.Password
+                      prefix={<LockOutlined />}
+                      placeholder="请输入新密码"
+                      size="large"
+                      className="auth-input"
+                    />
+                  </Form.Item>
+
+                  <Form.Item
+                    name="confirm_password"
+                    rules={[
+                      { required: true, message: '请确认新密码' },
+                      ({ getFieldValue }) => ({
+                        validator(_, value) {
+                          if (!value || getFieldValue('new_password') === value) {
+                            return Promise.resolve();
+                          }
+                          return Promise.reject(new Error('两次输入的密码不一致'));
+                        },
+                      }),
+                    ]}
+                  >
+                    <Input.Password
+                      prefix={<LockOutlined />}
+                      placeholder="请确认新密码"
+                      size="large"
+                      className="auth-input"
+                    />
+                  </Form.Item>
+                </>
+              )}
+
+              <Form.Item className="form-buttons">
+                <Button
+                  type="primary"
+                  htmlType="submit"
+                  loading={loading}
+                  block
+                  size="large"
+                  className="submit-button"
+                >
+                  {verificationCodeSent ? '重置密码' : '发送验证码'}
+                </Button>
+              </Form.Item>
+            </Form>
+          </Modal>
         </div>
 
         <div className="form-container sign-up-container">
