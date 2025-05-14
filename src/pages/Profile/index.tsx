@@ -103,7 +103,7 @@ const Profile: React.FC = () => {
   const [isEditingBio, setIsEditingBio] = useState(false);
   const [newBio, setNewBio] = useState('');
   const [isUploading, setIsUploading] = useState(false);
-  const [activeTab, setActiveTab] = useState('articles');
+  const [activeTab, setActiveTab] = useState(isOtherUser ? 'articles' : 'messages');
   const [blogs, setBlogs] = useState<Blog[]>([]);
   const [following, setFollowing] = useState<User[]>([]);
   const [followers, setFollowers] = useState<User[]>([]);
