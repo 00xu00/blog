@@ -108,6 +108,7 @@ async def login_for_access_token(
             password = data.get("password")
             
             logger.info(f"登录请求 - 邮箱: {email}")
+            logger.info(f"当前SECRET_KEY: {settings.SECRET_KEY}")
             
             if not email or not password:
                 logger.warning("登录失败 - 邮箱或密码为空")
@@ -145,9 +146,11 @@ async def login_for_access_token(
             
             # 创建访问令牌
             access_token_expires = timedelta(minutes=settings.ACCESS_TOKEN_EXPIRE_MINUTES)
+            logger.info(f"创建token - 过期时间: {access_token_expires}")
             access_token = create_access_token(
                 data={"sub": user.email}, expires_delta=access_token_expires
             )
+            logger.info(f"生成的token: {access_token}")
             
             # 返回用户信息
             user_data = {

@@ -2,6 +2,10 @@ from pydantic_settings import BaseSettings
 from typing import List, Optional
 import os
 from pathlib import Path
+import secrets
+
+# 定义默认密钥
+DEFAULT_SECRET_KEY = "xijing-blog-secret-key-2024"
 
 class Settings(BaseSettings):
     # 项目基础配置
@@ -10,7 +14,7 @@ class Settings(BaseSettings):
     API_V1_STR: str = "/api/v1"
     
     # 安全配置
-    SECRET_KEY: str = "your-secret-key-here"  # 请在生产环境中更改
+    SECRET_KEY: str = os.getenv("SECRET_KEY", DEFAULT_SECRET_KEY)
     ALGORITHM: str = "HS256"
     ACCESS_TOKEN_EXPIRE_MINUTES: int = 60 * 24 * 7  # 7天
     

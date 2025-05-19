@@ -69,15 +69,11 @@ const Auth: React.FC = () => {
       const response = await authApi.login(values);
       const { access_token, user } = response as LoginResponse;
 
-      localStorage.removeItem('token');
-      localStorage.removeItem('userInfo');
+      // 清除旧的token和用户信息
+      removeToken();
 
-      const token = access_token.trim();
-      if (!token) {
-        throw new Error('获取到的 token 无效');
-      }
-
-      localStorage.setItem('token', token);
+      // 使用新的token处理函数
+      setToken(access_token);
       localStorage.setItem('userInfo', JSON.stringify(user));
 
       message.success('登录成功');
