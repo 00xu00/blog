@@ -1,4 +1,5 @@
 import axios from "axios";
+import { getToken } from "../utils/auth";
 
 const request = axios.create({
   baseURL: "http://localhost:8000",
@@ -9,7 +10,7 @@ const request = axios.create({
 // 请求拦截器
 request.interceptors.request.use(
   (config) => {
-    const token = localStorage.getItem("token");
+    const token = getToken();
     if (token) {
       // 确保token格式正确
       const tokenValue = token.startsWith("Bearer ")

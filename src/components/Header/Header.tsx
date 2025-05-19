@@ -24,6 +24,7 @@ import {
 import "./header.css"
 import { getMessages, markMessageAsRead } from '../../api/message';
 import { getSearchHistory, searchBlogs, clearSearchHistory, SearchHistory, SearchResult } from '../../api/search';
+import { getToken, removeToken } from '../../utils/auth';
 
 const { Search } = Input;
 
@@ -81,7 +82,7 @@ const Header = () => {
     useEffect(() => {
         const fetchUserInfo = async () => {
             try {
-                const token = localStorage.getItem('token');
+                const token = getToken();
                 if (!token) {
                     setIsLoggedIn(false);
                     setUserInfo(null);
@@ -98,7 +99,7 @@ const Header = () => {
                         const response = await fetch('http://localhost:8000/api/v1/users/me', {
                             method: 'GET',
                             headers: {
-                                'Authorization': `Bearer ${token.trim()}`,
+                                'Authorization': `Bearer ${token}`,
                                 'Content-Type': 'application/json',
                             },
                         });
@@ -111,7 +112,7 @@ const Header = () => {
                             return;
                         } else if (response.status === 401) {
                             console.error('Token 验证失败:', token);
-                            localStorage.removeItem('token');
+                            removeToken();
                             setIsLoggedIn(false);
                             setUserInfo(null);
                             navigate('/auth');
@@ -290,7 +291,7 @@ const Header = () => {
     ];
 
     const handleLogout = () => {
-        localStorage.removeItem('token');
+        removeToken();
         setUserInfo(null);
         setIsLoggedIn(false);
         antMessage.success('已退出登录');
